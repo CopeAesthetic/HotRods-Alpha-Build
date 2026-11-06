@@ -249,7 +249,7 @@ class World:
         self.trees = join_meshes(trees)
 
     def _build_water(self):
-        self.cols, self.rows = 10, 9
+        self.cols, self.rows = 8, 7
         self.wx0, self.wx1 = -34.0, 34.0
         self.wz0, self.wz1 = -56.0, 6.5
         self.wverts = [(0.0, 0.0, 0.0)] * ((self.cols + 1) * (self.rows + 1))

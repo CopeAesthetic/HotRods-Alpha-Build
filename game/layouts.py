@@ -74,10 +74,10 @@ def dock(spot):
 
 # far bank shape: where it starts, how many slabs, how far out, how wide
 BANK = {
-    0: dict(x0=-40.0, n=20, z=-13.5, spacing=4.6, w=4.8),
-    1: dict(x0=-46.0, n=22, z=-18.0, spacing=4.6, w=4.8),
-    2: dict(x0=-34.0, n=16, z=-11.0, spacing=4.4, w=5.4),
-    3: dict(x0=-30.0, n=14, z=-9.0, spacing=4.4, w=5.0),
+    0: dict(x0=-40.0, n=12, z=-13.5, spacing=7.6, w=8.0),
+    1: dict(x0=-46.0, n=13, z=-18.0, spacing=7.6, w=8.0),
+    2: dict(x0=-34.0, n=10, z=-11.0, spacing=7.2, w=9.0),
+    3: dict(x0=-30.0, n=9, z=-9.0, spacing=7.2, w=8.4),
 }
 
 
@@ -106,7 +106,7 @@ def props(spot):
 
 
 # how much water dressing each water carries: (lilies, reeds)
-DENSITY = {0: (16, 22), 1: (9, 12), 2: (14, 40), 3: (0, 6)}
+DENSITY = {0: (9, 12), 1: (6, 8), 2: (10, 20), 3: (0, 4)}
 
 
 def water_props(spot):
