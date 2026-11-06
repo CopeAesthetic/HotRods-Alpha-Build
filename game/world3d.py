@@ -479,13 +479,28 @@ class World:
             hold = (waist[0] + (face[0] - waist[0]) * r,
                     waist[1] + (face[1] - waist[1]) * r,
                     waist[2] + (face[2] - waist[2]) * r)
-            for shx, shz in ((-3.43, 1.46), (-3.23, 1.565)):
-                sh = (shx, 1.19, shz)
-                el = (sh[0] + (hold[0] - sh[0]) * 0.5,
-                      sh[1] + (hold[1] - sh[1]) * 0.5,
-                      sh[2] + (hold[2] - sh[2]) * 0.5)
-                parts.append(segment(sh, el, 0.065, body, 4))
-                parts.append(segment(el, hold, 0.055, skin, 4))
+            # right arm raises the piece to the mouth
+            sh_r = (-3.23, 1.19, 1.565)
+            el_r = (sh_r[0] + (hold[0] - sh_r[0]) * 0.5,
+                    sh_r[1] + (hold[1] - sh_r[1]) * 0.5,
+                    sh_r[2] + (hold[2] - sh_r[2]) * 0.5)
+            parts.append(segment(sh_r, el_r, 0.065, body, 4))
+            parts.append(segment(el_r, hold, 0.055, skin, 4))
+            # left arm brings a lighter to the tip
+            lighter = (hold[0] + 0.10, hold[1] - 0.01, hold[2] + 0.04)
+            sh_l = (-3.43, 1.19, 1.46)
+            el_l = (sh_l[0] + (lighter[0] - sh_l[0]) * 0.5,
+                    sh_l[1] + (lighter[1] - sh_l[1]) * 0.5,
+                    sh_l[2] + (lighter[2] - sh_l[2]) * 0.5)
+            parts.append(segment(sh_l, el_l, 0.065, body, 4))
+            parts.append(segment(el_l, lighter, 0.055, skin, 4))
+            parts.append(segment((lighter[0] - 0.01, lighter[1] - 0.02, lighter[2]),
+                                 (lighter[0] + 0.01, lighter[1] + 0.04, lighter[2] + 0.01),
+                                 0.020, (232, 186, 96), 4))
+            flame_y = lighter[1] + 0.05 + math.sin(self.t * 30.0) * 0.006
+            parts.append(segment((lighter[0], lighter[1] + 0.04, lighter[2] + 0.01),
+                                 (lighter[0], flame_y, lighter[2] + 0.01),
+                                 0.012, (255, 190, 60), 4))
             sid = getattr(self, "smoker_id", None) or "one_hitter"
             col = SMOKER_TINT.get(sid, (198, 168, 128))
             m = objload.asset("smoker_" + sid, col, scale=0.55)
@@ -517,9 +532,18 @@ class World:
             parts.append(segment((-3.58, 1.28, 2.12), (-3.46, 1.66, 2.16),
                                  0.021, (198, 170, 116), 4))
         else:
-            parts.append(segment(shoulder, (-3.08, 1.02, 1.56), 0.065, body, 4))
-            parts.append(segment((-3.08, 1.02, 1.56), (-3.03, 1.00, 1.57), 0.070,
+            parts.append(segment(shoulder, (-3.12, 1.06, 1.62), 0.065, body, 4))
+            parts.append(segment((-3.12, 1.06, 1.62), (-3.03, 1.00, 1.57), 0.055,
                                  skin, 4))
+            lhand = (hand[0] + (tip[0] - hand[0]) * 0.35,
+                     hand[1] + (tip[1] - hand[1]) * 0.35,
+                     hand[2] + (tip[2] - hand[2]) * 0.35)
+            lsh = (-3.43, 1.19, 1.46)
+            lel = (lsh[0] + (lhand[0] - lsh[0]) * 0.5,
+                   lsh[1] + (lhand[1] - lsh[1]) * 0.5,
+                   lsh[2] + (lhand[2] - lsh[2]) * 0.5)
+            parts.append(segment(lsh, lel, 0.065, body, 4))
+            parts.append(segment(lel, lhand, 0.055, skin, 4))
             mid = (hand[0] + (tip[0] - hand[0]) * 0.55,
                    hand[1] + (tip[1] - hand[1]) * 0.55,
                    hand[2] + (tip[2] - hand[2]) * 0.55)
