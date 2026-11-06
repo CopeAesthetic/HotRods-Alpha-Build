@@ -11,6 +11,7 @@ jobs:
       - run: ruff check game main.py
       - run: python tests/screens.py
       - run: python tests/test_flow.py
+      - run: python tests/test_soak.py
       - run: pyinstaller --noconfirm --windowed --name "Hot Rods" main.py
       - uses: actions/upload-artifact@v4
         with:
@@ -26,6 +27,7 @@ jobs:
       - run: ruff check game main.py
       - run: python tests/screens.py
       - run: python tests/test_flow.py
+      - run: python tests/test_soak.py
       - run: pyinstaller --noconfirm --windowed --name "Hot Rods" main.py
       - run: ditto -c -k --sequesterRsrc --keepParent "dist/Hot Rods.app" "Hot Rods-mac.zip"
       - uses: actions/upload-artifact@v4
