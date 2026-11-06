@@ -134,6 +134,56 @@ def shack():
     return mesh_from("shack", v, f)
 
 
+def dock_post(name="dock_post", h=1.5):
+    """Square pile with a capped top, used along the pier edge."""
+    v = [(-0.16, 0.0, -0.16), (0.16, 0.0, -0.16), (0.16, 0.0, 0.16), (-0.16, 0.0, 0.16),
+         (-0.13, h, -0.13), (0.13, h, -0.13), (0.13, h, 0.13), (-0.13, h, 0.13),
+         (-0.20, h, -0.20), (0.20, h, -0.20), (0.20, h, 0.20), (-0.20, h, 0.20),
+         (-0.20, h + 0.10, -0.20), (0.20, h + 0.10, -0.20),
+         (0.20, h + 0.10, 0.20), (-0.20, h + 0.10, 0.20)]
+    f = [(0, 1, 2, 3), (4, 5, 1, 0), (5, 6, 2, 1), (6, 7, 3, 2), (7, 4, 0, 3),
+         (8, 9, 10, 11), (12, 13, 14, 15), (8, 9, 13, 12), (9, 10, 14, 13),
+         (10, 11, 15, 14), (11, 8, 12, 15)]
+    return mesh_from(name, v, f)
+
+
+def rod_rack(name="rod_rack"):
+    """Two uprights and a crossbar, for leaning rods against."""
+    v, f = [], []
+
+    def bar(x0, y0, z0, x1, y1, z1, t):
+        b = len(v)
+        v.extend([(x0 - t, y0, z0 - t), (x0 + t, y0, z0 - t),
+                  (x0 + t, y0, z0 + t), (x0 - t, y0, z0 + t),
+                  (x1 - t, y1, z1 - t), (x1 + t, y1, z1 - t),
+                  (x1 + t, y1, z1 + t), (x1 - t, y1, z1 + t)])
+        f.extend([(b, b + 1, b + 2, b + 3), (b + 4, b + 5, b + 6, b + 7),
+                  (b, b + 1, b + 5, b + 4), (b + 1, b + 2, b + 6, b + 5),
+                  (b + 2, b + 3, b + 7, b + 6), (b + 3, b, b + 4, b + 7)])
+
+    bar(-0.55, 0.0, 0.0, -0.55, 1.25, 0.0, 0.06)
+    bar(0.55, 0.0, 0.0, 0.55, 1.25, 0.0, 0.06)
+    bar(-0.62, 1.05, 0.0, 0.62, 1.05, 0.0, 0.045)
+    bar(-0.62, 0.55, 0.0, 0.62, 0.55, 0.0, 0.035)
+    return mesh_from(name, v, f)
+
+
+def lantern(name="lantern"):
+    """Post with a boxy lamp head - reads at night."""
+    post = crate("lantern_post", 0.12, 1.9, 0.12)
+    v = [tuple(x.co) for x in post.data.vertices]
+    f = [tuple(p.vertices) for p in post.data.polygons]
+    b = len(v)
+    v += [(-0.18, 1.85, -0.18), (0.18, 1.85, -0.18),
+          (0.18, 1.85, 0.18), (-0.18, 1.85, 0.18),
+          (-0.12, 2.20, -0.12), (0.12, 2.20, -0.12),
+          (0.12, 2.20, 0.12), (-0.12, 2.20, 0.12)]
+    f += [(b, b + 1, b + 2, b + 3), (b + 4, b + 5, b + 6, b + 7),
+          (b, b + 1, b + 5, b + 4), (b + 1, b + 2, b + 6, b + 5),
+          (b + 2, b + 3, b + 7, b + 6), (b + 3, b, b + 4, b + 7)]
+    return mesh_from(name, v, f)
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     reset()
@@ -145,6 +195,9 @@ def main():
     export(crate("cooler", 0.9, 0.55, 0.6), "cooler")
     export(crate("bucket", 0.5, 0.36, 0.5, taper=0.82), "bucket")
     export(shack(), "shack")
+    export(dock_post(), "dock_post")
+    export(rod_rack(), "rod_rack")
+    export(lantern(), "lantern")
     print("assets built")
 
 
