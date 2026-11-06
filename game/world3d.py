@@ -201,9 +201,12 @@ class World:
             rz = rngb.uniform(-7.5, 2.0)
             r = rngb.uniform(0.25, 0.7)
             beach.append(disc(rx, 0.12, rz, r, (112, 110, 104), 6))
+        self.lamps = []
         for name, px, pz, rot, sc in layouts.props(s):
             y = layouts.GROUND.get(ASSETS[name][2], 0.30)
             beach.append(self.prop(name, px, y, pz, rot=rot, scale=sc))
+            if name == "lantern":
+                self.lamps.append((px, y + 2.05, pz))
         self.beach = join_meshes(beach)
 
         # --- lily pads -----------------------------------------------------
@@ -388,6 +391,36 @@ class World:
                 sc.add((self.wverts[a], self.wverts[c], self.wverts[d]),
                        darken(base, 0.05), fog=True)
 
+    def draw_lamps(self, surf, dark):
+        """Additive glow sprites at each lantern head.
+
+        The renderer has no point lights, so night light is faked with a
+        radial falloff blit - cheap, and it reads correctly against the fog.
+        """
+        if not getattr(self, "lamps", None) or dark <= 0.02:
+            return
+        for wx, wy, wz in self.lamps:
+            v = self.cam.view((wx, wy, wz))
+            z = max(0.12, v[2])
+            if z > 40:
+                continue
+            f = self.cam.focal
+            sx = INTERNAL_W * 0.5 + v[0] * f / z
+            sy = INTERNAL_H * 0.5 - v[1] * f / z
+            r = max(5, int(26.0 * f / z))
+            if sx < -r or sx > INTERNAL_W + r or sy < -r or sy > INTERNAL_H + r:
+                continue
+            glow = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
+            for i in range(5, 0, -1):
+                rad = int(r * i / 5.0)
+                a = int(46 * dark * (1.0 - (i - 1) / 5.0))
+                if a <= 0:
+                    continue
+                pygame.draw.circle(glow, (255, 214, 140, a), (r, r), rad)
+            pygame.draw.circle(glow, (255, 236, 190, int(180 * dark)),
+                               (r, r), max(2, r // 7))
+            surf.blit(glow, (sx - r, sy - r), special_flags=pygame.BLEND_ADD)
+
     def set_view(self, eye, target):
         """Re-aim the existing camera in place (scene holds a reference)."""
         c = self.cam
@@ -512,6 +545,8 @@ class World:
             self._add_angler(p, mode)
 
         sc.draw(surf)
+        night = max(0.0, min(1.0, (0.55 - p.get("ambient", 0.5)) * 2.2))
+        self.draw_lamps(surf, night)
 
         # screen-space anchors for the HUD / particles
         f = self.cam.focal
