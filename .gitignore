@@ -17,3 +17,5 @@ dmg_stage/
 
 assets/*.mtl
 assets/__pycache__/
+
+ref/
