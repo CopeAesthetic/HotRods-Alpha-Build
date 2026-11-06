@@ -439,28 +439,56 @@ class World:
         # bucket hat
         parts.append(disc(-3.31, 1.44, 1.48, 0.24, hat, 8))
         parts.append(cone((-3.31, 1.44, 1.48), (-3.31, 1.62, 1.48), 0.145, hat, 7))
-        # arm reaching to the rod
-        parts.append(segment((-3.30, 1.16, 1.52), (-3.08, 1.02, 1.56), 0.065, body, 4))
-        parts.append(segment((-3.08, 1.02, 1.56), (-3.03, 1.00, 1.57), 0.075, skin, 4))
-        # the equipped smoking method, raised to the face for the ceremony
-        if getattr(self, "pipe_raise", 0) > 0:
+        toke = getattr(self, "pipe_raise", 0) > 0
+        shoulder = (-3.30, 1.16, 1.52)
+        if toke:
+            # raise with both hands, hold at the face, lower again
+            ph = min(1.0, max(0.0, getattr(self, "pipe_phase", 0.0)))
+            if ph < 0.25:
+                r = ph / 0.25
+            elif ph < 0.75:
+                r = 1.0
+            else:
+                r = max(0.0, 1.0 - (ph - 0.75) / 0.25)
+            waist = (-3.12, 0.95, 1.52)
+            face = (-3.30, 1.38, 1.54)
+            hold = (waist[0] + (face[0] - waist[0]) * r,
+                    waist[1] + (face[1] - waist[1]) * r,
+                    waist[2] + (face[2] - waist[2]) * r)
+            for shx in (-3.40, -3.24):
+                sh = (shx, 1.20, 1.47 + 0.06 * (shx + 3.32))
+                el = (sh[0] + (hold[0] - sh[0]) * 0.5,
+                      sh[1] + (hold[1] - sh[1]) * 0.5 + 0.05,
+                      sh[2] + (hold[2] - sh[2]) * 0.5)
+                parts.append(segment(sh, el, 0.055, body, 4))
+                parts.append(segment(el, hold, 0.068, skin, 4))
             sid = getattr(self, "smoker_id", None) or "one_hitter"
             col = SMOKER_TINT.get(sid, (198, 168, 128))
             m = objload.asset("smoker_" + sid, col, scale=0.55)
-            ang = math.sin(self.t * 3.2) * 0.13
-            c, sn = math.cos(ang), math.sin(ang)
-            hx, hy, hz = hand
-            bob = math.sin(self.t * 2.4) * 0.015
-            m.verts = [(vx * c - vz * sn + hx + 0.02,
-                        vy + hy + 0.10 + bob,
-                        vx * sn + vz * c + hz + 0.02) for vx, vy, vz in m.verts]
+            # lean it slightly toward the face as it rises
+            ax = -0.45 * r
+            ca, sa = math.cos(ax), math.sin(ax)
+            laid = []
+            for vx, vy, vz in m.verts:
+                y2 = vy * ca - vz * sa
+                z2 = vy * sa + vz * ca
+                laid.append((vx + hold[0] + 0.02, y2 + hold[1] + 0.16, z2 + hold[2] + 0.05))
+            m.verts = laid
             parts.append(m)
-        # rod
-        mid = (hand[0] + (tip[0] - hand[0]) * 0.55,
-               hand[1] + (tip[1] - hand[1]) * 0.55,
-               hand[2] + (tip[2] - hand[2]) * 0.55)
-        parts.append(segment(hand, mid, 0.030, (176, 148, 96), 4))
-        parts.append(segment(mid, tip, 0.021, (198, 170, 116), 4))
+            self.smoke_from = (face[0], face[1] + 0.05, face[2] + 0.04)
+            # the fishing rod rests beside him while he smokes
+            parts.append(segment((-3.76, 0.64, 2.04), (-3.58, 1.28, 2.12),
+                                 0.030, (176, 148, 96), 4))
+            parts.append(segment((-3.58, 1.28, 2.12), (-3.46, 1.66, 2.16),
+                                 0.021, (198, 170, 116), 4))
+        else:
+            parts.append(segment(shoulder, (-3.08, 1.02, 1.56), 0.065, body, 4))
+            parts.append(segment((-3.08, 1.02, 1.56), (-3.03, 1.00, 1.57), 0.075, skin, 4))
+            mid = (hand[0] + (tip[0] - hand[0]) * 0.55,
+                   hand[1] + (tip[1] - hand[1]) * 0.55,
+                   hand[2] + (tip[2] - hand[2]) * 0.55)
+            parts.append(segment(hand, mid, 0.030, (176, 148, 96), 4))
+            parts.append(segment(mid, tip, 0.021, (198, 170, 116), 4))
         self.scene.add_mesh(join_meshes(parts), shade=True, fog=True)
 
     def _add_float(self, depth, mode, taut, fly=0.0):
@@ -511,7 +539,8 @@ class World:
         sc.add_mesh(self.beach)
         sc.add_mesh(self.pads)
 
-        if mode in ("idle", "fly", "bite", "reel"):
+        toke = getattr(self, "pipe_raise", 0) > 0
+        if mode in ("idle", "fly", "bite", "reel") and not toke:
             self._add_float(depth, mode, taut, fly)
         self.apply_pov()
         if self.pov == "first":
