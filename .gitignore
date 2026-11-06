@@ -16,3 +16,4 @@ Hot Rods.app/
 dmg_stage/
 
 assets/*.mtl
+assets/__pycache__/

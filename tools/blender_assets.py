@@ -103,6 +103,31 @@ def lily():
     return mesh_from("lily", v, f)
 
 
+def crate(name, w, h, d, taper=1.0):
+    """Simple box: crates, coolers, buckets."""
+    x, z = w * 0.5, d * 0.5
+    t = taper
+    v = [(-x, 0.0, -z), (x, 0.0, -z), (x, 0.0, z), (-x, 0.0, z),
+         (-x * t, h, -z * t), (x * t, h, -z * t), (x * t, h, z * t), (-x * t, h, z * t)]
+    f = [(0, 1, 2, 3), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5),
+         (2, 3, 7, 6), (3, 0, 4, 7)]
+    return mesh_from(name, v, f)
+
+
+def shack():
+    """A small hut with a pitched roof, for the shop."""
+    body = crate("shack", 4.0, 2.2, 3.2)
+    v = list(body.data.vertices and [tuple(x.co) for x in body.data.vertices])
+    f = [tuple(p.vertices) for p in body.data.polygons]
+    base = len(v)
+    v += [(-2.3, 2.2, -1.9), (2.3, 2.2, -1.9), (2.3, 2.2, 1.9), (-2.3, 2.2, 1.9),
+          (-1.9, 3.3, 0.0), (1.9, 3.3, 0.0)]
+    f += [(base + 0, base + 1, base + 5, base + 4),
+          (base + 3, base + 2, base + 5, base + 4),
+          (base + 1, base + 2, base + 5), (base + 0, base + 3, base + 4)]
+    return mesh_from("shack", v, f)
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     reset()
@@ -111,6 +136,9 @@ def main():
     export(tree("tree_b", height=4.6, spread=1.1), "tree_b")
     export(reeds(), "reeds")
     export(lily(), "lily")
+    export(crate("cooler", 0.9, 0.55, 0.6), "cooler")
+    export(crate("bucket", 0.5, 0.36, 0.5, taper=0.82), "bucket")
+    export(shack(), "shack")
     print("assets built")
 
 
