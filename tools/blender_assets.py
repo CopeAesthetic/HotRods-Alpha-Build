@@ -197,7 +197,6 @@ def main():
     export(shack(), "shack")
     export(dock_post(), "dock_post")
     export(rod_rack(), "rod_rack")
-    export(lantern(), "lantern")
     print("assets built")
 
 
