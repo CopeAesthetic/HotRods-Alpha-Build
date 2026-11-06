@@ -19,7 +19,7 @@ WHITE = (222, 240, 224)
 HELP = [
     ("help", "this list"),
     ("cash <n> / addcash <n>", "set or add money"),
-    ("unlock all|spots|gear|jars", "open up the world"),
+    ("unlock all|spots|gear|jars|weed|species", "open up the world"),
     ("weed <strain|all> <n>", "add grams of weed"),
     ("species all|clear", "fill or wipe the journal"),
     ("legendaries", "unlock the four Legends tab fish"),
@@ -214,6 +214,27 @@ class Console:
         if what in ("all", "jars"):
             p.sal_tier = len(C.RARITY_ORDER) - 1
             c.out("every jar is open", WARN)
+        if what in ("all", "weed"):
+            for st in data.STRAINS:
+                p.weed[st["id"]] = p.weed_count(st["id"]) + 5
+            p.hidden_sold |= {sp["id"] for sp in data.HIDDEN_FISH}
+            p.hidden_sold |= {sp["id"] for sp in data.SHINY_FISH}
+            c.out("every strain + hidden jars unlocked, 5g each", WARN)
+        if what in ("all", "species"):
+            added = 0
+            for sp in list(data.SPECIES) + list(data.HIDDEN_FISH) \
+                     + list(data.SHINY_FISH):
+                if sp["id"] in p.species:
+                    continue
+                kg = sp["kg"][1] * 0.6
+                p.species[sp["id"]] = {
+                    "count": 1, "best": kg,
+                    "best_len": data.length_cm(kg, sp.get("shape", "fish"))}
+                added += 1
+            p.hidden_sold |= {sp["id"] for sp in data.HIDDEN_FISH}
+            p.hidden_sold |= {sp["id"] for sp in data.SHINY_FISH}
+            c.out("species log complete (+%d, legends and shinies too)" % added,
+                  WARN)
         app.save()
 
     def c_weed(self, app, args, c):
