@@ -12,6 +12,7 @@ from . import util
 from .render3d import Camera, Mesh, Scene, box, mix, vnorm, vsub, vcross, vlen
 from . import objload
 from assets.manifest import ASSETS
+from . import layouts
 from .util import Particles, clamp, lighten, darken, smoothstep
 
 INTERNAL_W, INTERNAL_H = 480, 270
@@ -200,13 +201,9 @@ class World:
             rz = rngb.uniform(-7.5, 2.0)
             r = rngb.uniform(0.25, 0.7)
             beach.append(disc(rx, 0.12, rz, r, (112, 110, 104), 6))
-        rngt = random.Random(91 + s)
-        for i in range(9):
-            tx = -30 + i * 7.2 + rngt.uniform(-1.5, 1.5)
-            tz = -17.5 + rngt.uniform(-1.2, 1.2)
-            beach.append(self.prop("tree_a" if i % 2 else "tree_b", tx, 0.4, tz,
-                                   rot=rngt.uniform(0, 6.28),
-                                   scale=rngt.uniform(0.9, 1.4)))
+        for name, px, pz, rot, sc in layouts.props(s):
+            y = layouts.GROUND.get(ASSETS[name][2], 0.30)
+            beach.append(self.prop(name, px, y, pz, rot=rot, scale=sc))
         self.beach = join_meshes(beach)
 
         # --- lily pads -----------------------------------------------------
