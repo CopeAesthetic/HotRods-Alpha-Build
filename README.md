@@ -291,3 +291,26 @@ python tools/fishsheet.py    # contact sheet of all 32 fish
   against a wobblier needle and couch lock.
 - Everything is drawn and synthesised at runtime; there are no asset files to
   lose.
+
+## Assets and tooling
+
+All in-game props are modelled in **Blender**, scripted and headless — no GUI
+step, and no second engine in the pipeline.
+
+```bash
+# regenerate every mesh in assets/ from source
+/Applications/Blender.app/Contents/MacOS/Blender --background \
+    --python tools/blender_assets.py
+```
+
+Blender is **Z-up**; the renderer is **Y-up**. `game/objload.py` converts on
+load `(x, y, z) -> (x, -z, y)`, so assets are authored normally in Blender and
+land right-side-up. A prop's colour and base scale live in
+`assets/manifest.py`; where it sits lives in `game/layouts.py`.
+
+| Tool | What it does |
+|---|---|
+| `tools/blender_assets.py` | builds every prop into `assets/*.obj` |
+| `tools/lookdev.py` | renders a water at five times of day for palette work |
+| `tools/screens.py` | screenshot regression against `tests/baseline/` |
+| `make check` / `make test` | lint + type check, then the full suite |
