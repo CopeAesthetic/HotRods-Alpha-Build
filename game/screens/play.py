@@ -307,9 +307,9 @@ class PlayScreen(Screen):
             keys = pygame.key.get_pressed()
             w = self.world
             if keys[pygame.K_LEFT]:
-                w.orbit -= 1.1 * dt
+                w.orbit = max(-w.orbit_max, w.orbit - 1.1 * dt)
             if keys[pygame.K_RIGHT]:
-                w.orbit += 1.1 * dt
+                w.orbit = min(w.orbit_max, w.orbit + 1.1 * dt)
             if keys[pygame.K_UP]:
                 w.orbit_pitch = min(0.45, w.orbit_pitch + 0.6 * dt)
             if keys[pygame.K_DOWN]:

@@ -99,6 +99,7 @@ class World:
         self.free_pitch = 0.0
         self.orbit = 0.0
         self.orbit_pitch = 0.0
+        self.orbit_max = 0.95      # the camera stays around the angler
         self.pipe_raise = 0.0
         self._bobber_screen = (INTERNAL_W * 0.6, INTERNAL_H * 0.6)
         self._tip_screen = (0.0, 0.0)
@@ -452,8 +453,8 @@ class World:
         parts.append(disc(-3.335, 1.225, 1.495, 0.135, body, 8))
         parts.append(segment((-3.33, 1.225, 1.495), (-3.32, 1.30, 1.49), 0.100,
                              skin, 5))
-        # shoulder bar the arms hang from
-        parts.append(segment((-3.41, 1.19, 1.47), (-3.25, 1.19, 1.56), 0.085,
+        # shoulder bar the arms hang from - spans the full shoulder width
+        parts.append(segment((-3.44, 1.19, 1.455), (-3.22, 1.19, 1.57), 0.085,
                              body, 5))
         # head
         parts.append(segment((-3.32, 1.30, 1.49), (-3.31, 1.45, 1.48), 0.115, skin, 6))
@@ -463,7 +464,7 @@ class World:
         parts.append(disc(-3.31, 1.44, 1.48, 0.24, hat, 8))
         parts.append(cone((-3.31, 1.44, 1.48), (-3.31, 1.62, 1.48), 0.145, hat, 7))
         toke = getattr(self, "pipe_raise", 0) > 0
-        shoulder = (-3.28, 1.19, 1.54)
+        shoulder = (-3.23, 1.19, 1.56)
         if toke:
             # raise with both hands, hold at the face, lower again
             ph = min(1.0, max(0.0, getattr(self, "pipe_phase", 0.0)))
@@ -478,7 +479,7 @@ class World:
             hold = (waist[0] + (face[0] - waist[0]) * r,
                     waist[1] + (face[1] - waist[1]) * r,
                     waist[2] + (face[2] - waist[2]) * r)
-            for shx, shz in ((-3.40, 1.475), (-3.26, 1.545)):
+            for shx, shz in ((-3.43, 1.46), (-3.23, 1.565)):
                 sh = (shx, 1.19, shz)
                 el = (sh[0] + (hold[0] - sh[0]) * 0.45,
                       sh[1] + (hold[1] - sh[1]) * 0.45 + 0.03,
