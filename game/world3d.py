@@ -460,17 +460,17 @@ class World:
         parts.append(segment((-3.32, 1.30, 1.49), (-3.31, 1.45, 1.48), 0.115, skin, 6))
         # the head turns toward the rod: the face plate sits on his right
         # cheek, looking at the hand holding the rod
-        parts.append(box(-3.26, 1.35, 1.545, 0.05, 0.15, 0.17,
+        parts.append(box(-3.305, 1.35, 1.545, 0.05, 0.15, 0.17,
                          (216, 170, 126), (202, 158, 116)))
-        parts.append(box(-3.233, 1.385, 1.49, 0.02, 0.035, 0.04,
+        parts.append(box(-3.275, 1.385, 1.49, 0.02, 0.035, 0.04,
                          (38, 34, 30), (38, 34, 30)))                # eye
-        parts.append(box(-3.233, 1.385, 1.60, 0.02, 0.035, 0.04,
+        parts.append(box(-3.275, 1.385, 1.60, 0.02, 0.035, 0.04,
                          (38, 34, 30), (38, 34, 30)))                # eye
-        parts.append(box(-3.24, 1.345, 1.545, 0.055, 0.055, 0.05,
+        parts.append(box(-3.28, 1.345, 1.545, 0.055, 0.055, 0.05,
                          (198, 140, 100), (182, 126, 90)))           # nose
-        parts.append(box(-3.233, 1.305, 1.545, 0.02, 0.03, 0.115,
+        parts.append(box(-3.275, 1.305, 1.545, 0.02, 0.03, 0.115,
                          (88, 52, 38), (88, 52, 38)))                # mouth
-        parts.append(segment((-3.26, 1.26, 1.545), (-3.26, 1.33, 1.545),
+        parts.append(segment((-3.30, 1.26, 1.545), (-3.30, 1.33, 1.545),
                              0.10, (96, 74, 52), 5))                 # beard
         # bucket hat
         parts.append(disc(-3.31, 1.44, 1.48, 0.24, hat, 8))
@@ -486,7 +486,7 @@ class World:
                 r = 1.0
             else:
                 r = max(0.0, 1.0 - (ph - 0.75) / 0.25)
-            mouth = (-3.235, 1.315, 1.565)
+            mouth = (-3.275, 1.315, 1.565)
             waist = (-3.13, 0.98, 1.53)
             face = (mouth[0] + 0.12, mouth[1], mouth[2])  # clear of the cheek
             hold = (waist[0] + (face[0] - waist[0]) * r,
