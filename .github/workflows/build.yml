@@ -1,0 +1,28 @@
+name: build
+on: [workflow_dispatch, push]
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install pygame-ce numpy pyinstaller
+      - run: pyinstaller --noconfirm --windowed --name "Hot Rods" main.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Hot-Rods-Windows
+          path: dist/Hot Rods/
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install pygame-ce numpy pyinstaller
+      - run: pyinstaller --noconfirm --windowed --name "Hot Rods" main.py
+      - run: ditto -c -k --sequesterRsrc --keepParent "dist/Hot Rods.app" "Hot Rods-mac.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Hot-Rods-macOS
+          path: Hot Rods-mac.zip

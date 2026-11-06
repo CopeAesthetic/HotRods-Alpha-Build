@@ -1,0 +1,16 @@
+.venv/
+save.json
+__pycache__/
+*.pyc
+
+build/
+dist/
+*.dmg
+*.zip
+save*.json
+.pyinstaller/
+*.log
+*.spec
+
+Hot Rods.app/
+dmg_stage/
