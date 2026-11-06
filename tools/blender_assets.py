@@ -79,8 +79,8 @@ def reeds():
     """A clump of solid blades - prisms, so they read from any angle."""
     import math as _m
     v, f = [], []
-    for i in range(9):
-        a = _m.tau * i / 9
+    for i in range(5):
+        a = _m.tau * i / 5
         r = 0.10 + 0.06 * (i % 3)
         x, z = _m.cos(a) * r, _m.sin(a) * r
         h = 0.85 + 0.5 * ((i * 7) % 5) / 5.0
@@ -90,9 +90,8 @@ def reeds():
               (x + w, 0.0, z + d), (x - w, 0.0, z + d),
               (x - w, h, z - d), (x + w, h, z - d),
               (x + w, h, z + d), (x - w, h, z + d)]
-        f += [(b, b + 1, b + 2, b + 3), (b + 4, b + 5, b + 6, b + 7),
-              (b, b + 1, b + 5, b + 4), (b + 1, b + 2, b + 6, b + 5),
-              (b + 2, b + 3, b + 7, b + 6), (b + 3, b, b + 4, b + 7)]
+        f += [(b + 1, b + 2, b + 6, b + 5), (b + 2, b + 3, b + 7, b + 6),
+              (b + 3, b, b + 4, b + 7)]          # sides only - no caps
     return mesh_from("reeds", v, f)
 
 
