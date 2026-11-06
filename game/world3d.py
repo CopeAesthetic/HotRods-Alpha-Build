@@ -450,16 +450,16 @@ class World:
                 r = 1.0
             else:
                 r = max(0.0, 1.0 - (ph - 0.75) / 0.25)
-            waist = (-3.12, 0.92, 1.54)
-            face = (-3.28, 1.30, 1.60)
+            waist = (-3.13, 0.98, 1.53)
+            face = (-3.29, 1.32, 1.57)
             hold = (waist[0] + (face[0] - waist[0]) * r,
                     waist[1] + (face[1] - waist[1]) * r,
                     waist[2] + (face[2] - waist[2]) * r)
             for shx in (-3.40, -3.24):
                 sh = (shx, 1.20, 1.47 + 0.06 * (shx + 3.32))
-                el = (sh[0] + (hold[0] - sh[0]) * 0.5,
-                      sh[1] + (hold[1] - sh[1]) * 0.5 + 0.05,
-                      sh[2] + (hold[2] - sh[2]) * 0.5)
+                el = (sh[0] + (hold[0] - sh[0]) * 0.45,
+                      sh[1] + (hold[1] - sh[1]) * 0.45 + 0.03,
+                      sh[2] + (hold[2] - sh[2]) * 0.45)
                 parts.append(segment(sh, el, 0.055, body, 4))
                 parts.append(segment(el, hold, 0.068, skin, 4))
             sid = getattr(self, "smoker_id", None) or "one_hitter"
@@ -467,15 +467,22 @@ class World:
             m = objload.asset("smoker_" + sid, col, scale=0.55)
             # small handheld pieces lie horizontal like a joint; glass
             # stays more upright as it rises
-            lay = {"one_hitter": -1.05, "papers": -1.05,
-                   "backwoods": -1.10}.get(sid, 0.0)
-            ax = -0.45 * r + lay * r
+            lay = {"one_hitter": -1.55, "papers": -1.55,
+                   "backwoods": -1.60}.get(sid, 0.0)
+            yaw = {"one_hitter": -1.15, "papers": -1.15,
+                   "backwoods": -1.25}.get(sid, 0.0)
+            ax = (-0.45 + lay) * r          # lie it fully flat
+            ay = yaw * r                    # then swing across the body
             ca, sa = math.cos(ax), math.sin(ax)
+            cy2, sy2 = math.cos(ay), math.sin(ay)
             laid = []
             for vx, vy, vz in m.verts:
                 y2 = vy * ca - vz * sa
                 z2 = vy * sa + vz * ca
-                laid.append((vx + hold[0] + 0.02, y2 + hold[1] + 0.16, z2 + hold[2] + 0.05))
+                x3 = vx * cy2 + z2 * sy2
+                z3 = -vx * sy2 + z2 * cy2
+                laid.append((x3 + hold[0] + 0.02, y2 + hold[1] + 0.15,
+                             z3 + hold[2] + 0.05))
             m.verts = laid
             parts.append(m)
             self.smoke_from = (face[0], face[1] + 0.04, face[2] + 0.06)
