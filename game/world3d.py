@@ -450,8 +450,8 @@ class World:
                 r = 1.0
             else:
                 r = max(0.0, 1.0 - (ph - 0.75) / 0.25)
-            waist = (-3.12, 0.95, 1.52)
-            face = (-3.30, 1.38, 1.54)
+            waist = (-3.12, 0.92, 1.54)
+            face = (-3.28, 1.30, 1.60)
             hold = (waist[0] + (face[0] - waist[0]) * r,
                     waist[1] + (face[1] - waist[1]) * r,
                     waist[2] + (face[2] - waist[2]) * r)
@@ -467,8 +467,8 @@ class World:
             m = objload.asset("smoker_" + sid, col, scale=0.55)
             # small handheld pieces lie horizontal like a joint; glass
             # stays more upright as it rises
-            lay = {"one_hitter": -0.85, "papers": -0.85,
-                   "backwoods": -0.90}.get(sid, 0.0)
+            lay = {"one_hitter": -1.05, "papers": -1.05,
+                   "backwoods": -1.10}.get(sid, 0.0)
             ax = -0.45 * r + lay * r
             ca, sa = math.cos(ax), math.sin(ax)
             laid = []
@@ -478,7 +478,7 @@ class World:
                 laid.append((vx + hold[0] + 0.02, y2 + hold[1] + 0.16, z2 + hold[2] + 0.05))
             m.verts = laid
             parts.append(m)
-            self.smoke_from = (face[0], face[1] + 0.05, face[2] + 0.04)
+            self.smoke_from = (face[0], face[1] + 0.04, face[2] + 0.06)
             # the fishing rod rests beside him while he smokes
             parts.append(segment((-3.76, 0.64, 2.04), (-3.58, 1.28, 2.12),
                                  0.030, (176, 148, 96), 4))
