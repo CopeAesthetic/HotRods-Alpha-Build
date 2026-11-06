@@ -465,8 +465,11 @@ class World:
             sid = getattr(self, "smoker_id", None) or "one_hitter"
             col = SMOKER_TINT.get(sid, (198, 168, 128))
             m = objload.asset("smoker_" + sid, col, scale=0.55)
-            # lean it slightly toward the face as it rises
-            ax = -0.45 * r
+            # small handheld pieces lie horizontal like a joint; glass
+            # stays more upright as it rises
+            lay = {"one_hitter": -0.85, "papers": -0.85,
+                   "backwoods": -0.90}.get(sid, 0.0)
+            ax = -0.45 * r + lay * r
             ca, sa = math.cos(ax), math.sin(ax)
             laid = []
             for vx, vy, vz in m.verts:
