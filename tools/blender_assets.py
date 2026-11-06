@@ -76,17 +76,23 @@ def tree(name="tree", height=3.4, spread=1.5):
 
 
 def reeds():
-    """A clump of thin blades."""
-    v, f = [], []
+    """A clump of solid blades - prisms, so they read from any angle."""
     import math as _m
-    for i in range(7):
-        a = _m.tau * i / 7
-        r = 0.10 + 0.05 * (i % 3)
+    v, f = [], []
+    for i in range(9):
+        a = _m.tau * i / 9
+        r = 0.10 + 0.06 * (i % 3)
         x, z = _m.cos(a) * r, _m.sin(a) * r
-        h = 0.9 + 0.35 * ((i * 7) % 5) / 5.0
+        h = 0.85 + 0.5 * ((i * 7) % 5) / 5.0
+        w, d = 0.045, 0.045
         b = len(v)
-        v += [(x - 0.03, 0.0, z), (x + 0.03, 0.0, z), (x, h, z - 0.02), (x, h, z + 0.02)]
-        f += [(b, b + 1, b + 2), (b + 1, b + 3, b + 2), (b, b + 2, b + 3), (b, b + 3, b + 1)]
+        v += [(x - w, 0.0, z - d), (x + w, 0.0, z - d),
+              (x + w, 0.0, z + d), (x - w, 0.0, z + d),
+              (x - w, h, z - d), (x + w, h, z - d),
+              (x + w, h, z + d), (x - w, h, z + d)]
+        f += [(b, b + 1, b + 2, b + 3), (b + 4, b + 5, b + 6, b + 7),
+              (b, b + 1, b + 5, b + 4), (b + 1, b + 2, b + 6, b + 5),
+              (b + 2, b + 3, b + 7, b + 6), (b + 3, b, b + 4, b + 7)]
     return mesh_from("reeds", v, f)
 
 
