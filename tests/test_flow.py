@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import sys
+import tempfile
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
@@ -11,7 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pygame  # noqa: E402
 
 import game.player as player_mod  # noqa: E402
-player_mod.SAVE_PATH = "/tmp/hotrods_flow.json"
+player_mod.SAVE_PATH = os.path.join(tempfile.gettempdir(), "hotrods_flow.json")
 
 from game.app import App  # noqa: E402
 from game.player import Player  # noqa: E402
