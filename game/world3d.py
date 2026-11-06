@@ -122,10 +122,11 @@ class World:
         self.meshes = []
         # --- dock ---------------------------------------------------------
         deck = []
-        for i in range(8):
-            x = -13.8 + i * 1.42
+        dk = layouts.dock(s)
+        for i in range(dk["n"]):
+            x = dk["x0"] + i * 1.42
             c = wood if i % 2 == 0 else (138, 102, 68)
-            deck.append(box(x, 0.62, 0.6, 1.24, 0.13, 5.6, c, c))
+            deck.append(box(x, 0.62, dk["z"], 1.24, 0.13, dk["dz"], c, c))
         for x in (-13.2, -9.8, -6.4, -3.3):
             deck.append(box(x, -0.30, 0.6, 0.30, 1.8, 0.30, wood_dark, wood_dark))
             deck.append(box(x, 0.48, 0.6, 0.42, 0.16, 0.42, (110, 80, 54), (110, 80, 54)))
@@ -137,9 +138,9 @@ class World:
                         (214, 214, 206)))
             deck.append(box(-4.45, 0.86, 2.10, 0.5, 0.36, 0.5, (120, 130, 140), (96, 104, 114)))
         # the pier turns toward open water at its east end
-        for i in range(6):
+        for i in range(dk["arm"]):
             z = -0.55 - i * 1.42
-            deck.append(box(-4.55, 0.62, z, 2.5, 0.13, 1.24,
+            deck.append(box(dk["arm_x"], 0.62, z, 2.5, 0.13, 1.24,
                             wood if i % 2 == 0 else (138, 102, 68), wood))
         for z in (-1.4, -4.2, -7.0):
             deck.append(box(-4.55, -0.30, z, 0.30, 1.8, 0.30, wood_dark, wood_dark))

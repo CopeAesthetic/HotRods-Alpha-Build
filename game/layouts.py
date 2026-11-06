@@ -43,6 +43,20 @@ LAYOUTS = {
     3: [],
 }
 
+# pier shape per water: planks start at x0, step 1.42, board depth dz,
+# then an arm of `arm` boards turning toward open water at the east end
+DOCK = {
+    0: dict(n=8, x0=-13.8, z=0.60, dz=5.6, arm=6, arm_x=-4.55),
+    1: dict(n=5, x0=-9.20, z=0.35, dz=4.4, arm=5, arm_x=-3.20),
+    2: dict(n=6, x0=-11.0, z=0.50, dz=5.0, arm=5, arm_x=-3.80),
+    3: dict(n=4, x0=-7.60, z=0.30, dz=4.0, arm=4, arm_x=-2.60),
+}
+
+
+def dock(spot):
+    return DOCK.get(spot, DOCK[0])
+
+
 # ground level for each asset family, so tables stay two-dimensional
 GROUND = {"land": 0.40, "water": 0.02, "dock": 0.72}
 
