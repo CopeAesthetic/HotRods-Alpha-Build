@@ -482,33 +482,25 @@ class World:
             for shx, shz in ((-3.43, 1.46), (-3.23, 1.565)):
                 sh = (shx, 1.19, shz)
                 el = (sh[0] + (hold[0] - sh[0]) * 0.5,
-                      sh[1] + (hold[1] - sh[1]) * 0.5 - 0.02,
-                      sh[2] + (hold[2] - sh[2]) * 0.5 + 0.05)
-                parts.append(segment(sh, el, 0.070, body, 5))
-                parts.append(segment(el, hold, 0.050, skin, 5))
-                parts.append(segment(hold, (hold[0], hold[1] + 0.03, hold[2] + 0.03),
-                                     0.055, skin, 5))
+                      sh[1] + (hold[1] - sh[1]) * 0.5,
+                      sh[2] + (hold[2] - sh[2]) * 0.5)
+                parts.append(segment(sh, el, 0.065, body, 4))
+                parts.append(segment(el, hold, 0.055, skin, 4))
             sid = getattr(self, "smoker_id", None) or "one_hitter"
             col = SMOKER_TINT.get(sid, (198, 168, 128))
             m = objload.asset("smoker_" + sid, col, scale=0.55)
             # small handheld pieces lie horizontal like a joint; glass
             # stays more upright as it rises
-            lay = {"one_hitter": -1.55, "papers": -1.55,
-                   "backwoods": -1.60}.get(sid, 0.0)
-            yaw = {"one_hitter": -1.15, "papers": -1.15,
-                   "backwoods": -1.25}.get(sid, 0.0)
-            ax = (-0.45 + lay) * r          # lie it fully flat
-            ay = yaw * r                    # then swing across the body
+            lay = {"one_hitter": -1.57, "papers": -1.57,
+                   "backwoods": -1.57}.get(sid, 0.0)
+            ax = lay * r                    # handhelds lie flat, glass stays up
             ca, sa = math.cos(ax), math.sin(ax)
-            cy2, sy2 = math.cos(ay), math.sin(ay)
             laid = []
             for vx, vy, vz in m.verts:
                 y2 = vy * ca - vz * sa
                 z2 = vy * sa + vz * ca
-                x3 = vx * cy2 + z2 * sy2
-                z3 = -vx * sy2 + z2 * cy2
-                laid.append((x3 + hold[0] + 0.02, y2 + hold[1] + 0.10,
-                             z3 + hold[2] + 0.04))
+                laid.append((vx + hold[0] + 0.02, y2 + hold[1] + 0.10,
+                             z2 + hold[2] + 0.04))
             m.verts = laid
             parts.append(m)
             # smoke rises from the mouth, clear of the held piece
@@ -519,9 +511,9 @@ class World:
             parts.append(segment((-3.58, 1.28, 2.12), (-3.46, 1.66, 2.16),
                                  0.021, (198, 170, 116), 4))
         else:
-            el = (-3.12, 1.05, 1.63)
-            parts.append(segment(shoulder, el, 0.070, body, 5))
-            parts.append(segment(el, (-3.03, 1.00, 1.57), 0.050, skin, 5))
+            parts.append(segment(shoulder, (-3.08, 1.02, 1.56), 0.065, body, 4))
+            parts.append(segment((-3.08, 1.02, 1.56), (-3.03, 1.00, 1.57), 0.070,
+                                 skin, 4))
             mid = (hand[0] + (tip[0] - hand[0]) * 0.55,
                    hand[1] + (tip[1] - hand[1]) * 0.55,
                    hand[2] + (tip[2] - hand[2]) * 0.55)
