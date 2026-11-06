@@ -458,18 +458,19 @@ class World:
                              body, 5))
         # head, with a defined face on the camera side
         parts.append(segment((-3.32, 1.30, 1.49), (-3.31, 1.45, 1.48), 0.115, skin, 6))
-        # a flat, high-contrast face plate with boxy features that read
-        parts.append(box(-3.315, 1.365, 1.545, 0.17, 0.15, 0.04,
+        # the head turns toward the rod: the face plate sits on his right
+        # cheek, looking at the hand holding the rod
+        parts.append(box(-3.245, 1.365, 1.545, 0.05, 0.15, 0.17,
                          (216, 170, 126), (202, 158, 116)))
-        parts.append(box(-3.35, 1.395, 1.575, 0.04, 0.035, 0.02,
+        parts.append(box(-3.218, 1.395, 1.49, 0.02, 0.035, 0.04,
                          (38, 34, 30), (38, 34, 30)))                # eye
-        parts.append(box(-3.28, 1.395, 1.575, 0.04, 0.035, 0.02,
+        parts.append(box(-3.218, 1.395, 1.60, 0.02, 0.035, 0.04,
                          (38, 34, 30), (38, 34, 30)))                # eye
-        parts.append(box(-3.315, 1.355, 1.585, 0.05, 0.055, 0.05,
+        parts.append(box(-3.225, 1.355, 1.545, 0.055, 0.055, 0.05,
                          (198, 140, 100), (182, 126, 90)))           # nose
-        parts.append(box(-3.315, 1.315, 1.575, 0.115, 0.03, 0.02,
+        parts.append(box(-3.218, 1.315, 1.545, 0.02, 0.03, 0.115,
                          (88, 52, 38), (88, 52, 38)))                # mouth
-        parts.append(segment((-3.315, 1.27, 1.52), (-3.315, 1.34, 1.53),
+        parts.append(segment((-3.24, 1.27, 1.545), (-3.24, 1.34, 1.545),
                              0.10, (96, 74, 52), 5))                 # beard
         # bucket hat
         parts.append(disc(-3.31, 1.44, 1.48, 0.24, hat, 8))
@@ -485,9 +486,9 @@ class World:
                 r = 1.0
             else:
                 r = max(0.0, 1.0 - (ph - 0.75) / 0.25)
-            mouth = (-3.315, 1.325, 1.585)
+            mouth = (-3.22, 1.325, 1.565)
             waist = (-3.13, 0.98, 1.53)
-            face = (mouth[0], mouth[1], mouth[2] + 0.08)   # in front of the mouth
+            face = (mouth[0] + 0.09, mouth[1], mouth[2])   # out from the mouth
             hold = (waist[0] + (face[0] - waist[0]) * r,
                     waist[1] + (face[1] - waist[1]) * r,
                     waist[2] + (face[2] - waist[2]) * r)
@@ -537,7 +538,7 @@ class World:
             m.verts = laid
             parts.append(m)
             # smoke rises from the mouth, clear of the held piece
-            self.smoke_from = (mouth[0], mouth[1] + 0.02, mouth[2] + 0.02)
+            self.smoke_from = (mouth[0] + 0.02, mouth[1] + 0.03, mouth[2])
             # the fishing rod rests beside him while he smokes
             parts.append(segment((-3.76, 0.64, 2.04), (-3.58, 1.28, 2.12),
                                  0.030, (176, 148, 96), 4))
