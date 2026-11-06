@@ -458,16 +458,19 @@ class World:
                              body, 5))
         # head, with a defined face on the camera side
         parts.append(segment((-3.32, 1.30, 1.49), (-3.31, 1.45, 1.48), 0.115, skin, 6))
-        parts.append(segment((-3.315, 1.32, 1.505), (-3.315, 1.42, 1.51), 0.095,
-                             (96, 74, 52), 5))                      # beard, front
-        parts.append(segment((-3.315, 1.385, 1.50), (-3.315, 1.37, 1.56),
-                             0.050, (190, 132, 96), 5))             # nose
-        parts.append(segment((-3.365, 1.33, 1.545), (-3.265, 1.33, 1.545),
-                             0.022, (76, 46, 34), 4))               # mouth
-        parts.append(segment((-3.35, 1.415, 1.53), (-3.35, 1.415, 1.555),
-                             0.024, (32, 30, 28), 5))               # eye
-        parts.append(segment((-3.28, 1.415, 1.53), (-3.28, 1.415, 1.555),
-                             0.024, (32, 30, 28), 5))               # eye
+        # a flat, high-contrast face plate with boxy features that read
+        parts.append(box(-3.315, 1.365, 1.545, 0.17, 0.15, 0.04,
+                         (216, 170, 126), (202, 158, 116)))
+        parts.append(box(-3.35, 1.395, 1.575, 0.04, 0.035, 0.02,
+                         (38, 34, 30), (38, 34, 30)))                # eye
+        parts.append(box(-3.28, 1.395, 1.575, 0.04, 0.035, 0.02,
+                         (38, 34, 30), (38, 34, 30)))                # eye
+        parts.append(box(-3.315, 1.355, 1.585, 0.05, 0.055, 0.05,
+                         (198, 140, 100), (182, 126, 90)))           # nose
+        parts.append(box(-3.315, 1.315, 1.575, 0.115, 0.03, 0.02,
+                         (88, 52, 38), (88, 52, 38)))                # mouth
+        parts.append(segment((-3.315, 1.27, 1.52), (-3.315, 1.34, 1.53),
+                             0.10, (96, 74, 52), 5))                 # beard
         # bucket hat
         parts.append(disc(-3.31, 1.44, 1.48, 0.24, hat, 8))
         parts.append(cone((-3.31, 1.44, 1.48), (-3.31, 1.62, 1.48), 0.145, hat, 7))
@@ -482,7 +485,7 @@ class World:
                 r = 1.0
             else:
                 r = max(0.0, 1.0 - (ph - 0.75) / 0.25)
-            mouth = (-3.315, 1.36, 1.535)
+            mouth = (-3.315, 1.325, 1.585)
             waist = (-3.13, 0.98, 1.53)
             face = (mouth[0], mouth[1], mouth[2] + 0.08)   # in front of the mouth
             hold = (waist[0] + (face[0] - waist[0]) * r,
