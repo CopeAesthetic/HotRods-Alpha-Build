@@ -182,6 +182,14 @@ class World:
             bx = -40 + i * 7.4
             beach.append(box(bx, 0.44, -16.6, 6.0, 0.7, 4.0, (132, 144, 92),
                              (110, 122, 76)))
+        # north shore, behind the angler: closes the pond
+        for i in range(10):
+            bx = -36 + i * 8.0
+            beach.append(box(bx, 0.30, 15.4, 8.2, 0.55, 6.0, sand, sand_d))
+        for i in range(8):
+            bx = -32 + i * 9.0
+            beach.append(box(bx, 0.72, 19.2, 9.0, 0.7, 5.0, (132, 144, 92),
+                             (110, 122, 76)))
         # side arms, so the bank wraps around the water
         for i in range(6):
             zz = -12.0 + i * 2.2
@@ -251,7 +259,7 @@ class World:
     def _build_water(self):
         self.cols, self.rows = 8, 7
         self.wx0, self.wx1 = -34.0, 34.0
-        self.wz0, self.wz1 = -56.0, 6.5
+        self.wz0, self.wz1 = -56.0, 13.0
         self.wverts = [(0.0, 0.0, 0.0)] * ((self.cols + 1) * (self.rows + 1))
 
     def water_color(self, z, p):
