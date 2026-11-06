@@ -175,20 +175,20 @@ class World:
         bk = layouts.bank(s)
         for i in range(bk["n"]):
             bx = bk["x0"] + i * bk["spacing"]
-            beach.append(box(bx, 0.02, bk["z"], bk["w"], 0.34, 5.0, sand, sand_d))
-            beach.append(box(bx, 0.30, -11.6, 4.8, 0.30, 1.6,
+            beach.append(box(bx, 0.34, bk["z"], bk["w"] + 0.6, 0.42, 5.6, sand, sand_d))
+            beach.append(box(bx, 0.70, -11.4, 5.0, 0.30, 2.0,
                              (186, 168, 128), sand_d))
         for i in range(11):
             bx = -40 + i * 7.4
-            beach.append(box(bx, 0.44, -16.6, 6.0, 0.7, 4.0, (132, 144, 92),
+            beach.append(box(bx, 0.72, -16.6, 6.2, 0.7, 4.2, (132, 144, 92),
                              (110, 122, 76)))
         # north shore, behind the angler: closes the pond
         for i in range(10):
             bx = -36 + i * 8.0
-            beach.append(box(bx, 0.30, 15.4, 8.2, 0.55, 6.0, sand, sand_d))
+            beach.append(box(bx, 0.34, 15.4, 8.6, 0.46, 6.4, sand, sand_d))
         for i in range(8):
             bx = -32 + i * 9.0
-            beach.append(box(bx, 0.72, 19.2, 9.0, 0.7, 5.0, (132, 144, 92),
+            beach.append(box(bx, 0.78, 19.2, 9.2, 0.7, 5.2, (132, 144, 92),
                              (110, 122, 76)))
         # side arms, so the bank wraps around the water
         for i in range(6):
