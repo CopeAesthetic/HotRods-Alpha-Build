@@ -546,6 +546,12 @@ class PlayScreen(Screen):
         if self.menu_open:
             U.panel(surf, (C.W - 158, 138, 144, 4 * 32 + 10), C.PANEL_BG, radius=10,
                     border=C.PANEL_EDGE, alpha=236, shadow=True, shadow_alpha=50)
+        if self.pipe_t > 0:
+            w = self.world
+            ui.txt(surf, "phase %.2f  t %.2f  smoke %s" % (
+                getattr(w, "pipe_phase", 0.0), self.pipe_t,
+                ", ".join("%.2f" % v for v in getattr(w, "smoke_from", (0, 0, 0)))),
+                (16, C.H - 118), 11, False, (120, 220, 140), family="mono")
         self._draw_level(surf)
         for b in self.buttons:
             b.draw(surf, self.mouse)
