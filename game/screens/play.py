@@ -75,6 +75,9 @@ class PlayScreen(Screen):
                     radius=6, action=lambda f=action: self.menu_pick(f)))
 
     def toggle_menu(self):
+        if self.pipe_t > 0:
+            self.app.toast("Put the piece down first", (230, 150, 120), 1.6)
+            return
         self.menu_open = not self.menu_open
         self.build()
 
@@ -256,7 +259,12 @@ class PlayScreen(Screen):
         if super().handle_event(event):
             return
         if event.type == pygame.KEYDOWN:
-            if self.pipe_t > 0 and event.key in (pygame.K_SPACE, pygame.K_e):
+            if self.pipe_t > 0 and event.key in (
+                    pygame.K_SPACE, pygame.K_e, pygame.K_j, pygame.K_c,
+                    pygame.K_k, pygame.K_z, pygame.K_x, pygame.K_ESCAPE,
+                    pygame.K_RETURN):
+                self.app.audio.play("error", 0.5)
+                self.app.toast("Put the piece down first", (230, 150, 120), 1.8)
                 return
             if event.key == pygame.K_SPACE and self.player.couch > 0:
                 self.app.audio.play("error", 0.6)
