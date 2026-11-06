@@ -401,13 +401,13 @@ class World:
             return
         for wx, wy, wz in self.lamps:
             v = self.cam.view((wx, wy, wz))
-            z = max(0.12, v[2])
+            z = max(0.12, -v[2])          # camera space: forward is -z
             if z > 40:
                 continue
             f = self.cam.focal
             sx = INTERNAL_W * 0.5 + v[0] * f / z
             sy = INTERNAL_H * 0.5 - v[1] * f / z
-            r = max(5, int(26.0 * f / z))
+            r = min(52, max(6, int(6.0 * f / z)))
             if sx < -r or sx > INTERNAL_W + r or sy < -r or sy > INTERNAL_H + r:
                 continue
             glow = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
@@ -545,7 +545,8 @@ class World:
             self._add_angler(p, mode)
 
         sc.draw(surf)
-        night = max(0.0, min(1.0, (0.55 - p.get("ambient", 0.5)) * 2.2))
+        night = max(0.0, min(1.0, (19.5 - self.hour) / 2.0 if self.hour > 12
+                           else (self.hour - 5.5) / 2.0))
         self.draw_lamps(surf, night)
 
         # screen-space anchors for the HUD / particles
