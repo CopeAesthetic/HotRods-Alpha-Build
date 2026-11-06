@@ -172,9 +172,10 @@ class World:
             beach.append(box(bx, 0.10, -17.2, 4.4, 0.36, 2.6, sand, sand_d))
         self.reeds = join_meshes(reeds)
         # opposite bank, close enough to read from the dock
-        for i in range(20):
-            bx = -40 + i * 4.6
-            beach.append(box(bx, 0.02, -13.5, 4.8, 0.34, 5.0, sand, sand_d))
+        bk = layouts.bank(s)
+        for i in range(bk["n"]):
+            bx = bk["x0"] + i * bk["spacing"]
+            beach.append(box(bx, 0.02, bk["z"], bk["w"], 0.34, 5.0, sand, sand_d))
             beach.append(box(bx, 0.30, -11.6, 4.8, 0.30, 1.6,
                              (186, 168, 128), sand_d))
         for i in range(11):

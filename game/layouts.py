@@ -39,8 +39,23 @@ LAYOUTS = {
         ("dock_post", -6.05, -2.15, 0.0, 1.00),
         ("rod_rack", -7.10, 2.60, 0.20, 1.00),
     ],
-    2: [],
-    3: [],
+    # Munchies Marsh - dense, low, crowding the water
+    2: [
+        ("tree_b", -22.0, -13.0, 1.1, 0.95),
+        ("tree_a", -16.0, -12.4, 3.8, 1.05),
+        ("tree_b", -10.0, -13.2, 5.2, 0.90),
+        ("tree_a", -4.0, -12.6, 2.2, 1.00),
+        ("tree_b", 2.0, -13.1, 4.4, 0.95),
+        ("tree_a", 8.0, -12.3, 0.6, 1.05),
+        ("dock_post", -4.60, -2.05, 0.0, 1.00),
+    ],
+    # Tokers Trench - bare and distant, a few wind-bent trees
+    3: [
+        ("tree_a", -20.0, -11.0, 1.6, 1.45),
+        ("tree_b", -8.0, -11.6, 4.0, 1.55),
+        ("tree_a", 6.0, -10.8, 2.9, 1.40),
+        ("tree_b", 18.0, -11.4, 5.6, 1.50),
+    ],
 }
 
 # pier shape per water: planks start at x0, step 1.42, board depth dz,
@@ -55,6 +70,19 @@ DOCK = {
 
 def dock(spot):
     return DOCK.get(spot, DOCK[0])
+
+
+# far bank shape: where it starts, how many slabs, how far out, how wide
+BANK = {
+    0: dict(x0=-40.0, n=20, z=-13.5, spacing=4.6, w=4.8),
+    1: dict(x0=-46.0, n=22, z=-18.0, spacing=4.6, w=4.8),
+    2: dict(x0=-34.0, n=16, z=-11.0, spacing=4.4, w=5.4),
+    3: dict(x0=-30.0, n=14, z=-9.0, spacing=4.4, w=5.0),
+}
+
+
+def bank(spot):
+    return BANK.get(spot, BANK[0])
 
 
 # ground level for each asset family, so tables stay two-dimensional
