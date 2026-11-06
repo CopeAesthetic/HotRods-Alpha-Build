@@ -474,8 +474,8 @@ class World:
                 r = 1.0
             else:
                 r = max(0.0, 1.0 - (ph - 0.75) / 0.25)
-            waist = (-3.73, 0.98, 1.53)
-            face = (-3.86, 1.24, 1.64)      # below the chin, shifted left
+            waist = (-3.13, 0.98, 2.53)
+            face = (-3.26, 1.24, 2.64)      # below the chin, moved forward
             hold = (waist[0] + (face[0] - waist[0]) * r,
                     waist[1] + (face[1] - waist[1]) * r,
                     waist[2] + (face[2] - waist[2]) * r)
