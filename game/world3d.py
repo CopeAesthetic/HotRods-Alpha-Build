@@ -493,14 +493,20 @@ class World:
             # stays more upright as it rises
             lay = {"one_hitter": -1.57, "papers": -1.57,
                    "backwoods": -1.57}.get(sid, 0.0)
-            ax = lay * r                    # handhelds lie flat, glass stays up
+            yaw = {"one_hitter": -1.1, "papers": -1.1,
+                   "backwoods": -1.2}.get(sid, 0.0)
+            ax = lay * r                    # lie flat...
+            ay = yaw * r                    # ...across the body, so it shows
             ca, sa = math.cos(ax), math.sin(ax)
+            cb, sb = math.cos(ay), math.sin(ay)
             laid = []
             for vx, vy, vz in m.verts:
                 y2 = vy * ca - vz * sa
                 z2 = vy * sa + vz * ca
-                laid.append((vx + hold[0] + 0.02, y2 + hold[1] + 0.10,
-                             z2 + hold[2] + 0.04))
+                x3 = vx * cb + z2 * sb
+                z3 = -vx * sb + z2 * cb
+                laid.append((x3 + hold[0] + 0.02, y2 + hold[1] + 0.10,
+                             z3 + hold[2] + 0.04))
             m.verts = laid
             parts.append(m)
             # smoke rises from the mouth, clear of the held piece
