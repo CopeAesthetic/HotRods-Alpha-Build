@@ -208,23 +208,14 @@ class World:
 
         # --- lily pads -----------------------------------------------------
         pads = []
-        for i in range(16):
-            px = rngb.uniform(-8.5, 8.5)
-            pz = rngb.uniform(-9.0, -1.5)
-            pads.append(self.prop("lily", px, 0.02, pz,
-                                  rot=rngb.uniform(0.0, 6.28),
-                                  scale=rngb.uniform(0.7, 1.15)))
+        lily_rows, reed_rows = layouts.water_props(s)
+        for name, px, pz, rot, sc in lily_rows:
+            pads.append(self.prop(name, px, 0.02, pz, rot=rot, scale=sc))
         self.pads = join_meshes(pads)
 
         # reeds thicken around the pads
-        rngr = random.Random(77 + s)
-        for i in range(22):
-            rx = rngr.uniform(-9.0, 9.0)
-            rz = rngr.uniform(-10.0, -1.0)
-            h = rngr.uniform(0.45, 1.25)
-            reeds.append(self.prop("reeds", rx, -0.05, rz,
-                                   rot=rngr.uniform(0.0, 6.28),
-                                   scale=rngr.uniform(0.8, 1.5)))
+        for name, rx, rz, rot, sc in reed_rows:
+            reeds.append(self.prop(name, rx, -0.05, rz, rot=rot, scale=sc))
         self.reeds = join_meshes(reeds)
 
         # --- far ridge + trees --------------------------------------------
