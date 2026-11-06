@@ -432,6 +432,7 @@ class PlayScreen(Screen):
         fly = (a.fly_t / C.FLY_TIME) if a.state == "fly" else 0.0
         w.pov = getattr(self.player, "pov", "third")
         w.pipe_raise = 1.0 if self.pipe_t > 0 else 0.0
+        w.smoker_id = p.smoker
         w.draw(scene, mode, a.depth, 0.35 if a.state == "reel" else 0.0, fly)
         if a.state == "bite":
             self._draw_bite_marker(scene)

@@ -12,6 +12,13 @@ from . import util
 from .render3d import Camera, Mesh, Scene, box, mix, vnorm, vsub, vcross, vlen
 from . import objload
 from assets.manifest import ASSETS
+
+SMOKER_TINT = {
+    "one_hitter": (198, 172, 120), "papers": (236, 232, 220),
+    "backwoods": (120, 92, 62), "pipe": (150, 196, 210),
+    "beaker_bong": (140, 200, 180), "heady_bong": (210, 170, 240),
+    "dab_rig": (250, 210, 120), "hot_press": (226, 120, 96),
+}
 from . import layouts
 from .util import Particles, clamp, lighten, darken, smoothstep
 
@@ -435,16 +442,19 @@ class World:
         # arm reaching to the rod
         parts.append(segment((-3.30, 1.16, 1.52), (-3.08, 1.02, 1.56), 0.065, body, 4))
         parts.append(segment((-3.08, 1.02, 1.56), (-3.03, 1.00, 1.57), 0.075, skin, 4))
-        # pipe, held up to the face for the smoke ceremony
+        # the equipped smoking method, raised to the face for the ceremony
         if getattr(self, "pipe_raise", 0) > 0:
-            mouth = (-3.30, 1.40, 1.60)
-            stem_end = (mouth[0] + 0.16, mouth[1] - 0.04, mouth[2] + 0.10)
-            parts.append(segment((hand[0], hand[1] + 0.10, hand[2]), stem_end, 0.020,
-                                 (78, 74, 84), 4))
-            parts.append(cone(stem_end, (mouth[0] + 0.04, mouth[1] + 0.04, mouth[2] + 0.02),
-                              0.055, (96, 74, 60), 6))
-            parts.append(segment(stem_end, (stem_end[0] + 0.16, stem_end[1], stem_end[2]),
-                                 0.016, (60, 56, 64), 4))
+            sid = getattr(self, "smoker_id", None) or "one_hitter"
+            col = SMOKER_TINT.get(sid, (198, 168, 128))
+            m = objload.asset("smoker_" + sid, col, scale=0.55)
+            ang = math.sin(self.t * 3.2) * 0.13
+            c, sn = math.cos(ang), math.sin(ang)
+            hx, hy, hz = hand
+            bob = math.sin(self.t * 2.4) * 0.015
+            m.verts = [(vx * c - vz * sn + hx + 0.02,
+                        vy + hy + 0.10 + bob,
+                        vx * sn + vz * c + hz + 0.02) for vx, vy, vz in m.verts]
+            parts.append(m)
         # rod
         mid = (hand[0] + (tip[0] - hand[0]) * 0.55,
                hand[1] + (tip[1] - hand[1]) * 0.55,

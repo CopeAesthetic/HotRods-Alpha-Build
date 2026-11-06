@@ -183,6 +183,68 @@ def lantern(name="lantern"):
     return mesh_from(name, v, f)
 
 
+def tube(name, r0, r1, h, sides=6):
+    """A capped frustum: the workhorse for pipes, papers and bong necks."""
+    import math as _m
+    v, f = [], []
+    for i in range(sides):
+        a = _m.tau * i / sides
+        v.append((_m.cos(a) * r0, 0.0, _m.sin(a) * r0))
+    for i in range(sides):
+        a = _m.tau * i / sides
+        v.append((_m.cos(a) * r1, h, _m.sin(a) * r1))
+    for i in range(sides):
+        j = (i + 1) % sides
+        f.append((i, j, j + sides, i + sides))
+    f.append(tuple(range(sides - 1, -1, -1)))
+    f.append(tuple(range(sides, sides * 2)))
+    return mesh_from(name, v, f)
+
+
+def join_into(name, *objs):
+    v, f = [], []
+    for ob in objs:
+        base = len(v)
+        v += [tuple(x.co) for x in ob.data.vertices]
+        f += [tuple(base + i for i in p.vertices) for p in ob.data.polygons]
+    return mesh_from(name, v, f)
+
+
+def smokers():
+    """One prop per smoking method, each a distinct silhouette."""
+    out = {}
+    out["one_hitter"] = tube("one_hitter", 0.022, 0.022, 0.34, 6)
+    out["papers"] = tube("papers", 0.016, 0.030, 0.30, 5)
+    out["backwoods"] = tube("backwoods", 0.030, 0.038, 0.26, 6)
+    bowl = tube("pipe_bowl", 0.045, 0.055, 0.07, 6)
+    stem = tube("pipe_stem", 0.012, 0.012, 0.20, 4)
+    stem.location = (0.0, 0.0, 0.0)
+    for x in stem.data.vertices:
+        x.co = (x.co.z, x.co.y - 0.02, x.co.x + 0.05)
+    out["pipe"] = join_into("pipe", bowl, stem)
+    base = tube("bong_base", 0.075, 0.045, 0.18, 6)
+    neck = tube("bong_neck", 0.030, 0.030, 0.22, 6)
+    for x in neck.data.vertices:
+        x.co = (x.co.x, x.co.z + 0.18, x.co.y)
+    out["beaker_bong"] = join_into("beaker_bong", base, neck)
+    belly = tube("heady_belly", 0.070, 0.070, 0.16, 7)
+    snout = tube("heady_neck", 0.026, 0.032, 0.18, 5)
+    for x in snout.data.vertices:
+        x.co = (x.co.x, x.co.z + 0.16, x.co.y)
+    out["heady_bong"] = join_into("heady_bong", belly, snout)
+    rig_base = tube("rig_base", 0.055, 0.040, 0.10, 6)
+    nail = tube("rig_nail", 0.010, 0.010, 0.10, 4)
+    for x in nail.data.vertices:
+        x.co = (x.co.x + 0.05, x.co.z + 0.10, x.co.y)
+    out["dab_rig"] = join_into("dab_rig", rig_base, nail)
+    plate_a = crate("press_a", 0.20, 0.03, 0.14)
+    plate_b = crate("press_b", 0.20, 0.03, 0.14)
+    for x in plate_b.data.vertices:
+        x.co = (x.co.x, x.co.y + 0.10, x.co.z)
+    out["hot_press"] = join_into("hot_press", plate_a, plate_b)
+    return out
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     reset()
@@ -194,6 +256,8 @@ def main():
     export(crate("cooler", 0.9, 0.55, 0.6), "cooler")
     export(crate("bucket", 0.5, 0.36, 0.5, taper=0.82), "bucket")
     export(shack(), "shack")
+    for _name, _ob in smokers().items():
+        export(_ob, "smoker_" + _name)
     export(dock_post(), "dock_post")
     export(rod_rack(), "rod_rack")
     print("assets built")
