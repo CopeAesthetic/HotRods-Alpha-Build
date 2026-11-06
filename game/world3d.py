@@ -106,7 +106,7 @@ class World:
     def prop(self, name, x, y, z, rot=0.0, scale=None):
         """Place a Blender asset (assets/*.obj) into world space."""
         col, sc, _ = ASSETS[name]
-        m = objload.asset(name, col, scale=scale or sc)
+        m = objload.asset(name, col, scale=(scale or 1.0) * sc)
         if rot:
             c, sn = math.cos(rot), math.sin(rot)
             m.verts = [(vx * c - vz * sn + x, vy + y, vx * sn + vz * c + z)

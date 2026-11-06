@@ -19,8 +19,10 @@ def load(path, color, scale=1.0, offset=(0.0, 0.0, 0.0)):
             if not parts:
                 continue
             if parts[0] == "v":
-                x, y, z = (float(v) * scale for v in parts[1:4])
-                verts.append((x + offset[0], y + offset[1], z + offset[2]))
+                bx, by, bz = (float(v) * scale for v in parts[1:4])
+                # Blender is Z-up; the renderer is Y-up. The exporter also
+                # flips Y, so (x, y, z) -> (x, -z, y).
+                verts.append((bx + offset[0], -bz + offset[1], by + offset[2]))
             elif parts[0] == "f":
                 idx = []
                 for token in parts[1:]:
