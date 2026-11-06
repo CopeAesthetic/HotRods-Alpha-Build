@@ -439,9 +439,13 @@ class World:
                              (150, 132, 108), 5))
         parts.append(segment((-3.30, 1.06, 1.51), (-3.34, 1.22, 1.50), 0.175,
                              body, 5))
-        # neck
-        parts.append(segment((-3.34, 1.22, 1.50), (-3.32, 1.30, 1.49), 0.115,
+        # neck, tucked into the vest collar
+        parts.append(disc(-3.335, 1.225, 1.495, 0.135, body, 8))
+        parts.append(segment((-3.33, 1.225, 1.495), (-3.32, 1.30, 1.49), 0.100,
                              skin, 5))
+        # shoulder bar the arms hang from
+        parts.append(segment((-3.41, 1.19, 1.47), (-3.25, 1.19, 1.56), 0.085,
+                             body, 5))
         # head
         parts.append(segment((-3.32, 1.30, 1.49), (-3.31, 1.45, 1.48), 0.115, skin, 6))
         parts.append(segment((-3.315, 1.34, 1.475), (-3.315, 1.40, 1.47), 0.085,
@@ -450,7 +454,7 @@ class World:
         parts.append(disc(-3.31, 1.44, 1.48, 0.24, hat, 8))
         parts.append(cone((-3.31, 1.44, 1.48), (-3.31, 1.62, 1.48), 0.145, hat, 7))
         toke = getattr(self, "pipe_raise", 0) > 0
-        shoulder = (-3.30, 1.16, 1.52)
+        shoulder = (-3.28, 1.19, 1.54)
         if toke:
             # raise with both hands, hold at the face, lower again
             ph = min(1.0, max(0.0, getattr(self, "pipe_phase", 0.0)))
@@ -465,8 +469,8 @@ class World:
             hold = (waist[0] + (face[0] - waist[0]) * r,
                     waist[1] + (face[1] - waist[1]) * r,
                     waist[2] + (face[2] - waist[2]) * r)
-            for shx in (-3.40, -3.24):
-                sh = (shx, 1.20, 1.47 + 0.06 * (shx + 3.32))
+            for shx, shz in ((-3.40, 1.475), (-3.26, 1.545)):
+                sh = (shx, 1.19, shz)
                 el = (sh[0] + (hold[0] - sh[0]) * 0.45,
                       sh[1] + (hold[1] - sh[1]) * 0.45 + 0.03,
                       sh[2] + (hold[2] - sh[2]) * 0.45)
