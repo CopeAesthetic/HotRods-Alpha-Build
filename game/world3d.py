@@ -451,7 +451,7 @@ class World:
             else:
                 r = max(0.0, 1.0 - (ph - 0.75) / 0.25)
             waist = (-3.13, 0.98, 1.53)
-            face = (-3.29, 1.32, 1.57)
+            face = (-3.26, 1.24, 1.64)      # below the chin, in front of it
             hold = (waist[0] + (face[0] - waist[0]) * r,
                     waist[1] + (face[1] - waist[1]) * r,
                     waist[2] + (face[2] - waist[2]) * r)
@@ -481,11 +481,12 @@ class World:
                 z2 = vy * sa + vz * ca
                 x3 = vx * cy2 + z2 * sy2
                 z3 = -vx * sy2 + z2 * cy2
-                laid.append((x3 + hold[0] + 0.02, y2 + hold[1] + 0.15,
-                             z3 + hold[2] + 0.05))
+                laid.append((x3 + hold[0] + 0.02, y2 + hold[1] + 0.10,
+                             z3 + hold[2] + 0.04))
             m.verts = laid
             parts.append(m)
-            self.smoke_from = (face[0], face[1] + 0.04, face[2] + 0.06)
+            # smoke rises from the mouth, clear of the held piece
+            self.smoke_from = (-3.30, 1.40, 1.50)
             # the fishing rod rests beside him while he smokes
             parts.append(segment((-3.76, 0.64, 2.04), (-3.58, 1.28, 2.12),
                                  0.030, (176, 148, 96), 4))
