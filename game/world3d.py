@@ -200,6 +200,13 @@ class World:
             rz = rngb.uniform(-7.5, 2.0)
             r = rngb.uniform(0.25, 0.7)
             beach.append(disc(rx, 0.12, rz, r, (112, 110, 104), 6))
+        rngt = random.Random(91 + s)
+        for i in range(9):
+            tx = -30 + i * 7.2 + rngt.uniform(-1.5, 1.5)
+            tz = -17.5 + rngt.uniform(-1.2, 1.2)
+            beach.append(self.prop("tree_a" if i % 2 else "tree_b", tx, 0.4, tz,
+                                   rot=rngt.uniform(0, 6.28),
+                                   scale=rngt.uniform(0.9, 1.4)))
         self.beach = join_meshes(beach)
 
         # --- lily pads -----------------------------------------------------
@@ -207,8 +214,9 @@ class World:
         for i in range(16):
             px = rngb.uniform(-8.5, 8.5)
             pz = rngb.uniform(-9.0, -1.5)
-            pads.append(disc(px, 0.035, pz, rngb.uniform(0.20, 0.40),
-                             (84, 126, 72) if i % 3 else (104, 146, 86), 7))
+            pads.append(self.prop("lily", px, 0.02, pz,
+                                  rot=rngb.uniform(0.0, 6.28),
+                                  scale=rngb.uniform(0.7, 1.15)))
         self.pads = join_meshes(pads)
 
         # reeds thicken around the pads
@@ -217,10 +225,9 @@ class World:
             rx = rngr.uniform(-9.0, 9.0)
             rz = rngr.uniform(-10.0, -1.0)
             h = rngr.uniform(0.45, 1.25)
-            reeds.append(segment((rx, -0.10, rz),
-                                 (rx + rngr.uniform(-0.2, 0.2), h,
-                                  rz + rngr.uniform(-0.2, 0.2)),
-                                 rngr.uniform(0.02, 0.045), (58, 72, 50), 3))
+            reeds.append(self.prop("reeds", rx, -0.05, rz,
+                                   rot=rngr.uniform(0.0, 6.28),
+                                   scale=rngr.uniform(0.8, 1.5)))
         self.reeds = join_meshes(reeds)
 
         # --- far ridge + trees --------------------------------------------
