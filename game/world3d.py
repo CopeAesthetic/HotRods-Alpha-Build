@@ -175,8 +175,9 @@ class World:
         bk = layouts.bank(s)
         for i in range(bk["n"]):
             bx = bk["x0"] + i * bk["spacing"]
-            beach.append(box(bx, 0.34, bk["z"], bk["w"] + 0.6, 0.42, 5.6, sand, sand_d))
-            beach.append(box(bx, 0.70, -11.4, 5.0, 0.30, 2.0,
+            beach.append(box(bx, 0.34 + 0.004 * (i % 3), bk["z"], bk["w"] + 0.6,
+                             0.42, 5.6, sand, sand_d))
+            beach.append(box(bx, 0.70 + 0.004 * (i % 3), -11.4, 5.0, 0.30, 2.0,
                              (186, 168, 128), sand_d))
         for i in range(11):
             bx = -40 + i * 7.4
@@ -185,7 +186,7 @@ class World:
         # north shore, behind the angler: closes the pond
         for i in range(10):
             bx = -36 + i * 8.0
-            beach.append(box(bx, 0.34, 15.4, 8.6, 0.46, 6.4, sand, sand_d))
+            beach.append(box(bx, 0.34 + 0.004 * (i % 3), 15.4, 8.6, 0.46, 6.4, sand, sand_d))
         for i in range(8):
             bx = -32 + i * 9.0
             beach.append(box(bx, 0.78, 19.2, 9.2, 0.7, 5.2, (132, 144, 92),
@@ -385,9 +386,11 @@ class World:
                 base = self.water_color(zmid, p)
                 if (i + j) % 2:
                     base = lighten(base, 0.05)
-                sc.add((self.wverts[a], self.wverts[b], self.wverts[c]), base, fog=True)
+                # water is always the backdrop: bias it behind land and props
+                sc.add((self.wverts[a], self.wverts[b], self.wverts[c]), base,
+                       fog=True, bias=2.0)
                 sc.add((self.wverts[a], self.wverts[c], self.wverts[d]),
-                       darken(base, 0.05), fog=True)
+                       darken(base, 0.05), fog=True, bias=2.0)
 
     def set_view(self, eye, target):
         """Re-aim the existing camera in place (scene holds a reference)."""
