@@ -10,6 +10,8 @@ from . import config as C
 from . import data
 from . import util
 from .render3d import Camera, Mesh, Scene, box, mix, vnorm, vsub, vcross, vlen
+from . import objload
+from assets.manifest import ASSETS
 from .util import Particles, clamp, lighten, darken, smoothstep
 
 INTERNAL_W, INTERNAL_H = 480, 270
@@ -100,6 +102,18 @@ class World:
         self._build_water()
 
     # ------------------------------------------------------------- geometry
+    def prop(self, name, x, y, z, rot=0.0, scale=None):
+        """Place a Blender asset (assets/*.obj) into world space."""
+        col, sc, _ = ASSETS[name]
+        m = objload.asset(name, col, scale=scale or sc)
+        if rot:
+            c, sn = math.cos(rot), math.sin(rot)
+            m.verts = [(vx * c - vz * sn + x, vy + y, vx * sn + vz * c + z)
+                       for vx, vy, vz in m.verts]
+        else:
+            m.verts = [(vx + x, vy + y, vz + z) for vx, vy, vz in m.verts]
+        return m
+
     def _build_static(self):
         s = self.spot_index
         wood = (128, 94, 62)
@@ -115,9 +129,12 @@ class World:
             deck.append(box(x, -0.30, 0.6, 0.30, 1.8, 0.30, wood_dark, wood_dark))
             deck.append(box(x, 0.48, 0.6, 0.42, 0.16, 0.42, (110, 80, 54), (110, 80, 54)))
         # a cooler and a bucket
-        deck.append(box(-5.05, 0.95, 2.35, 0.9, 0.55, 0.6, (196, 74, 64), (168, 62, 54),
+        deck.append(self.prop("cooler", -4.55, 0.72, 0.35, rot=0.25))
+        deck.append(self.prop("bucket", -5.30, 0.72, -0.15, rot=0.6))
+        if False:
+            deck.append(box(-5.05, 0.95, 2.35, 0.9, 0.55, 0.6, (196, 74, 64), (168, 62, 54),
                         (214, 214, 206)))
-        deck.append(box(-4.45, 0.86, 2.10, 0.5, 0.36, 0.5, (120, 130, 140), (96, 104, 114)))
+            deck.append(box(-4.45, 0.86, 2.10, 0.5, 0.36, 0.5, (120, 130, 140), (96, 104, 114)))
         # the pier turns toward open water at its east end
         for i in range(6):
             z = -0.55 - i * 1.42
