@@ -105,8 +105,11 @@ def props(spot):
     return LAYOUTS.get(spot, [])
 
 
+# how much water dressing each water carries: (lilies, reeds)
+DENSITY = {0: (16, 22), 1: (9, 12), 2: (14, 40), 3: (0, 6)}
+
+
 def water_props(spot):
-    """Lilies and reeds - only the pond is dressed so far."""
-    if spot != 0:
-        return [], []
-    return LILIES, REEDS
+    """Per-water share of the lily and reed tables."""
+    n_lily, n_reed = DENSITY.get(spot, (0, 0))
+    return LILIES[:n_lily], REEDS[:n_reed]
