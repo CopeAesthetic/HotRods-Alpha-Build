@@ -68,6 +68,7 @@ class Button:
         self.radius = radius
         self.bold = bold
         self.hover = 0.0
+        self.selected = False
 
     def hit(self, pos):
         return self.rect.collidepoint(pos)

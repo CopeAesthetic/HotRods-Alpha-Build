@@ -52,6 +52,7 @@ class Player:
         self.dab_mode = False      # smoke concentrate instead of flower
         self.guaranteed = False    # next cast is a legendary
         self.pov = "third"
+        self.path = SAVE_PATH
         self.ice = data.ICE_MINUTES  # starts with one bag in the cooler
         self.xp = 0
         self.stoke = {"fish": 0, "smoke": 0, "vibes": 0}
