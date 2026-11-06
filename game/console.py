@@ -19,7 +19,6 @@ WHITE = (222, 240, 224)
 HELP = [
     ("help", "this list"),
     ("cash <n> / addcash <n>", "set or add money"),
-    ("vp <n> / addvp <n>", "set or add Vibe Points (VP)"),
     ("unlock all|spots|gear|jars", "open up the world"),
     ("weed <strain|all> <n>", "add grams of weed"),
     ("species all|clear", "fill or wipe the journal"),
@@ -63,11 +62,6 @@ class Console:
         r["cash"] = (self.c_cash, "cash <n>")
         r["money"] = r["cash"]
         r["addcash"] = (self.c_addcash, "addcash <n>")
-        r["vp"] = (self.c_pts, "vp <n>")
-        r["pts"] = r["vp"]
-        r["points"] = r["vp"]
-        r["addvp"] = (self.c_addpts, "addvp <n>")
-        r["addpts"] = r["addvp"]
         r["unlock"] = (self.c_unlock, "unlock all|spots|gear|jars")
         r["weed"] = (self.c_weed, "weed <strain|all> <grams>")
         r["species"] = (self.c_species, "species all|clear")

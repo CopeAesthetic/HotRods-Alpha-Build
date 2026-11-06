@@ -52,12 +52,6 @@ class DealerScreen(Screen):
                          size=13, action=None)
         sell.selected = True
         self.buttons.append(sell)
-        # mode tabs
-        for i, (key, label) in enumerate((("cash", "CASH"), ("pts", "VP"))):
-            b = ui.Button((r.x + 560 + i * 106, r.y + 112, 100, 32), label,
-                          style="tab", size=14, action=lambda k=key: self.set_mode(k))
-            b.selected = (self.mode == key)
-            self.buttons.append(b)
         # bulk action
         label, style, enabled = self._bulk_button()
         self.buttons.append(ui.Button((r.x + 30, r.y + 566, 300, 38), label,
@@ -91,17 +85,15 @@ class DealerScreen(Screen):
         n = len(self.player.bag)
         if n == 0:
             return ("COOLER EMPTY", "dark", False)
-        if self.mode == "cash":
-            return ("SELL ALL  ·  %s" % fmt_money(self.player.bag_value), "primary", True)
-        return ("TRADE ALL  ·  %d VP" % self.player.bag_points, "primary", True)
+        return ("SELL ALL  ·  %s" % fmt_money(self.player.bag_value), "primary", True)
 
     def _jar_button(self, st):
         p = self.player
         if not p.jar_available(st["id"]):
             return ("LOCKED", "dark", False)
-        if p.pts < st["pts"]:
-            return ("%d VP" % st["pts"], "dark", False)
-        return ("TRADE %d VP" % st["pts"], "primary", True)
+        if p.cash < st["pts"]:
+            return (fmt_money(st["pts"]), "dark", False)
+        return (fmt_money(st["pts"]), "primary", True)
 
     def _use_button(self, st):
         p = self.player
@@ -135,15 +127,9 @@ class DealerScreen(Screen):
         p = self.player
         if not (0 <= index < len(p.bag)):
             return
-        sp = data.species(p.bag[index]["id"])
-        if self.mode == "cash":
-            value = p.sell_fish(index)
-            self.app.audio.play("buy", 0.7)
-            self.say_now("$%d. Don't spend it all on lures." % value)
-        else:
-            pts = p.trade_fish(index)
-            self.app.audio.play("buy", 0.8)
-            self.say_now("%d VP for the %s. Good fish." % (pts, sp["name"]))
+        value = p.sell_fish(index)
+        self.app.audio.play("buy", 0.7)
+        self.say_now("$%d. Don't spend it all on lures." % value)
         self.app.save()
         self.build()
 
@@ -151,14 +137,9 @@ class DealerScreen(Screen):
         p = self.player
         if not p.bag:
             return
-        if self.mode == "cash":
-            n, total = p.sell_all()
-            self.app.audio.play("buy", 0.9)
-            self.say_now("%d fish, %s. Pleasure." % (n, fmt_money(total)))
-        else:
-            n, pts = p.trade_all()
-            self.app.audio.play("unlock", 0.6)
-            self.say_now("%d fish, %d VP. Now we're talkin'." % (n, pts))
+        n, total = p.sell_all()
+        self.app.audio.play("buy", 0.9)
+        self.say_now("%d fish, %s. Pleasure." % (n, fmt_money(total)))
         self.app.save()
         self.build()
 
@@ -228,7 +209,7 @@ class DealerScreen(Screen):
         ui.txt(surf, "YOUR COOLER", (r.x + 30, r.y + 112), 15, True, C.GOLD)
         ui.txt(surf, "%d / %d" % (len(p.bag), p.bag_size), (r.x + 148, r.y + 112), 15,
                True, C.CREAM)
-        ui.txt(surf, "click a fish to %s it" % ("sell" if self.mode == "cash" else "trade"),
+        ui.txt(surf, "click a fish to sell it",
                (r.x + 210, r.y + 114), 13, False, C.TEXT_DIM)
 
         # the counter
@@ -245,9 +226,9 @@ class DealerScreen(Screen):
 
         # ---- jars
         ui.txt(surf, "SAL'S JARS", (r.x + JAR_X, r.y + 86), 15, True, (168, 220, 160))
-        pts_r = ui.txt(surf, "%d VP" % p.pts, (r.right - 34, r.y + 82), 20, True, C.GOLD,
+        cash_r = ui.txt(surf, fmt_money(p.cash), (r.right - 34, r.y + 82), 20, True, C.GOLD,
                        anchor="topright")
-        ui.txt(surf, "your vibe points", (pts_r.left - 10, r.y + 90), 11, False,
+        ui.txt(surf, "your money", (cash_r.left - 10, r.y + 90), 11, False,
                C.TEXT_DIM, anchor="topright")
 
         for i, st in enumerate(self.jar_rows()):
@@ -273,13 +254,8 @@ class DealerScreen(Screen):
         ui.txt(surf, C.RARITY_LABEL[sp["rarity"]].upper(), (rect.centerx, rect.y + 3),
                9, True, C.RARITY_COLORS[sp["rarity"]], anchor="midtop")
         pygame.draw.circle(surf, col, (rect.x + 10, rect.y + 80), 3)
-        vp = C.RARITY_POINTS[sp["rarity"]]
-        if self.mode == "cash":
-            main, sub = fmt_money(entry["value"]), "%d VP" % vp
-            mcol, scol = C.GOLD, (150, 220, 160)
-        else:
-            main, sub = "%d VP" % vp, fmt_money(entry["value"])
-            mcol, scol = (150, 220, 160), C.GOLD
+        main, sub = fmt_money(entry["value"]), C.RARITY_LABEL[sp["rarity"]].upper()
+        mcol, scol = C.GOLD, C.RARITY_COLORS[sp["rarity"]]
         ui.txt(surf, main, (rect.right - 10, rect.y + 52), 14, True, mcol,
                anchor="topright")
         ui.txt(surf, sub, (rect.right - 10, rect.y + 70), 10, False, scol,
@@ -312,8 +288,8 @@ class DealerScreen(Screen):
 
         ui.txt(surf, U.truncate(st["name"], font(16, True), 210), (rect.x + 52, rect.y + 8),
                16, True, C.CREAM if avail else (128, 132, 148))
-        ui.txt(surf, "%d VP" % st["pts"], (rect.right - 12, rect.y + 9), 14, True,
-               C.GOLD if p.pts >= st["pts"] and avail else C.TEXT_DIM, anchor="topright")
+        ui.txt(surf, fmt_money(st["pts"]), (rect.right - 12, rect.y + 9), 14, True,
+               C.GOLD if p.cash >= st["pts"] and avail else C.TEXT_DIM, anchor="topright")
         ui.txt(surf, "x%d" % stock, (rect.right - 12, rect.y + 26), 11, True,
                (150, 200, 150) if stock else (96, 102, 120), anchor="topright")
         ui.txt(surf, "POTENCY %d/7" % st["potency"], (rect.x + 52, rect.y + 33), 10,
@@ -340,10 +316,8 @@ class DealerScreen(Screen):
         p = self.player
         if self.say_t > 0:
             line = self.say
-        elif not p.bag and p.pts == 0:
-            line = "Cooler's empty, kid. Go fill it."
         elif not p.bag:
-            line = "You've got %d VP burnin' a hole in my ledger." % p.pts
+            line = "Cooler's empty, kid. Go fill it."
         else:
             best = p.bag_best_tier()
             if best >= 4:

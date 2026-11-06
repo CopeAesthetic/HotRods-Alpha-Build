@@ -433,7 +433,6 @@ class PlayScreen(Screen):
                                      C.RARITY_COLORS[rarity])
         self.card = dict(sp=sp, kg=res["kg"], cm=res["cm"], new=info["new"],
                          value=info["value"], bonus=info["bonus"], rarity=rarity,
-                         vp=C.RARITY_POINTS[rarity],
                          kept=info["kept"], capacity=info["capacity"], anim=0.0)
         self.card_anim = 0.0
         self.card_t = 0.0
@@ -508,9 +507,7 @@ class PlayScreen(Screen):
                     True, (246, 170, 120) if full else (200, 190, 168), anchor="topright")
         ui.fish_icon(surf, (r2.left - 16, r2.centery), 16,
                      (246, 170, 120) if full else (200, 190, 168))
-        r3 = ui.txt(surf, "%d VP" % p.pts, (cx, 70), 14, False, (150, 216, 160),
-                    anchor="topright")
-        ui.leaf(surf, (r3.left - 14, r3.centery), 8, (150, 216, 160))
+
         ui.txt(surf, "%d / %d species" % (p.found_count, p.total_count),
                (cx, 90), 13, False, C.TEXT_DIM, anchor="topright")
 
@@ -729,7 +726,7 @@ class PlayScreen(Screen):
         ui.txt(cs, "COOLER  %d / %d" % (card.get("kept", 1), card.get("capacity", 8)),
                (tx, 162), 14, True, (190, 196, 212))
         ui.coin(cs, (tx + 9, 196), 10)
-        ui.txt(cs, "worth %s  ·  %d VP" % (fmt_money(card["value"]), card.get("vp", 0)),
+        ui.txt(cs, "worth %s" % fmt_money(card["value"]),
                (tx + 24, 184), 19, True, C.GOLD)
         if card["bonus"]:
             ui.txt(cs, "+%s finder's fee" % fmt_money(card["bonus"]), (tx, 210), 13,

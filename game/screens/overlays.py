@@ -114,7 +114,6 @@ class PauseScreen(Screen):
             ("CASTS", str(p.casts)),
             ("FISH LANDED", str(p.catches)),
             ("SPECIES", "%d / %d" % (p.found_count, p.total_count)),
-            ("VIBE POINTS", str(p.pts)),
             ("COOLER", "%d / %d" % (len(p.bag), p.bag_size)),
         ]
         for i, (label, value) in enumerate(stats):
@@ -178,8 +177,8 @@ class HelpScreen(Screen):
                      "rarer fish bite at all. Z opens ZAA to pick a strain."),
             ("ICE", "The cooler needs ice - $15 buys 5 minutes. Without it fish "
                     "spoil and sell for less."),
-            ("SHOP", "B opens BUY and SELL. Trade fish for VP to unlock jars; "
-                     "cash buys gear."),
+            ("SHOP", "B opens BUY and SELL. Sell fish for cash; Sal's jars "
+                     "unlock as you bring rarer catches."),
         ]
         y = ly + 26
         for tag, body in steps:

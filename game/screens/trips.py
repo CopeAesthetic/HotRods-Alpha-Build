@@ -112,10 +112,9 @@ class TripsScreen(Screen):
                        C.TEXT_DIM)
                 continue
             ui.txt(surf, info["rawname"], (box.x + 20, box.y + 40), 19, True, C.CREAM)
-            ui.txt(surf, "LV %d  ·  %s  ·  %d VP  ·  %d/40 fish  ·  %dm" % (
-                info["level"], fmt_money(info["cash"]), info["vp"],
-                info["species"], info["mins"]), (box.x + 20, box.y + 66), 12,
-                False, C.TEXT_DIM)
+            ui.txt(surf, "LV %d  ·  %s  ·  %d/40 fish  ·  %dm" % (
+                info["level"], fmt_money(info["cash"]), info["species"],
+                info["mins"]), (box.x + 20, box.y + 66), 12, False, C.TEXT_DIM)
         for b in self.buttons:
             b.draw(surf, self.mouse)
         ui.txt(surf, "ESC closes", (r.centerx, r.bottom - 30), 12, False,

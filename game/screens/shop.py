@@ -273,9 +273,7 @@ class ShopScreen(Screen):
         cash_r = ui.txt(surf, fmt_money(p.cash), (r.right - 96, r.y + 18), 28, True,
                         C.GOLD, anchor="topright")
         ui.coin(surf, (cash_r.left - 16, cash_r.centery), 11)
-        nug_r = ui.txt(surf, "%d VP" % p.pts, (r.right - 96, r.y + 52), 14, False,
-                       (180, 208, 164), anchor="topright")
-        ui.leaf(surf, (nug_r.left - 14, nug_r.centery), 8, (180, 208, 164))
+
 
         tight = self.tab == "smoke"
         pitch, rh = (58, 52) if tight else (76, 68)

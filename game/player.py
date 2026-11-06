@@ -395,9 +395,9 @@ class Player:
             return False, "Unknown strain"
         if not self.jar_available(sid):
             return False, "Sal wants a better fish first"
-        if self.pts < st["pts"]:
-            return False, "Not enough VP"
-        self.pts -= st["pts"]
+        if self.cash < st["pts"]:
+            return False, "Not enough cash"
+        self.cash -= st["pts"]
         self.weed[sid] = self.weed_count(sid) + 1
         self.strain = sid
         return True, "+1g " + st["name"]
@@ -458,17 +458,7 @@ class Player:
         return entry["value"]
 
     def trade_fish(self, index):
-        if not (0 <= index < len(self.bag)):
-            return 0
-        entry = self.bag.pop(index)
-        sp = data.species(entry["id"])
-        if entry["id"] in data.HIDDEN_BY_ID:
-            self.hidden_sold.add(entry["id"])
-        pts = int(round(RARITY_POINTS[sp["rarity"]] * data.pay_mult(entry["id"])))
-        self.pts += pts
-        self.sal_tier = max(self.sal_tier, RARITY_INDEX[sp["rarity"]])
-        self.sold += 1
-        return pts
+        return self.sell_fish(index)
 
     def sell_all(self):
         total = self.bag_value
@@ -486,17 +476,7 @@ class Player:
         return n, total
 
     def trade_all(self):
-        pts = self.bag_points
-        n = len(self.bag)
-        for f in self.bag:
-            sp = data.species(f["id"])
-            if f["id"] in data.HIDDEN_BY_ID or f["id"] in data.SHINY_BY_ID:
-                self.hidden_sold.add(f["id"])
-            self.sal_tier = max(self.sal_tier, RARITY_INDEX[sp["rarity"]])
-        self.sold += n
-        self.bag = []
-        self.pts += pts
-        return n, pts
+        return self.sell_all()
 
     # ------------------------------------------------------------ shopping
     def _owned(self, kind):
