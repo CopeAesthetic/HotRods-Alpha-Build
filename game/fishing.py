@@ -190,12 +190,17 @@ class Angler:
         weights = []
         total = 0.0
         for sp in pool:
-            # sober water only gives up commons; potency opens the rest
+            # sober water only gives up commons; potency opens the rest.
+            # a strain smoked outside its home water never opens more than
+            # uncommon here - no skipping a water's ladder with old weed
             if not p.is_high:
                 lo, hi = 0, 0
             else:
                 lo = p.strain_data.get("gate_min", 0)
                 hi = p.strain_data.get("gate_max", 4)
+                if p.strain_data.get("area", p.spot) != p.spot:
+                    # old weed only keeps commons and uncommons in reach
+                    lo, hi = 0, min(hi, 1)
             if not (lo <= RARITY_INDEX[sp["rarity"]] <= hi):
                 continue
             cond = sp.get("cond")
