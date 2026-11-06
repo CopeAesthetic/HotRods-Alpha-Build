@@ -303,6 +303,17 @@ class PlayScreen(Screen):
 
     # -------------------------------------------------------------- update
     def update(self, dt):
+        if getattr(self.player, "pov", "third") == "third":
+            keys = pygame.key.get_pressed()
+            w = self.world
+            if keys[pygame.K_LEFT]:
+                w.orbit -= 1.1 * dt
+            if keys[pygame.K_RIGHT]:
+                w.orbit += 1.1 * dt
+            if keys[pygame.K_UP]:
+                w.orbit_pitch = min(0.45, w.orbit_pitch + 0.6 * dt)
+            if keys[pygame.K_DOWN]:
+                w.orbit_pitch = max(-0.30, w.orbit_pitch - 0.6 * dt)
         if getattr(self.player, "pov", "third") == "free":
             keys = pygame.key.get_pressed()
             w = self.world

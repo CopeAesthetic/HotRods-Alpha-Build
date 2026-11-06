@@ -97,6 +97,8 @@ class World:
         self.pov = "third"
         self.free_yaw = 0.0
         self.free_pitch = 0.0
+        self.orbit = 0.0
+        self.orbit_pitch = 0.0
         self.pipe_raise = 0.0
         self._bobber_screen = (INTERNAL_W * 0.6, INTERNAL_H * 0.6)
         self._tip_screen = (0.0, 0.0)
@@ -418,7 +420,14 @@ class World:
             ey = 4.5 + self.free_pitch * 7.0
             self.set_view((ex, ey, ez), (tx, ty, tz))
         else:
-            self.set_view((-3.70, 1.92, 4.10), (1.55, 0.72, -7.00))
+            # third person: orbit the fixed rig around the angler
+            tgt = (1.55, 0.72 + self.orbit_pitch * 1.5, -7.00)
+            eye0 = (-3.70, 1.92 + self.orbit_pitch * 3.0, 4.10)
+            dx, dz = eye0[0] - tgt[0], eye0[2] - tgt[2]
+            c, sn = math.cos(self.orbit), math.sin(self.orbit)
+            eye = (tgt[0] + dx * c - dz * sn, eye0[1],
+                   tgt[2] + dx * sn + dz * c)
+            self.set_view(eye, tgt)
 
     def _add_angler(self, p, mode):
         hand, tip = self.rod_tip_world()
