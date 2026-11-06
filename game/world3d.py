@@ -421,13 +421,13 @@ class World:
             ey = 4.5 + self.free_pitch * 7.0
             self.set_view((ex, ey, ez), (tx, ty, tz))
         else:
-            # third person: orbit the fixed rig around the angler
-            tgt = (1.55, 0.72 + self.orbit_pitch * 1.5, -7.00)
-            eye0 = (-3.70, 1.92 + self.orbit_pitch * 3.0, 4.10)
-            dx, dz = eye0[0] - tgt[0], eye0[2] - tgt[2]
+            # third person: the camera is fixed on the angler, orbiting him
+            tgt = (-3.20, 1.00 + self.orbit_pitch * 1.0, 1.50)
+            ox, oy, oz = -0.50, 0.92, 2.60
             c, sn = math.cos(self.orbit), math.sin(self.orbit)
-            eye = (tgt[0] + dx * c - dz * sn, eye0[1],
-                   tgt[2] + dx * sn + dz * c)
+            eye = (tgt[0] + ox * c - oz * sn,
+                   tgt[1] + oy + self.orbit_pitch * 2.0,
+                   tgt[2] + ox * sn + oz * c)
             self.set_view(eye, tgt)
 
     def _add_angler(self, p, mode):
