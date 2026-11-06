@@ -422,20 +422,30 @@ class World:
 
     def _add_angler(self, p, mode):
         hand, tip = self.rod_tip_world()
-        body = (92, 104, 134)
-        body2 = (52, 60, 84)
+        body = (96, 110, 88)       # olive fishing vest
+        body2 = (78, 92, 74)      # rubber waders
         skin = (206, 158, 116)
         hat = (204, 178, 130)
         parts = []
-        # dangling legs over the edge
-        parts.append(segment((-3.18, 0.70, 1.38), (-2.62, 0.12, 1.30), 0.085, body2, 4))
-        parts.append(segment((-3.18, 0.70, 1.72), (-2.55, 0.08, 1.66), 0.085, body2, 4))
-        # torso, leaning forward
-        parts.append(segment((-3.26, 0.66, 1.55), (-3.34, 1.22, 1.50), 0.165, body, 5))
-        # shoulders / neck
-        parts.append(segment((-3.34, 1.22, 1.50), (-3.32, 1.30, 1.49), 0.125, body, 5))
+        # wader-clad legs dangling over the dock edge, rubber boots below
+        for (bx, bz) in ((-2.92, 1.26), (-2.85, 1.64)):
+            hip = (-3.18, 0.70, 1.38 if bz < 1.5 else 1.72)
+            parts.append(segment(hip, (bx - 0.05, 0.16, bz + 0.02), 0.095,
+                                 body2, 5))
+            parts.append(segment((bx - 0.05, 0.16, bz + 0.02), (bx, 0.0, bz),
+                                 0.075, (58, 48, 40), 5))
+        # torso: worn shirt under a padded fishing vest, leaning forward
+        parts.append(segment((-3.26, 0.66, 1.55), (-3.30, 1.06, 1.51), 0.150,
+                             (150, 132, 108), 5))
+        parts.append(segment((-3.30, 1.06, 1.51), (-3.34, 1.22, 1.50), 0.175,
+                             body, 5))
+        # neck
+        parts.append(segment((-3.34, 1.22, 1.50), (-3.32, 1.30, 1.49), 0.115,
+                             skin, 5))
         # head
         parts.append(segment((-3.32, 1.30, 1.49), (-3.31, 1.45, 1.48), 0.115, skin, 6))
+        parts.append(segment((-3.315, 1.34, 1.475), (-3.315, 1.40, 1.47), 0.085,
+                             (96, 74, 52), 5))
         # bucket hat
         parts.append(disc(-3.31, 1.44, 1.48, 0.24, hat, 8))
         parts.append(cone((-3.31, 1.44, 1.48), (-3.31, 1.62, 1.48), 0.145, hat, 7))
