@@ -111,6 +111,7 @@ public class HotRodsGame : Game
             ("rod_rack", -7.10f, 2.60f, 0.20f, 1.00f),
             ("cooler", -6.80f, 2.90f, 0.10f, 1.00f),
             ("bucket", -6.10f, 3.05f, 0.0f, 1.00f),
+            ("boat", 3.60f, -3.20f, 1.35f, 1.00f),
             ("rock_a", -20.0f, -15.4f, 0.8f, 1.00f),
             ("rock_b", -11.5f, -16.2f, 2.1f, 1.00f),
             ("rock_a", 12.0f, -15.0f, 4.2f, 0.85f),
@@ -521,6 +522,7 @@ public class HotRodsGame : Game
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(_skyClear);
+        DrawSky();
         var water = WaterVerts();
         foreach (var effect in new[] { _effect, _effectCullNone })
         {
@@ -544,6 +546,7 @@ public class HotRodsGame : Game
             _fishing.EmitBobber(dyn);
             EmitFightingFish(dyn);
         }
+        EmitShimmer(dyn);
 
         // water first, then the static world over it
         DrawVerts(water, _effect);
@@ -560,6 +563,20 @@ public class HotRodsGame : Game
         if (_consoleOpen)
             DrawConsole();
         base.Draw(gameTime);
+    }
+
+    private void EmitShimmer(List<VertexPositionColor> dyn)
+    {
+        if (_state.Hour >= 20 || _state.Hour < 5)
+            return;
+        for (int k = 0; k < 16; k++)
+        {
+            float x = -30f + k * 4.1f;
+            float z = 8f - k * 2.6f;
+            float tw = 0.4f + 0.6f * MathF.Abs(MathF.Sin(FishingSim.Clock * 3f + k * 1.7f));
+            Prims.AddBox(dyn, new Vector3(x, 0.09f, z), tw, 0.015f, tw,
+                         new Color(252, 240, 186));
+        }
     }
 
     private void EmitFightingFish(List<VertexPositionColor> dyn)
@@ -961,6 +978,27 @@ public class HotRodsGame : Game
                    new Color(220, 226, 240));
         _font.Draw(_batch, "cash N  hour N  goto N  unlock  save", new Vector2(w - 300, h - 38),
                    2, new Color(110, 120, 150));
+        _batch.End();
+    }
+
+    /// <summary>Simple banded sky gradient, zenith to horizon.</summary>
+    private void DrawSky()
+    {
+        int w = GraphicsDevice.Viewport.Width;
+        int h = GraphicsDevice.Viewport.Height;
+        var horizon = new Color(
+            (byte)(_skyClear.R + 70 > 255 ? 255 : _skyClear.R + 70),
+            (byte)(_skyClear.G + 50 > 255 ? 255 : _skyClear.G + 50),
+            (byte)(_skyClear.B + 40 > 255 ? 255 : _skyClear.B + 40));
+        if (_state.Hour >= 20 || _state.Hour < 5)
+            horizon = new Color(30, 44, 86);
+        _batch.Begin();
+        for (int i = 0; i < 12; i++)
+        {
+            float t = i / 11f;
+            var col = Color.Lerp(_skyClear, horizon, t * t);
+            _batch.Draw(_pixel, new Rectangle(0, h * i / 12, w, h / 12 + 1), col);
+        }
         _batch.End();
     }
 
