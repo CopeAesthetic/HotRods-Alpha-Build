@@ -36,6 +36,9 @@ public sealed class FishingSim
 
     public FishingSim(GameState state) => _state = state;
 
+    /// <summary>Sound cues: "whoosh", "splash", "click".</summary>
+    public Action<string> Sfx = _ => { };
+
     public float NeedleAngle => _angle;
     public static float Clock => _time;
     public static void TickTime(float dt) => _time += dt;
@@ -56,6 +59,7 @@ public sealed class FishingSim
                 if (kb.IsKeyUp(Keys.Space))
                 {
                     _state.Casts++;
+                    Sfx("whoosh");
                     _start = rodTip;
                     _target = rodTip + castDir * (5f + Power * 11f);
                     _target.Y = 0.06f;
@@ -71,6 +75,7 @@ public sealed class FishingSim
                 if (t >= 1f)
                 {
                     Bobber = _target;
+                    Sfx("splash");
                     _waitT = 2f + (float)Rng.NextDouble() * 4f;
                     Current = Phase.Waiting;
                 }
@@ -108,6 +113,7 @@ public sealed class FishingSim
                 if (kb.IsKeyDown(Keys.Space) && _strikeCd <= 0f)
                 {
                     _strikeCd = 0.14f;
+                    Sfx("click");
                     float db = MathF.Abs(Wrap(_angle - _bluePos));
                     float dg = MathF.Abs(Wrap(_angle - _greenPos));
                     if (db < blue)

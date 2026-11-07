@@ -10,7 +10,8 @@ public sealed class ObjMesh
     public readonly List<(int a, int b, int c)> Tris = new();
     public readonly List<string> TriMats = new();
 
-    public static ObjMesh Load(string path, float scale = 1.0f)
+    public static ObjMesh Load(string path, float scale = 1.0f,
+                              bool blenderAxes = true)
     {
         var m = new ObjMesh();
         string currentMat = "";
@@ -31,8 +32,10 @@ public sealed class ObjMesh
                 float bx = float.Parse(parts[1]) * scale;
                 float by = float.Parse(parts[2]) * scale;
                 float bz = float.Parse(parts[3]) * scale;
-                // Blender is Z-up; the renderer is Y-up, exporter also flips Y.
-                m.Verts.Add(new Vector3(bx, -bz, by));
+                // our own pipeline exports Blender Z-up with a Y flip; external
+                // OBJs like Kenney's are already Y-up and load directly
+                m.Verts.Add(blenderAxes ? new Vector3(bx, -bz, by)
+                                        : new Vector3(bx, by, bz));
             }
             else if (parts[0] == "f")
             {

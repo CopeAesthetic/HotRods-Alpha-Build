@@ -19,6 +19,8 @@
     <!-- Blender assets stay in the python repo root; link them in -->
     <None Include="../../assets/**/*.obj" Link="Assets/%(RecursiveDir)%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../assets/audio/*.wav" Link="Audio/%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

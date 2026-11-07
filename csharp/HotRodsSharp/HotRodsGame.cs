@@ -25,6 +25,9 @@ public class HotRodsGame : Game
     private string _shopMsg = "";
     private float _shopMsgT;
     private bool _consoleOpen, _tickHeld;
+    private SoundEffect _splash = null!, _splashBig = null!, _click = null!,
+                        _whoosh = null!;
+    private SoundEffectInstance _birds = null!;
     private string _consoleInput = "", _consoleMsg = "";
     private float _consoleMsgT;
     private HashSet<Keys> _prevKeys = new();
@@ -81,6 +84,14 @@ public class HotRodsGame : Game
         ("rock_a", new Color(128, 122, 112), 1.0f, "land"),
         ("rock_b", new Color(108, 104, 96), 1.0f, "land"),
         ("bush", new Color(86, 116, 72), 1.0f, "land"),
+        ("kn_plant", new Color(74, 112, 58), 8.0f, "land"),
+        ("kn_rocks_low", new Color(128, 124, 118), 3.0f, "land"),
+        ("kn_rocks_high", new Color(122, 118, 112), 2.6f, "land"),
+        ("kn_fence", new Color(140, 108, 74), 2.6f, "land"),
+        ("kn_tent", new Color(172, 116, 72), 2.4f, "land"),
+        ("kn_bridge", new Color(146, 110, 76), 2.2f, "land"),
+        ("kn_flag", new Color(200, 70, 60), 3.0f, "land"),
+        ("kn_tree", new Color(96, 120, 70), 2.2f, "land"),
         ("smoker_pipe", new Color(150, 196, 210), 0.55f, "dock"),
         ("smoker_beaker_bong", new Color(140, 200, 180), 0.55f, "dock"),
     };
@@ -118,6 +129,10 @@ public class HotRodsGame : Game
             ("bush", -30.0f, -14.6f, 1.4f, 1.00f),
             ("bush", 18.0f, -14.2f, 5.0f, 1.15f),
             ("bush", -4.5f, -15.8f, 3.3f, 0.90f),
+            ("kn_fence", -8.0f, 5.6f, 0.0f, 1.00f),
+            ("kn_tent", 12.0f, 3.2f, 5.6f, 1.00f),
+            ("kn_plant", -24.0f, -13.2f, 1.1f, 1.00f),
+            ("kn_plant", 16.0f, -12.6f, 4.0f, 0.90f),
         },
         // Bass & Bake Lake
         new (string, float, float, float, float)[]
@@ -133,6 +148,9 @@ public class HotRodsGame : Game
             ("tree_b", 30.0f, -20.2f, 3.6f, 1.40f),
             ("dock_post", -6.05f, -2.15f, 0.0f, 1.00f),
             ("rod_rack", -7.10f, 2.60f, 0.20f, 1.00f),
+            ("kn_bridge", 0.0f, -5.5f, 1.57f, 1.00f),
+            ("kn_tree", -20.0f, -14.5f, 2.2f, 1.00f),
+            ("kn_plant", 14.0f, -13.0f, 5.2f, 1.00f),
         },
         // Munchies Marsh
         new (string, float, float, float, float)[]
@@ -144,6 +162,11 @@ public class HotRodsGame : Game
             ("tree_b", 2.0f, -13.1f, 4.4f, 0.95f),
             ("tree_a", 8.0f, -12.3f, 0.6f, 1.05f),
             ("dock_post", -4.60f, -2.05f, 0.0f, 1.00f),
+            ("kn_plant", -14.0f, -10.4f, 2.4f, 1.10f),
+            ("kn_plant", -8.0f, -10.0f, 4.4f, 1.00f),
+            ("kn_plant", -2.0f, -10.6f, 0.8f, 1.15f),
+            ("kn_plant", 4.0f, -9.8f, 5.6f, 1.00f),
+            ("kn_rocks_low", -20.0f, -9.4f, 1.9f, 1.00f),
         },
         // Tokers Trench
         new (string, float, float, float, float)[]
@@ -152,6 +175,9 @@ public class HotRodsGame : Game
             ("tree_b", -8.0f, -11.6f, 4.0f, 1.55f),
             ("tree_a", 6.0f, -10.8f, 2.9f, 1.40f),
             ("tree_b", 18.0f, -11.4f, 5.6f, 1.50f),
+            ("kn_rocks_high", -14.0f, -8.8f, 3.1f, 1.00f),
+            ("kn_rocks_high", 10.0f, -8.4f, 5.9f, 0.85f),
+            ("kn_flag", 20.0f, -6.5f, 2.2f, 1.00f),
         },
     };
 
@@ -235,6 +261,8 @@ public class HotRodsGame : Game
         BuildWorld();
         _batch = new SpriteBatch(GraphicsDevice);
         _font = new BitmapFont(GraphicsDevice);
+        LoadAudio();
+        _fishing.Sfx = PlaySfx;
         _pixel = new Texture2D(GraphicsDevice, 1, 1);
         _pixel.SetData(new[] { Color.White });
     }
@@ -243,9 +271,10 @@ public class HotRodsGame : Game
                          float z, float rot, float scale, float yBias = 0f)
     {
         var (_, col, bscale, ground) = Manifest.First(m => m.name == name);
+        bool blenderAxes = !name.StartsWith("kn_");
         var mesh = ObjMesh.Load(
             Path.Combine(AppContext.BaseDirectory, "Assets", name + ".obj"),
-            scale * bscale);
+            scale * bscale, blenderAxes);
         mesh.Transform(rot, new Vector3(x, Ground[ground] + yBias, z));
         foreach (var (a, b, c) in mesh.Tris)
             Prims.AddTri(s, mesh.Verts[a], mesh.Verts[b], mesh.Verts[c], col);
@@ -710,6 +739,44 @@ public class HotRodsGame : Game
     private float _sellFlash;
     private Color _skyClear = new(84, 108, 130), _skyFog = new(140, 158, 184);
     private (Color col, float a) _tint = (new Color(255, 255, 255), 0f);
+
+    private void LoadAudio()
+    {
+        string P(string n) => Path.Combine(AppContext.BaseDirectory, "Audio", n);
+        try
+        {
+            _splash = SoundEffect.FromStream(File.OpenRead(P("splash.wav")));
+            _splashBig = SoundEffect.FromStream(File.OpenRead(P("splash_big.wav")));
+            _click = SoundEffect.FromStream(File.OpenRead(P("click.wav")));
+            _whoosh = SoundEffect.FromStream(File.OpenRead(P("whoosh.wav")));
+            _birds = SoundEffect.FromStream(File.OpenRead(P("birds.wav")))
+                                .CreateInstance();
+            _birds.IsLooped = true;
+            _birds.Volume = 0.22f;
+            _birds.Play();
+        }
+        catch
+        {
+            // the game runs silently if audio files are missing
+        }
+    }
+
+    private void PlaySfx(string name)
+    {
+        try
+        {
+            switch (name)
+            {
+                case "whoosh": _whoosh.Play(0.5f, 0f, 0f); break;
+                case "splash": _splash.Play(0.6f, 0f, 0f); break;
+                case "big": _splashBig.Play(0.7f, 0f, 0f); break;
+                case "click": _click.Play(0.35f, 0f, 0f); break;
+            }
+        }
+        catch
+        {
+        }
+    }
 
     private void SetDayPhase()
     {
