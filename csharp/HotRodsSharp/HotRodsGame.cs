@@ -14,6 +14,8 @@ public class HotRodsGame : Game
     // static world
     private readonly List<VertexPositionColor> _staticVerts = new();
     private int _staticTriCount;
+    private int _spot;
+    private readonly bool[] _spotHeld = new bool[4];
 
     // water, rebuilt per frame
     private float _t;
@@ -68,24 +70,86 @@ public class HotRodsGame : Game
         ["land"] = 0.40f, ["water"] = 0.02f, ["dock"] = 0.72f,
     };
 
-    // (asset, x, z, rot, scale) - the pond layout from game/layouts.py
-    private static readonly (string name, float x, float z, float rot, float scale)[] PondLayout =
+    // per-water layout tables from game/layouts.py
+    private static readonly (string name, float x, float z, float rot, float scale)[][] Layouts =
     {
-        ("tree_b", -34.0f, -20.0f, 0.9f, 1.40f),
-        ("tree_a", -26.0f, -21.0f, 3.2f, 1.20f),
-        ("tree_b", -18.0f, -19.4f, 5.4f, 1.30f),
-        ("tree_a", -10.0f, -21.2f, 1.8f, 1.10f),
-        ("tree_b", -2.0f, -20.1f, 4.6f, 1.35f),
-        ("tree_a", 6.0f, -21.4f, 2.4f, 1.25f),
-        ("tree_b", 14.0f, -19.8f, 0.7f, 1.15f),
-        ("tree_a", 22.0f, -21.0f, 5.1f, 1.30f),
-        ("tree_b", 30.0f, -20.2f, 3.6f, 1.40f),
-        ("shack", -14.5f, -4.2f, 0.0f, 1.00f),
-        ("dock_post", -5.85f, -2.05f, 0.0f, 1.00f),
-        ("dock_post", -6.05f, -2.15f, 0.0f, 1.00f),
-        ("rod_rack", -7.10f, 2.60f, 0.20f, 1.00f),
-        ("cooler", -6.80f, 2.90f, 0.10f, 1.00f),
-        ("bucket", -6.10f, 3.05f, 0.0f, 1.00f),
+        // Duckweed Pond
+        new (string, float, float, float, float)[]
+        {
+            ("tree_b", -34.0f, -20.0f, 0.9f, 1.40f),
+            ("tree_a", -26.0f, -21.0f, 3.2f, 1.20f),
+            ("tree_b", -18.0f, -19.4f, 5.4f, 1.30f),
+            ("tree_a", -10.0f, -21.2f, 1.8f, 1.10f),
+            ("tree_b", -2.0f, -20.1f, 4.6f, 1.35f),
+            ("tree_a", 6.0f, -21.4f, 2.4f, 1.25f),
+            ("tree_b", 14.0f, -19.8f, 0.7f, 1.15f),
+            ("tree_a", 22.0f, -21.0f, 5.1f, 1.30f),
+            ("tree_b", 30.0f, -20.2f, 3.6f, 1.40f),
+            ("shack", -14.5f, -4.2f, 0.0f, 1.00f),
+            ("dock_post", -5.85f, -2.05f, 0.0f, 1.00f),
+            ("dock_post", -6.05f, -2.15f, 0.0f, 1.00f),
+            ("rod_rack", -7.10f, 2.60f, 0.20f, 1.00f),
+            ("cooler", -6.80f, 2.90f, 0.10f, 1.00f),
+            ("bucket", -6.10f, 3.05f, 0.0f, 1.00f),
+        },
+        // Bass & Bake Lake
+        new (string, float, float, float, float)[]
+        {
+            ("tree_b", -34.0f, -20.0f, 0.9f, 1.40f),
+            ("tree_a", -26.0f, -21.0f, 3.2f, 1.20f),
+            ("tree_b", -18.0f, -19.4f, 5.4f, 1.30f),
+            ("tree_a", -10.0f, -21.2f, 1.8f, 1.10f),
+            ("tree_b", -2.0f, -20.1f, 4.6f, 1.35f),
+            ("tree_a", 6.0f, -21.4f, 2.4f, 1.25f),
+            ("tree_b", 14.0f, -19.8f, 0.7f, 1.15f),
+            ("tree_a", 22.0f, -21.0f, 5.1f, 1.30f),
+            ("tree_b", 30.0f, -20.2f, 3.6f, 1.40f),
+            ("dock_post", -6.05f, -2.15f, 0.0f, 1.00f),
+            ("rod_rack", -7.10f, 2.60f, 0.20f, 1.00f),
+        },
+        // Munchies Marsh
+        new (string, float, float, float, float)[]
+        {
+            ("tree_b", -22.0f, -13.0f, 1.1f, 0.95f),
+            ("tree_a", -16.0f, -12.4f, 3.8f, 1.05f),
+            ("tree_b", -10.0f, -13.2f, 5.2f, 0.90f),
+            ("tree_a", -4.0f, -12.6f, 2.2f, 1.00f),
+            ("tree_b", 2.0f, -13.1f, 4.4f, 0.95f),
+            ("tree_a", 8.0f, -12.3f, 0.6f, 1.05f),
+            ("dock_post", -4.60f, -2.05f, 0.0f, 1.00f),
+        },
+        // Tokers Trench
+        new (string, float, float, float, float)[]
+        {
+            ("tree_a", -20.0f, -11.0f, 1.6f, 1.45f),
+            ("tree_b", -8.0f, -11.6f, 4.0f, 1.55f),
+            ("tree_a", 6.0f, -10.8f, 2.9f, 1.40f),
+            ("tree_b", 18.0f, -11.4f, 5.6f, 1.50f),
+        },
+    };
+
+    // dock planks per water: n, x0, z, depth, arm boards, arm x
+    private static readonly (int n, float x0, float z, float dz, int arm, float armX)[] Docks =
+    {
+        (8, -13.8f, 0.60f, 5.6f, 6, -4.55f),
+        (5, -9.20f, 0.35f, 4.4f, 5, -3.20f),
+        (6, -11.0f, 0.50f, 5.0f, 5, -3.80f),
+        (4, -7.60f, 0.30f, 4.0f, 4, -2.60f),
+    };
+
+    // far bank per water: x0, slabs, z, spacing, width
+    private static readonly (float x0, int n, float z, float spacing, float w)[] Banks =
+    {
+        (-40f, 12, -13.5f, 7.6f, 8.0f),
+        (-46f, 13, -18.0f, 7.6f, 8.0f),
+        (-34f, 10, -11.0f, 7.2f, 9.0f),
+        (-30f, 9, -9.0f, 7.2f, 8.4f),
+    };
+
+    // water dressing density per water: (lilies, reeds)
+    private static readonly (int lilies, int reeds)[] Density =
+    {
+        (9, 12), (6, 8), (10, 20), (0, 4),
     };
 
     // lily and reed dressing, seeded like layouts.py
@@ -138,17 +202,7 @@ public class HotRodsGame : Game
             FogEnd = 42f,
         };
 
-        var s = _staticVerts;
-        foreach (var (name, x, z, rot, scale) in PondLayout)
-            AddProp(s, name, x, z, rot, scale);
-        foreach (var (name, x, z, rot, scale) in Reeds)
-            AddProp(s, name, x, z, rot, scale, -0.05f);
-        foreach (var (name, x, z, rot, scale) in Lilies)
-            AddProp(s, name, x, z, rot, scale, 0.02f);
-        BuildDock(s);
-        BuildShore(s);
-        BuildAngler(s);
-        _staticTriCount = s.Count / 3;
+        BuildWorld();
     }
 
     private void AddProp(List<VertexPositionColor> s, string name, float x,
@@ -163,32 +217,50 @@ public class HotRodsGame : Game
             Prims.AddTri(s, mesh.Verts[a], mesh.Verts[b], mesh.Verts[c], col);
     }
 
-    private void BuildDock(List<VertexPositionColor> s)
+    private void BuildWorld()
     {
-        // layouts.dock(0): 8 planks from x -13.8, depth 5.6, 6-board arm
-        for (int i = 0; i < 8; i++)
-            Prims.AddBox(s, new Vector3(-13.8f + i * 1.42f, 0.62f, 0.60f),
-                         1.24f, 0.13f, 5.6f, Wood);
-        for (int i = 0; i < 6; i++)
-            Prims.AddBox(s, new Vector3(-4.55f, 0.62f, -0.55f - i * 1.42f),
+        var s = _staticVerts;
+        s.Clear();
+        foreach (var (name, x, z, rot, scale) in Layouts[_spot])
+            AddProp(s, name, x, z, rot, scale);
+        var (nlily, nreed) = Density[_spot];
+        for (int i = 0; i < nreed; i++)
+            AddProp(s, "reeds", Reeds[i].x, Reeds[i].z, Reeds[i].rot,
+                    Reeds[i].scale, -0.05f);
+        for (int i = 0; i < nlily; i++)
+            AddProp(s, "lily", Lilies[i].x, Lilies[i].z, Lilies[i].rot,
+                    Lilies[i].scale, 0.02f);
+        BuildDock(s, Docks[_spot]);
+        BuildShore(s, Banks[_spot]);
+        BuildAngler(s);
+        _staticTriCount = s.Count / 3;
+    }
+
+    private void BuildDock(List<VertexPositionColor> s,
+                           (int n, float x0, float z, float dz, int arm, float armX) dk)
+    {
+        for (int i = 0; i < dk.n; i++)
+            Prims.AddBox(s, new Vector3(dk.x0 + i * 1.42f, 0.62f, dk.z),
+                         1.24f, 0.13f, dk.dz, Wood);
+        for (int i = 0; i < dk.arm; i++)
+            Prims.AddBox(s, new Vector3(dk.armX, 0.62f, -0.55f - i * 1.42f),
                          2.5f, 0.13f, 1.24f, Wood);
     }
 
-    private void BuildShore(List<VertexPositionColor> s)
+    private void BuildShore(List<VertexPositionColor> s,
+                            (float x0, int n, float z, float spacing, float w) bk)
     {
-        // far bank, raised above the swell and overlapping to close the ring
-        for (int i = 0; i < 12; i++)
+        for (int i = 0; i < bk.n; i++)
         {
-            float bx = -40f + i * 7.6f;
-            Prims.AddBox(s, new Vector3(bx, 0.34f + 0.004f * (i % 3), -13.5f),
-                         8.6f, 0.42f, 5.6f, i % 2 == 0 ? Sand : SandD);
+            float bx = bk.x0 + i * bk.spacing;
+            Prims.AddBox(s, new Vector3(bx, 0.34f + 0.004f * (i % 3), bk.z),
+                         bk.w + 0.6f, 0.42f, 5.6f, i % 2 == 0 ? Sand : SandD);
         }
-        // grass shelf behind the sand
-        for (int i = 0; i < 12; i++)
+        for (int i = 0; i < bk.n; i++)
         {
-            float bx = -40f + i * 7.6f;
-            Prims.AddBox(s, new Vector3(bx, 0.72f, -16.6f), 8.4f, 0.7f, 4.2f,
-                         i % 2 == 0 ? Grass : GrassD);
+            float bx = bk.x0 + i * bk.spacing;
+            Prims.AddBox(s, new Vector3(bx, 0.72f, bk.z - 3.1f),
+                         bk.w + 0.2f, 0.7f, 4.2f, i % 2 == 0 ? Grass : GrassD);
         }
         // north shore behind the angler closes the pond
         for (int i = 0; i < 10; i++)
@@ -269,6 +341,16 @@ public class HotRodsGame : Game
             _tabHeld = true;
         }
         if (kb.IsKeyUp(Keys.Tab)) _tabHeld = false;
+        for (int i = 0; i < 4; i++)
+        {
+            var key = (Keys)((int)Keys.D1 + i);
+            if (kb.IsKeyDown(key) && !_spotHeld[i])
+            {
+                _spot = i;
+                BuildWorld();
+            }
+            _spotHeld[i] = kb.IsKeyDown(key);
+        }
 
         if (_mode == 0)                    // third: locked arc around the angler
         {
