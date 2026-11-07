@@ -16,6 +16,8 @@ public class HotRodsGame : Game
     private int _staticTriCount;
     private int _spot;
     private readonly FishingSim _fishing = new();
+    private readonly SmokingSim _smoking = new();
+    private bool _eHeld, _qHeld;
     private SpriteBatch _batch = null!;
     private Texture2D _pixel = null!;
     private readonly bool[] _spotHeld = new bool[4];
@@ -318,21 +320,23 @@ public class HotRodsGame : Game
         Prims.AddBox(s, new Vector3(-3.275f, 1.385f, 1.60f), 0.02f, 0.035f, 0.04f, Dark);
         Prims.AddBox(s, new Vector3(-3.28f, 1.345f, 1.545f), 0.055f, 0.055f, 0.05f, Nose);
         Prims.AddBox(s, new Vector3(-3.275f, 1.305f, 1.545f), 0.02f, 0.03f, 0.115f, Mouth);
-        // rod arm + left hand riding the blank, and the rod itself
+        // arms and rod are pose-dependent: drawn per frame, not baked in
+    }
+
+    private void EmitFishingPose(List<VertexPositionColor> v)
+    {
         var hand = new Vector3(-3.03f, 1.00f, 1.57f);
         var tip = new Vector3(-2.70f, 1.70f, -0.40f);
-        Prims.AddSegment(s, new Vector3(-3.23f, 1.19f, 1.56f),
+        Prims.AddSegment(v, new Vector3(-3.23f, 1.19f, 1.56f),
                          new Vector3(-3.12f, 1.06f, 1.62f), 0.065f, Vest);
-        Prims.AddSegment(s, new Vector3(-3.12f, 1.06f, 1.62f), hand, 0.055f, Skin);
+        Prims.AddSegment(v, new Vector3(-3.12f, 1.06f, 1.62f), hand, 0.055f, Skin);
         var lhand = hand + (tip - hand) * 0.35f;
-        Prims.AddSegment(s, new Vector3(-3.43f, 1.19f, 1.46f),
-                         lhand * 0.5f + new Vector3(-3.43f, 1.19f, 1.46f) * 0.5f,
-                         0.065f, Vest);
-        Prims.AddSegment(s, lhand * 0.5f + new Vector3(-3.43f, 1.19f, 1.46f) * 0.5f,
-                         lhand, 0.055f, Skin);
+        var lsh = new Vector3(-3.43f, 1.19f, 1.46f);
+        Prims.AddSegment(v, lsh, (lsh + lhand) * 0.5f, 0.065f, Vest);
+        Prims.AddSegment(v, (lsh + lhand) * 0.5f, lhand, 0.055f, Skin);
         var mid = hand + (tip - hand) * 0.55f;
-        Prims.AddSegment(s, hand, mid, 0.030f, RodDark, 4);
-        Prims.AddSegment(s, mid, tip, 0.021f, RodLight, 4);
+        Prims.AddSegment(v, hand, mid, 0.030f, RodDark, 4);
+        Prims.AddSegment(v, mid, tip, 0.021f, RodLight, 4);
     }
 
     protected override void Update(GameTime gameTime)
@@ -390,9 +394,23 @@ public class HotRodsGame : Game
         }
         _proj = Matrix.CreatePerspectiveFieldOfView(
             MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 0.1f, 250f);
+        if (kb.IsKeyDown(Keys.E) && !_eHeld)
+        {
+            _smoking.Start();
+            _eHeld = true;
+        }
+        if (kb.IsKeyUp(Keys.E)) _eHeld = false;
+        if (kb.IsKeyDown(Keys.Q) && !_qHeld)
+        {
+            _smoking.CycleItem();
+            _qHeld = true;
+        }
+        if (kb.IsKeyUp(Keys.Q)) _qHeld = false;
+        _smoking.Update(dt);
         FishingSim.TickTime(dt);
-        _fishing.Update(dt, kb, new Vector3(-2.70f, 1.70f, -0.40f),
-                        new Vector3(0.18f, -0.05f, -0.98f));
+        if (!_smoking.Active)
+            _fishing.Update(dt, kb, new Vector3(-2.70f, 1.70f, -0.40f),
+                            new Vector3(0.18f, -0.05f, -0.98f));
         base.Update(gameTime);
     }
 
@@ -439,8 +457,19 @@ public class HotRodsGame : Game
         }
 
         var dyn = new List<VertexPositionColor>();
-        _fishing.EmitLine(dyn, new Vector3(-2.70f, 1.70f, -0.40f));
-        _fishing.EmitBobber(dyn);
+        if (_smoking.Active)
+        {
+            _smoking.EmitArms(dyn, Vest, Skin);
+            _smoking.EmitItem(dyn);
+            _smoking.EmitPlume(dyn);
+            _smoking.EmitRestingRod(dyn);
+        }
+        else
+        {
+            EmitFishingPose(dyn);
+            _fishing.EmitLine(dyn, new Vector3(-2.70f, 1.70f, -0.40f));
+            _fishing.EmitBobber(dyn);
+        }
 
         // water first, then the static world over it
         DrawVerts(water, _effect);
