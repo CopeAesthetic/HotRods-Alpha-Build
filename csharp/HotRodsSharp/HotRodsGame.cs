@@ -220,7 +220,7 @@ public class HotRodsGame : Game
             FogStart = 14f,
             FogEnd = 42f,
         };
-        _effect.GraphicsDevice.RasterizerState = RasterizerState.CullNone;
+        GraphicsDevice.RasterizerState = RasterizerState.CullNone;
         _effectCullNone = new BasicEffect(GraphicsDevice)
         {
             VertexColorEnabled = true,
@@ -230,7 +230,7 @@ public class HotRodsGame : Game
             FogStart = 14f,
             FogEnd = 42f,
         };
-        _effectCullNone.GraphicsDevice.RasterizerState = RasterizerState.CullNone;
+        GraphicsDevice.RasterizerState = RasterizerState.CullNone;
 
         BuildWorld();
         _batch = new SpriteBatch(GraphicsDevice);
@@ -523,6 +523,7 @@ public class HotRodsGame : Game
     {
         GraphicsDevice.Clear(_skyClear);
         DrawSky();
+        GraphicsDevice.RasterizerState = RasterizerState.CullNone;
         var water = WaterVerts();
         foreach (var effect in new[] { _effect, _effectCullNone })
         {
