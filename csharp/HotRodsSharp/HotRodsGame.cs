@@ -390,6 +390,7 @@ public class HotRodsGame : Game
         }
         _proj = Matrix.CreatePerspectiveFieldOfView(
             MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 0.1f, 250f);
+        FishingSim.TickTime(dt);
         _fishing.Update(dt, kb, new Vector3(-2.70f, 1.70f, -0.40f),
                         new Vector3(0.18f, -0.05f, -0.98f));
         base.Update(gameTime);
@@ -460,6 +461,8 @@ public class HotRodsGame : Game
             _batch.Draw(_pixel, r, new Color(24, 28, 44, 235));
             _batch.Draw(_pixel, new Rectangle(r.X + 10, r.Y + 10, 320, 10), f.Color);
         }
+        if (_fishing.Reeling)
+            DrawReel();
         if (_fishing.Current == FishingSim.Phase.Charging)
         {
             var meter = new Rectangle(w / 2 - 100, h - 90, 200, 14);
@@ -468,6 +471,75 @@ public class HotRodsGame : Game
                         (int)(196 * _fishing.Power), 10), new Color(240, 200, 90));
         }
         _batch.End();
+    }
+
+    private void DrawReel()
+    {
+        int w = GraphicsDevice.Viewport.Width;
+        int h = GraphicsDevice.Viewport.Height;
+        var c = new Vector2(w / 2f, h / 2f - 40f);
+        float R = 90f;
+        for (int i = 0; i < 36; i++)
+        {
+            float a0 = -MathF.PI + MathF.Tau * i / 36;
+            float a1 = a0 + MathF.Tau / 36;
+            float mid = MathF.Abs(Wrap(a0 + a1) / 2);
+            Color col = mid < 0.10f ? new Color(90, 180, 250)
+                      : mid < 0.28f ? new Color(110, 210, 120)
+                      : new Color(190, 70, 70);
+            var p0 = c + new Vector2(MathF.Cos(a0), MathF.Sin(a0)) * R;
+            var p1 = c + new Vector2(MathF.Cos(a1), MathF.Sin(a1)) * R;
+            var p2 = c + new Vector2(MathF.Cos(a1), MathF.Sin(a1)) * (R - 10);
+            var p3 = c + new Vector2(MathF.Cos(a0), MathF.Sin(a0)) * (R - 10);
+            FillTri(_batch, _pixel, p0, p1, p2, col);
+            FillTri(_batch, _pixel, p0, p2, p3, col);
+        }
+        // needle: small quads along the sweep
+        var end = c + new Vector2(MathF.Cos(_fishing.NeedleAngle),
+                                  MathF.Sin(_fishing.NeedleAngle)) * (R - 14);
+        for (int i = 0; i <= 16; i++)
+        {
+            var pt = Vector2.Lerp(c, end, i / 16f);
+            _batch.Draw(_pixel, new Rectangle((int)pt.X - 3, (int)pt.Y - 3, 6, 6),
+                        new Color(245, 245, 235));
+        }
+        // progress bar
+        var bar = new Rectangle((int)c.X - 90, (int)c.Y + (int)R + 24, 180, 12);
+        _batch.Draw(_pixel, bar, new Color(40, 46, 66, 220));
+        _batch.Draw(_pixel, new Rectangle(bar.X + 1, bar.Y + 1,
+                    (int)(178 * _fishing.Progress), 10), new Color(120, 210, 250));
+        _batch.Draw(_pixel, new Rectangle((int)c.X - 3, (int)c.Y - (int)R + 2, 6, 8),
+                    new Color(90, 180, 250));
+    }
+
+    private static float Wrap(float a)
+    {
+        while (a > MathF.PI) a -= MathF.Tau;
+        while (a < -MathF.PI) a += MathF.Tau;
+        return a;
+    }
+
+    private static void FillTri(SpriteBatch batch, Texture2D px, Vector2 a,
+                                Vector2 b, Vector2 c2, Color col)
+    {
+        // rasterise a tiny triangle with a few horizontal strips
+        var pts = new[] { a, b, c2 }.OrderBy(p => p.Y).ToArray();
+        var (top, mid, bot) = (pts[0], pts[1], pts[2]);
+        if (bot.Y - top.Y < 0.5f)
+            return;
+        for (float y = top.Y; y <= bot.Y; y += 1.5f)
+        {
+            float t = Math.Clamp((y - top.Y) / MathF.Max(0.001f, bot.Y - top.Y), 0f, 1f);
+            var left = Vector2.Lerp(top, bot, t);
+            float t2 = y < mid.Y
+                ? (y - top.Y) / MathF.Max(0.001f, mid.Y - top.Y)
+                : (y - mid.Y) / MathF.Max(0.001f, bot.Y - mid.Y);
+            var right = Vector2.Lerp(y < mid.Y ? top : mid, y < mid.Y ? mid : bot,
+                                     Math.Clamp(t2, 0f, 1f));
+            if (left.X > right.X) (left, right) = (right, left);
+            batch.Draw(px, new Rectangle((int)left.X, (int)y,
+                        Math.Max(1, (int)(right.X - left.X)), 1), col);
+        }
     }
 
     private void DrawVerts(List<VertexPositionColor> verts, BasicEffect effect)

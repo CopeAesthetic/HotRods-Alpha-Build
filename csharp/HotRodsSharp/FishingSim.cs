@@ -7,7 +7,7 @@ namespace HotRodsSharp;
 /// </summary>
 public sealed class FishingSim
 {
-    public enum Phase { Idle, Charging, Flying, Waiting, Bite, Hooked, Reeling, Card }
+    public enum Phase { Idle, Charging, Flying, Waiting, Bite, Reeling, Card }
 
     public Phase Current;
     public Vector3 Bobber = new(-3.0f, 0.06f, -4.0f);
@@ -16,8 +16,16 @@ public sealed class FishingSim
     public float CardT;
 
     private Vector3 _start, _target;
-    private float _flyT, _waitT, _reel;
+    private float _flyT, _waitT;
+    private Fish? _pending;
+    private float _angle, _progress, _strikeCd;
     private static readonly Random Rng = new();
+
+    /// <summary>Minigame state exposed for the overlay.</summary>
+    public bool Reeling => Current == Phase.Reeling;
+    public float NeedleAngle => _angle;
+    public float Progress => _progress;
+    public Fish? Pending => _pending;
 
     public sealed record Fish(string Name, string Rarity, Color Color, float KgMin, float KgMax);
 
@@ -77,26 +85,37 @@ public sealed class FishingSim
             case Phase.Bite:
                 if (kb.IsKeyDown(Keys.Space))
                 {
-                    Current = Phase.Hooked;
-                    _reel = 0f;
+                    _pending = Roll();
+                    _progress = 0.30f;
+                    _angle = 0f;
+                    _strikeCd = 0f;
+                    Current = Phase.Reeling;
                 }
                 break;
-            case Phase.Hooked:
             case Phase.Reeling:
-                if (kb.IsKeyDown(Keys.Space))
+                // Dredge-style sweep: strike in the blue, recover the fish
+                float speed = 2.2f + RarityIndex(_pending!.Rarity) * 0.45f;
+                _angle = MathF.Sin(Time * speed) * 1.05f;
+                _strikeCd -= dt;
+                if (kb.IsKeyDown(Keys.Space) && _strikeCd <= 0f)
                 {
-                    _reel += dt / 1.6f;
-                    Current = Phase.Reeling;
-                    if (_reel >= 1f)
+                    _strikeCd = 0.14f;
+                    float a = MathF.Abs(_angle);
+                    _progress += a < 0.10f ? 0.09f
+                               : a < 0.28f ? 0.03f
+                               : -0.08f;
+                    if (_progress >= 1f)
                     {
-                        Caught = Roll();
+                        Caught = _pending;
                         CardT = 0f;
                         Current = Phase.Card;
                     }
-                }
-                else if (Current == Phase.Reeling)
-                {
-                    _reel = MathF.Max(0f, _reel - dt * 0.8f);
+                    else if (_progress <= 0f)
+                    {
+                        Caught = null;
+                        _pending = null;
+                        Current = Phase.Idle;
+                    }
                 }
                 break;
             case Phase.Card:
@@ -109,6 +128,15 @@ public sealed class FishingSim
                 break;
         }
     }
+
+    private static float _time;
+    private static float Time => _time;
+    public static void TickTime(float dt) => _time += dt;
+
+    private static int RarityIndex(string r) => r switch
+    {
+        "common" => 0, "uncommon" => 1, "rare" => 2, "epic" => 3, _ => 4,
+    };
 
     private static Fish Roll()
     {
