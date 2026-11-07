@@ -78,8 +78,9 @@ public class HotRodsGame : Game
         foreach (var (name, x, z, rot, scale) in PondLayout)
         {
             var (_, col, bscale, ground) = Manifest.First(m => m.name == name);
-            var mesh = ObjMesh.Load(Path.Combine("Assets", name + ".obj"),
-                                    scale * bscale);
+            var mesh = ObjMesh.Load(
+                Path.Combine(AppContext.BaseDirectory, "Assets", name + ".obj"),
+                scale * bscale);
             mesh.Transform(rot, new Vector3(x, Ground[ground], z));
             _props.Add((mesh, col));
         }
