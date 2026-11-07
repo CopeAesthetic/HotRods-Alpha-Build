@@ -23,6 +23,10 @@ public class HotRodsGame : Game
     private int _shopTab, _shopSel;
     private string _shopMsg = "";
     private float _shopMsgT;
+    private bool _consoleOpen, _tickHeld;
+    private string _consoleInput = "", _consoleMsg = "";
+    private float _consoleMsgT;
+    private HashSet<Keys> _prevKeys = new();
     private bool _wasSmoking;
     private BitmapFont _font = null!;
     private SpriteBatch _batch = null!;
@@ -344,6 +348,19 @@ public class HotRodsGame : Game
         _t += dt;
         var kb = Keyboard.GetState();
         if (kb.IsKeyDown(Keys.Escape)) Exit();
+        if (kb.IsKeyDown(Keys.OemTilde) && !_tickHeld)
+        {
+            _consoleOpen = !_consoleOpen;
+            _consoleInput = "";
+            _tickHeld = true;
+        }
+        if (kb.IsKeyUp(Keys.OemTilde)) _tickHeld = false;
+        if (_consoleOpen)
+        {
+            UpdateConsole(kb);
+            base.Update(gameTime);
+            return;
+        }
         if (kb.IsKeyDown(Keys.B) && !_bHeld)
         {
             _shopOpen = !_shopOpen;
@@ -524,6 +541,8 @@ public class HotRodsGame : Game
         DrawHud();
         if (_shopOpen)
             DrawShop();
+        if (_consoleOpen)
+            DrawConsole();
         base.Draw(gameTime);
     }
 
@@ -540,8 +559,10 @@ public class HotRodsGame : Game
             _font.Draw(_batch, f.Name, new Vector2(r.X + 16, r.Y + 22), 3, ColorExt.Cream());
             _font.Draw(_batch, f.Rarity.ToUpper(), new Vector2(r.X + 16, r.Y + 44), 2,
                        f.Body);
-            _font.Draw(_batch, string.Format("{0:0.0} KG  +${1}", _fishing.CaughtKg,
-                                             (int)_fishing.CaughtValue),
+            _font.Draw(_batch, _fishing.Kept
+                       ? string.Format("{0:0.0} KG  +${1}", _fishing.CaughtKg,
+                                       (int)_fishing.CaughtValue)
+                       : "COOLER FULL - SOLD ON THE SPOT",
                        new Vector2(r.X + 16, r.Y + 66), 2, new Color(240, 214, 120));
             _font.Draw(_batch, "X SELLS THE COOLER", new Vector2(r.X + 16, r.Y + 92), 2,
                        new Color(150, 160, 190));
@@ -748,6 +769,127 @@ public class HotRodsGame : Game
                        new Color(240, 214, 120));
         _font.Draw(_batch, "UP/DOWN SELECT  ENTER BUY  LEFT/RIGHT TAB  B CLOSE",
                    new Vector2(40, h - 30), 2, new Color(130, 140, 170));
+        _batch.End();
+    }
+
+    private static char KeyChar(Keys k) => k switch
+    {
+        >= Keys.A and <= Keys.Z => (char)('a' + (k - Keys.A)),
+        >= Keys.D0 and <= Keys.D9 => (char)('0' + (k - Keys.D0)),
+        Keys.Space => ' ',
+        Keys.OemMinus => '-',
+        Keys.OemPeriod => '.',
+        _ => '\0',
+    };
+
+    private void UpdateConsole(KeyboardState kb)
+    {
+        var pressed = kb.GetPressedKeys().ToHashSet();
+        foreach (var k in pressed)
+        {
+            if (_prevKeys.Contains(k))
+                continue;
+            if (k == Keys.Back && _consoleInput.Length > 0)
+                _consoleInput = _consoleInput[..^1];
+            else if (k == Keys.Enter)
+            {
+                RunConsole(_consoleInput);
+                _consoleInput = "";
+            }
+            else if (k == Keys.Escape)
+            {
+                _consoleOpen = false;
+            }
+            else
+            {
+                char ch = KeyChar(k);
+                if (ch != '\0' && _consoleInput.Length < 40)
+                    _consoleInput += ch;
+            }
+        }
+        _prevKeys = pressed;
+        _consoleMsgT -= 0.016f;
+    }
+
+    private void RunConsole(string cmd)
+    {
+        var parts = cmd.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        void Say(string m) { _consoleMsg = m; _consoleMsgT = 3f; }
+        if (parts.Length == 0)
+            return;
+        switch (parts[0].ToLower())
+        {
+            case "help":
+                Say("cash N | hour N | goto N | unlock | save");
+                break;
+            case "cash":
+                _state.Cash = int.Parse(parts[1]);
+                Say("cash " + _state.Cash);
+                break;
+            case "addcash":
+                _state.Cash += int.Parse(parts[1]);
+                Say("cash " + _state.Cash);
+                break;
+            case "hour":
+                _state.Hour = float.Parse(parts[1]);
+                Say("hour " + _state.Hour);
+                break;
+            case "goto":
+                int s2 = int.Parse(parts[1]);
+                if (s2 >= 0 && s2 < 4)
+                {
+                    _spot = s2;
+                    _state.Spot = s2;
+                    _state.MaxWater = Math.Max(_state.MaxWater, s2);
+                    BuildWorld();
+                    Say("travelled");
+                }
+                break;
+            case "unlock":
+                UnlockAll();
+                Say("everything unlocked");
+                break;
+            case "save":
+                _state.Save();
+                Say("saved");
+                break;
+            default:
+                Say("?");
+                break;
+        }
+        _state.Save();
+    }
+
+    private void UnlockAll()
+    {
+        _state.MaxWater = 3;
+        _state.SalTier = 4;
+        _state.Cash = 100000;
+        foreach (var (kind, table) in new (string, Gear[])[]
+                 { ("rod", GameData.Rods), ("line", GameData.Lines),
+                   ("lure", GameData.Lures), ("cooler", GameData.Coolers) })
+        {
+            _state.OwnedGear[kind] = table.Select(g => g.Id).ToHashSet();
+            _state.Equipped[kind] = table[^1].Id;
+        }
+        foreach (var f in GameData.Species)
+            _state.Species[f.Id] = 1;
+        _state.Save();
+    }
+
+    private void DrawConsole()
+    {
+        int w = GraphicsDevice.Viewport.Width;
+        int h = GraphicsDevice.Viewport.Height;
+        _batch.Begin(samplerState: SamplerState.PointClamp);
+        _batch.Draw(_pixel, new Rectangle(0, h - 46, w, 46), new Color(8, 10, 20, 235));
+        if (_consoleMsgT > 0f)
+            _font.Draw(_batch, _consoleMsg, new Vector2(20, h - 78), 2,
+                       new Color(150, 216, 160));
+        _font.Draw(_batch, "> " + _consoleInput + "_", new Vector2(20, h - 38), 2,
+                   new Color(220, 226, 240));
+        _font.Draw(_batch, "cash N  hour N  goto N  unlock  save", new Vector2(w - 300, h - 38),
+                   2, new Color(110, 120, 150));
         _batch.End();
     }
 

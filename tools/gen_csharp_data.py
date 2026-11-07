@@ -22,7 +22,8 @@ out.append("public sealed record Strain(string Id, string Name, int Area, int Ti
 out.append("        int GateMin, int GateMax, int Potency, float Luck, float Duration,")
 out.append("        int Price);")
 out.append("")
-out.append("public sealed record Gear(string Id, string Name, int Cost, string Desc);")
+out.append("public sealed record Gear(string Id, string Name, int Cost, string Desc,")
+out.append("        float Reel, float Grace, int Slots);")
 out.append("")
 out.append("public static class GameData")
 out.append("{")
@@ -64,8 +65,9 @@ for name, table in (("Rods", data.RODS), ("Lines", data.LINES),
     out.append("    public static readonly Gear[] %s =" % name)
     out.append("    {")
     for g in table:
-        out.append("        new(\"%s\", \"%s\", %d, \"%s\"),"
-                   % (g["id"], g["name"], g["cost"], g.get("desc", "")))
+        out.append("        new(\"%s\", \"%s\", %d, \"%s\", %sf, %sf, %d),"
+                   % (g["id"], g["name"], g["cost"], g.get("desc", ""),
+                      g.get("reel", 1.0), g.get("grace", 0.0), g.get("slots", 0)))
     out.append("    };")
     out.append("")
 out.append("")

@@ -8,7 +8,8 @@ public sealed record Strain(string Id, string Name, int Area, int Tier,
         int GateMin, int GateMax, int Potency, float Luck, float Duration,
         int Price);
 
-public sealed record Gear(string Id, string Name, int Cost, string Desc);
+public sealed record Gear(string Id, string Name, int Cost, string Desc,
+        float Reel, float Grace, int Slots);
 
 public static class GameData
 {
@@ -83,33 +84,33 @@ public static class GameData
 
     public static readonly Gear[] Rods =
     {
-        new("bamboo", "Bamboo Stick", 0, "A stick with string. Honest work."),
-        new("fiber", "Fiberglass Rod", 140, "Faster reel, softer tip. Forgiving on the line."),
-        new("carbon", "Carbon Caster", 750, "Light, stiff, and a little bit showy."),
-        new("moon", "Moonwhisper Rod", 3750, "Hums faintly. Catches things that should not be catchable."),
+        new("bamboo", "Bamboo Stick", 0, "A stick with string. Honest work.", 1.0f, 0.0f, 0),
+        new("fiber", "Fiberglass Rod", 140, "Faster reel, softer tip. Forgiving on the line.", 1.14f, 0.0f, 0),
+        new("carbon", "Carbon Caster", 750, "Light, stiff, and a little bit showy.", 1.3f, 0.0f, 0),
+        new("moon", "Moonwhisper Rod", 3750, "Hums faintly. Catches things that should not be catchable.", 1.45f, 0.0f, 0),
     };
 
     public static readonly Gear[] Lines =
     {
-        new("light", "Old Line", 0, "Six pound test and a lot of hope."),
-        new("braid", "Braided Line", 320, "Takes a beating without complaining. Much."),
-        new("ghost", "Ghost Line", 2250, "Barely visible, absurdly strong. Slight air of smugness."),
+        new("light", "Old Line", 0, "Six pound test and a lot of hope.", 1.0f, 0.22f, 0),
+        new("braid", "Braided Line", 320, "Takes a beating without complaining. Much.", 1.0f, 0.44f, 0),
+        new("ghost", "Ghost Line", 2250, "Barely visible, absurdly strong. Slight air of smugness.", 1.0f, 0.85f, 0),
     };
 
     public static readonly Gear[] Lures =
     {
-        new("worm", "Worm on a Hook", 0, "Classic. Reliable. Ethical questions aside."),
-        new("spoon", "Silver Spoon", 180, "Big flash, big fish. Smaller fish get self-conscious."),
-        new("fly", "Woolly Fly", 500, "Fussy, floaty, and very good at finding interesting things."),
-        new("jig", "Glow Jig", 1400, "Glows under the surface. Fish find it hard to be cool about it."),
-        new("gold", "Golden Lure", 3000, "Absurd. Ostentatious. The legends cannot resist it."),
+        new("worm", "Worm on a Hook", 0, "Classic. Reliable. Ethical questions aside.", 1.0f, 0.0f, 0),
+        new("spoon", "Silver Spoon", 180, "Big flash, big fish. Smaller fish get self-conscious.", 1.0f, 0.0f, 0),
+        new("fly", "Woolly Fly", 500, "Fussy, floaty, and very good at finding interesting things.", 1.0f, 0.0f, 0),
+        new("jig", "Glow Jig", 1400, "Glows under the surface. Fish find it hard to be cool about it.", 1.0f, 0.0f, 0),
+        new("gold", "Golden Lure", 3000, "Absurd. Ostentatious. The legends cannot resist it.", 1.0f, 0.0f, 0),
     };
 
     public static readonly Gear[] Coolers =
     {
-        new("small", "Little Cooler", 0, "Four fish and one bag of ice. Fits in one hand."),
-        new("medium", "Big Cooler", 600, "Ten fish, two bags of ice. The lid actually closes now."),
-        new("huge", "Sal's Spare Cooler", 3000, "Sixteen fish and four bags of ice. Smells faintly of Sal."),
+        new("small", "Little Cooler", 0, "Four fish and one bag of ice. Fits in one hand.", 1.0f, 0.0f, 4),
+        new("medium", "Big Cooler", 600, "Ten fish, two bags of ice. The lid actually closes now.", 1.0f, 0.0f, 10),
+        new("huge", "Sal's Spare Cooler", 3000, "Sixteen fish and four bags of ice. Smells faintly of Sal.", 1.0f, 0.0f, 16),
     };
 
 

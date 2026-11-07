@@ -16,15 +16,18 @@ public sealed class FishingSim
     public FishSpec? Caught;
     public float CaughtKg;
     public float CaughtValue;
+    public bool Kept;
     public float CardT;
     public float Progress => _progress;
+    public float BlueZone => _blue;
+    public float GreenZone => _green;
     public bool Reeling => Current == Phase.Reeling;
 
     private readonly GameState _state;
     private Vector3 _start, _target;
     private float _flyT, _waitT;
     private FishSpec? _pending;
-    private float _angle, _progress, _strikeCd;
+    private float _angle, _progress, _strikeCd, _blue = 0.10f, _green = 0.28f;
     private static readonly Random Rng = new();
     private static float _time;
 
@@ -86,21 +89,39 @@ public sealed class FishingSim
                 }
                 break;
             case Phase.Reeling:
-                float speed = 2.2f + GameData.RarityIndex(_pending!.Rarity) * 0.45f;
+                float reelF = GameData.Rods.FirstOrDefault(
+                    r => r.Id == _state.EquippedId("rod"))?.Reel ?? 1f;
+                float grace = GameData.Lines.FirstOrDefault(
+                    l => l.Id == _state.EquippedId("line"))?.Grace ?? 0f;
+                float speed = (2.2f + GameData.RarityIndex(_pending!.Rarity) * 0.45f)
+                              / reelF;
+                _blue = 0.10f * (1f + grace);
+                _green = 0.28f * (1f + grace);
                 _angle = MathF.Sin(_time * speed) * 1.05f;
                 _strikeCd -= dt;
                 if (kb.IsKeyDown(Keys.Space) && _strikeCd <= 0f)
                 {
                     _strikeCd = 0.14f;
                     float a = MathF.Abs(_angle);
-                    _progress += a < 0.10f ? 0.09f
-                               : a < 0.28f ? 0.03f
+                    _progress += a < _blue ? 0.09f
+                               : a < _green ? 0.03f
                                : -0.08f;
                     if (_progress >= 1f)
                     {
                         Caught = _pending;
                         _state.Catches++;
-                        _state.Bag.Add(_pending.Id);
+                        int slots = GameData.Coolers.FirstOrDefault(
+                            c => c.Id == _state.EquippedId("cooler"))?.Slots ?? 4;
+                        if (_state.Bag.Count >= slots)
+                        {
+                            Kept = false;
+                            _state.Cash += (int)MathF.Round(CaughtValue);
+                        }
+                        else
+                        {
+                            Kept = true;
+                            _state.Bag.Add(_pending.Id);
+                        }
                         _state.Species[_pending.Id] =
                             _state.Species.GetValueOrDefault(_pending.Id) + 1;
                         _state.Cash += (int)MathF.Round(CaughtValue);
