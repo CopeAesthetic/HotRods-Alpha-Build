@@ -19,7 +19,10 @@ out.append("        string Rarity, float KgMin, float KgMax, float UsdKg,")
 out.append("        Color Body);")
 out.append("")
 out.append("public sealed record Strain(string Id, string Name, int Area, int Tier,")
-out.append("        int GateMin, int GateMax, int Potency, float Luck, float Duration);")
+out.append("        int GateMin, int GateMax, int Potency, float Luck, float Duration,")
+out.append("        int Price);")
+out.append("")
+out.append("public sealed record Gear(string Id, string Name, int Cost, string Desc);")
 out.append("")
 out.append("public static class GameData")
 out.append("{")
@@ -49,11 +52,22 @@ out.append("")
 out.append("    public static readonly Strain[] Strains =")
 out.append("    {")
 for st in data.STRAINS:
-    out.append("        new(\"%s\", \"%s\", %d, %d, %d, %d, %d, %sf, %sf),"
+    out.append("        new(\"%s\", \"%s\", %d, %d, %d, %d, %d, %sf, %sf, %d),"
                % (st["id"], st["name"], st["area"], st["tier"],
                   st.get("gate_min", 0), st.get("gate_max", 4),
-                  st["potency"], st.get("luck", 0.3), st.get("duration", 1.0)))
+                  st["potency"], st.get("luck", 0.3), st.get("duration", 1.0),
+                  st.get("pts", 0)))
 out.append("    };")
+out.append("")
+for name, table in (("Rods", data.RODS), ("Lines", data.LINES),
+                    ("Lures", data.LURES), ("Coolers", data.COOLERS)):
+    out.append("    public static readonly Gear[] %s =" % name)
+    out.append("    {")
+    for g in table:
+        out.append("        new(\"%s\", \"%s\", %d, \"%s\"),"
+                   % (g["id"], g["name"], g["cost"], g.get("desc", "")))
+    out.append("    };")
+    out.append("")
 out.append("")
 out.append("    public static readonly string[] SpotNames =")
 out.append("        { \"%s\" };" % "\", \"".join(s["name"] for s in data.SPOTS))

@@ -5,7 +5,10 @@ public sealed record FishSpec(string Id, string Name, int Spot,
         Color Body);
 
 public sealed record Strain(string Id, string Name, int Area, int Tier,
-        int GateMin, int GateMax, int Potency, float Luck, float Duration);
+        int GateMin, int GateMax, int Potency, float Luck, float Duration,
+        int Price);
+
+public sealed record Gear(string Id, string Name, int Cost, string Desc);
 
 public static class GameData
 {
@@ -60,23 +63,55 @@ public static class GameData
 
     public static readonly Strain[] Strains =
     {
-        new("homegrown", "Bluegill Bud", 0, -1, 0, 1, 1, 0.15f, 1.0f),
-        new("sunset", "Crappie Kush", 0, 1, 1, 3, 2, 0.25f, 1.6f),
-        new("pond_haze", "Sunfish Skunk", 0, 2, 2, 4, 2, 0.36f, 1.1f),
-        new("lake_blue", "Rainbow Roach", 1, 2, 1, 2, 3, 0.45f, 1.2f),
-        new("lake_gold", "Smallmouth Sativa", 1, 3, 2, 3, 3, 0.4f, 1.3f),
-        new("lake_deep", "Pike Punch", 1, 3, 2, 4, 4, 0.56f, 0.9f),
-        new("marsh_mud", "Bowfin Blunt", 2, 3, 2, 3, 4, 0.5f, 1.5f),
-        new("marsh_fever", "Gar Gas", 2, 4, 3, 4, 5, 0.62f, 1.0f),
-        new("marsh_wisp", "Catfish Chronic", 2, 4, 3, 4, 5, 0.58f, 1.7f),
-        new("trench_abyss", "Burbot Blaze", 3, 4, 3, 4, 6, 0.72f, 1.2f),
-        new("trench_star", "Sturgeon Stank", 3, 4, 3, 4, 6, 0.68f, 1.5f),
-        new("cosmic", "Cosmic Carp", 3, 4, 3, 4, 7, 0.85f, 1.3f),
-        new("koi_kief", "Koi Kief", 0, 4, 3, 4, 4, 0.55f, 1.5f),
-        new("bass_bong", "Bass Bongwater", 1, 4, 3, 4, 5, 0.65f, 1.2f),
-        new("gar_gasm", "Gar Gasm", 2, 4, 3, 4, 6, 0.72f, 1.4f),
-        new("coelacanth_chronic", "Coelacanth Chronic", 3, 4, 3, 4, 8, 0.95f, 1.4f),
+        new("homegrown", "Bluegill Bud", 0, -1, 0, 1, 1, 0.15f, 1.0f, 3),
+        new("sunset", "Crappie Kush", 0, 1, 1, 3, 2, 0.25f, 1.6f, 6),
+        new("pond_haze", "Sunfish Skunk", 0, 2, 2, 4, 2, 0.36f, 1.1f, 11),
+        new("lake_blue", "Rainbow Roach", 1, 2, 1, 2, 3, 0.45f, 1.2f, 26),
+        new("lake_gold", "Smallmouth Sativa", 1, 3, 2, 3, 3, 0.4f, 1.3f, 40),
+        new("lake_deep", "Pike Punch", 1, 3, 2, 4, 4, 0.56f, 0.9f, 60),
+        new("marsh_mud", "Bowfin Blunt", 2, 3, 2, 3, 4, 0.5f, 1.5f, 95),
+        new("marsh_fever", "Gar Gas", 2, 4, 3, 4, 5, 0.62f, 1.0f, 135),
+        new("marsh_wisp", "Catfish Chronic", 2, 4, 3, 4, 5, 0.58f, 1.7f, 180),
+        new("trench_abyss", "Burbot Blaze", 3, 4, 3, 4, 6, 0.72f, 1.2f, 250),
+        new("trench_star", "Sturgeon Stank", 3, 4, 3, 4, 6, 0.68f, 1.5f, 350),
+        new("cosmic", "Cosmic Carp", 3, 4, 3, 4, 7, 0.85f, 1.3f, 480),
+        new("koi_kief", "Koi Kief", 0, 4, 3, 4, 4, 0.55f, 1.5f, 55),
+        new("bass_bong", "Bass Bongwater", 1, 4, 3, 4, 5, 0.65f, 1.2f, 110),
+        new("gar_gasm", "Gar Gasm", 2, 4, 3, 4, 6, 0.72f, 1.4f, 185),
+        new("coelacanth_chronic", "Coelacanth Chronic", 3, 4, 3, 4, 8, 0.95f, 1.4f, 420),
     };
+
+    public static readonly Gear[] Rods =
+    {
+        new("bamboo", "Bamboo Stick", 0, "A stick with string. Honest work."),
+        new("fiber", "Fiberglass Rod", 140, "Faster reel, softer tip. Forgiving on the line."),
+        new("carbon", "Carbon Caster", 750, "Light, stiff, and a little bit showy."),
+        new("moon", "Moonwhisper Rod", 3750, "Hums faintly. Catches things that should not be catchable."),
+    };
+
+    public static readonly Gear[] Lines =
+    {
+        new("light", "Old Line", 0, "Six pound test and a lot of hope."),
+        new("braid", "Braided Line", 320, "Takes a beating without complaining. Much."),
+        new("ghost", "Ghost Line", 2250, "Barely visible, absurdly strong. Slight air of smugness."),
+    };
+
+    public static readonly Gear[] Lures =
+    {
+        new("worm", "Worm on a Hook", 0, "Classic. Reliable. Ethical questions aside."),
+        new("spoon", "Silver Spoon", 180, "Big flash, big fish. Smaller fish get self-conscious."),
+        new("fly", "Woolly Fly", 500, "Fussy, floaty, and very good at finding interesting things."),
+        new("jig", "Glow Jig", 1400, "Glows under the surface. Fish find it hard to be cool about it."),
+        new("gold", "Golden Lure", 3000, "Absurd. Ostentatious. The legends cannot resist it."),
+    };
+
+    public static readonly Gear[] Coolers =
+    {
+        new("small", "Little Cooler", 0, "Four fish and one bag of ice. Fits in one hand."),
+        new("medium", "Big Cooler", 600, "Ten fish, two bags of ice. The lid actually closes now."),
+        new("huge", "Sal's Spare Cooler", 3000, "Sixteen fish and four bags of ice. Smells faintly of Sal."),
+    };
+
 
     public static readonly string[] SpotNames =
         { "Bongwater Pond", "Bass & Bake Lake", "Munchies Marsh", "Tokers Trench" };

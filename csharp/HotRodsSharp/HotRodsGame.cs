@@ -19,6 +19,10 @@ public class HotRodsGame : Game
     private readonly FishingSim _fishing;
     private readonly SmokingSim _smoking = new();
     private bool _eHeld, _qHeld, _xHeld, _lbHeld, _rbHeld;
+    private bool _shopOpen, _bHeld, _enterHeld, _upHeld, _downHeld, _leftHeld, _rightHeld;
+    private int _shopTab, _shopSel;
+    private string _shopMsg = "";
+    private float _shopMsgT;
     private bool _wasSmoking;
     private BitmapFont _font = null!;
     private SpriteBatch _batch = null!;
@@ -350,6 +354,19 @@ public class HotRodsGame : Game
         _t += dt;
         var kb = Keyboard.GetState();
         if (kb.IsKeyDown(Keys.Escape)) Exit();
+        if (kb.IsKeyDown(Keys.B) && !_bHeld)
+        {
+            _shopOpen = !_shopOpen;
+            _shopSel = 0;
+            _bHeld = true;
+        }
+        if (kb.IsKeyUp(Keys.B)) _bHeld = false;
+        if (_shopOpen)
+        {
+            UpdateShop(dt, kb);
+            base.Update(gameTime);
+            return;
+        }
         if (kb.IsKeyDown(Keys.Tab) && !_tabHeld)
         {
             _mode = (_mode + 1) % 3;
@@ -363,6 +380,7 @@ public class HotRodsGame : Game
             {
                 _spot = i;
                 _state.Spot = i;
+                _state.MaxWater = Math.Max(_state.MaxWater, i);
                 _state.Save();
                 BuildWorld();
             }
@@ -514,6 +532,8 @@ public class HotRodsGame : Game
         DrawVerts(dyn, _effectCullNone);
         DrawCatchCard();
         DrawHud();
+        if (_shopOpen)
+            DrawShop();
         base.Draw(gameTime);
     }
 
@@ -642,6 +662,103 @@ public class HotRodsGame : Game
                    new Vector2(14, h - 24), 2, new Color(150, 160, 190));
         _batch.End();
         _sellFlash -= 0.016f;
+    }
+
+    private void UpdateShop(float dt, KeyboardState kb)
+    {
+        _shopMsgT -= dt;
+        void Edge(ref bool held, Keys k, Action a)
+        {
+            if (kb.IsKeyDown(k) && !held) { a(); held = true; }
+            if (kb.IsKeyUp(k)) held = false;
+        }
+        Edge(ref _upHeld, Keys.Up, () => _shopSel = Math.Max(0, _shopSel - 1));
+        Edge(ref _downHeld, Keys.Down, () => _shopSel++);
+        Edge(ref _leftHeld, Keys.Left, () => { _shopTab = (_shopTab + 4) % 5; _shopSel = 0; });
+        Edge(ref _rightHeld, Keys.Right, () => { _shopTab = (_shopTab + 1) % 5; _shopSel = 0; });
+        Edge(ref _enterHeld, Keys.Enter, Buy);
+        if (kb.IsKeyDown(Keys.Escape)) { _shopOpen = false; }
+
+        void Buy()
+        {
+            if (_shopTab < 4)
+            {
+                string kind = new[] { "rod", "line", "lure", "cooler" }[_shopTab];
+                var gear = _state.GearTable(kind);
+                if (_shopSel >= gear.Length) return;
+                var (ok, msg) = _state.BuyGear(kind, gear[_shopSel]);
+                _shopMsg = msg; _shopMsgT = 2.2f;
+            }
+            else
+            {
+                if (_shopSel >= GameData.Strains.Length) return;
+                var (ok, msg) = _state.BuyStrain(GameData.Strains[_shopSel]);
+                _shopMsg = msg; _shopMsgT = 2.2f;
+            }
+        }
+    }
+
+    private void DrawShop()
+    {
+        int w = GraphicsDevice.Viewport.Width;
+        int h = GraphicsDevice.Viewport.Height;
+        _batch.Begin(samplerState: SamplerState.PointClamp);
+        _batch.Draw(_pixel, new Rectangle(0, 0, w, h), new Color(10, 14, 26, 225));
+        _font.Draw(_batch, "TRADING POST  -  $" + _state.Cash, new Vector2(40, 30), 3,
+                   new Color(240, 214, 120));
+        string[] tabs = { "RODS", "LINES", "LURES", "COOLERS", "WEED" };
+        for (int i = 0; i < 5; i++)
+            _font.Draw(_batch, tabs[i], new Vector2(40 + i * 130, 60), 2,
+                       i == _shopTab ? new Color(255, 255, 255)
+                                     : new Color(110, 120, 150));
+        int y = 100;
+        if (_shopTab < 4)
+        {
+            string kind = new[] { "rod", "line", "lure", "cooler" }[_shopTab];
+            var gear = _state.GearTable(kind);
+            for (int i = 0; i < gear.Length; i++)
+            {
+                var g = gear[i];
+                bool owned = _state.Owns(kind, g.Id);
+                bool eq = _state.EquippedId(kind) == g.Id;
+                var col = i == _shopSel ? new Color(255, 255, 200)
+                          : owned ? new Color(150, 216, 160)
+                          : new Color(170, 180, 210);
+                _font.Draw(_batch, (i == _shopSel ? ">" : " ") + " " + g.Name.ToUpper(),
+                           new Vector2(60, y), 2, col);
+                string right = eq ? "EQUIPPED" : owned ? "OWNED"
+                             : "$" + g.Cost;
+                _font.Draw(_batch, right, new Vector2(w - 240, y), 2, col);
+                _font.Draw(_batch, g.Desc, new Vector2(80, y + 22), 2,
+                           new Color(120, 130, 160));
+                y += 46;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < GameData.Strains.Length; i++)
+            {
+                var st = GameData.Strains[i];
+                bool open = _state.JarOpen(st);
+                bool current = _state.Strain == st.Id;
+                var col = i == _shopSel ? new Color(255, 255, 200)
+                          : open ? new Color(150, 216, 160)
+                          : new Color(110, 116, 140);
+                string name = open || current ? st.Name.ToUpper()
+                              : "???  (TIER " + st.Tier + " FISH)";
+                _font.Draw(_batch, (i == _shopSel ? ">" : " ") + " " + name,
+                           new Vector2(60, y), 2, col);
+                _font.Draw(_batch, open ? "$" + st.Price : "LOCKED",
+                           new Vector2(w - 240, y), 2, col);
+                y += 28;
+            }
+        }
+        if (_shopMsgT > 0f)
+            _font.Draw(_batch, _shopMsg, new Vector2(w / 2f - 120, h - 60), 2,
+                       new Color(240, 214, 120));
+        _font.Draw(_batch, "UP/DOWN SELECT  ENTER BUY  LEFT/RIGHT TAB  B CLOSE",
+                   new Vector2(40, h - 30), 2, new Color(130, 140, 170));
+        _batch.End();
     }
 
     private void DrawVerts(List<VertexPositionColor> verts, BasicEffect effect)
