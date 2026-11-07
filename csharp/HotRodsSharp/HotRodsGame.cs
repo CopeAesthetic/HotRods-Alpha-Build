@@ -15,9 +15,12 @@ public class HotRodsGame : Game
     private readonly List<VertexPositionColor> _staticVerts = new();
     private int _staticTriCount;
     private int _spot;
-    private readonly FishingSim _fishing = new();
+    private readonly GameState _state = GameState.Load();
+    private readonly FishingSim _fishing;
     private readonly SmokingSim _smoking = new();
-    private bool _eHeld, _qHeld;
+    private bool _eHeld, _qHeld, _xHeld, _lbHeld, _rbHeld;
+    private bool _wasSmoking;
+    private BitmapFont _font = null!;
     private SpriteBatch _batch = null!;
     private Texture2D _pixel = null!;
     private readonly bool[] _spotHeld = new bool[4];
@@ -181,6 +184,7 @@ public class HotRodsGame : Game
     public HotRodsGame()
     {
         _graphics = new GraphicsDeviceManager(this);
+        _fishing = new FishingSim(_state);
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
         Window.Title = "Hot Rods (C# port) - TAB cycles camera";
@@ -209,6 +213,7 @@ public class HotRodsGame : Game
 
         BuildWorld();
         _batch = new SpriteBatch(GraphicsDevice);
+        _font = new BitmapFont(GraphicsDevice);
         _pixel = new Texture2D(GraphicsDevice, 1, 1);
         _pixel.SetData(new[] { Color.White });
     }
@@ -357,10 +362,42 @@ public class HotRodsGame : Game
             if (kb.IsKeyDown(key) && !_spotHeld[i])
             {
                 _spot = i;
+                _state.Spot = i;
+                _state.Save();
                 BuildWorld();
             }
             _spotHeld[i] = kb.IsKeyDown(key);
         }
+        // economy keys: sell the cooler, cycle strains
+        if (kb.IsKeyDown(Keys.X) && !_xHeld)
+        {
+            int n = _state.SellBag();
+            if (n > 0)
+                _sellFlash = 2.0f;
+            _xHeld = true;
+        }
+        if (kb.IsKeyUp(Keys.X)) _xHeld = false;
+        if (kb.IsKeyDown(Keys.OemOpenBrackets) && !_lbHeld)
+        {
+            _state.StrainIndex = (_state.StrainIndex + GameData.Strains.Length - 1)
+                                 % GameData.Strains.Length;
+            _state.Strain = GameData.Strains[_state.StrainIndex].Id;
+            _lbHeld = true;
+        }
+        if (kb.IsKeyUp(Keys.OemOpenBrackets)) _lbHeld = false;
+        if (kb.IsKeyDown(Keys.OemCloseBrackets) && !_rbHeld)
+        {
+            _state.StrainIndex = (_state.StrainIndex + 1) % GameData.Strains.Length;
+            _state.Strain = GameData.Strains[_state.StrainIndex].Id;
+            _rbHeld = true;
+        }
+        if (kb.IsKeyUp(Keys.OemCloseBrackets)) _rbHeld = false;
+        // the ceremony sets the high when it finishes burning
+        if (_wasSmoking && !_smoking.Active)
+            _state.High = 1.0f;
+        _wasSmoking = _smoking.Active;
+        _state.High = MathF.Max(0f, _state.High - dt / 45f);
+        _state.Hour = (_state.Hour + dt / 60f) % 24f;
 
         if (_mode == 0)                    // third: locked arc around the angler
         {
@@ -476,6 +513,7 @@ public class HotRodsGame : Game
         DrawVerts(_staticVerts.GetRange(0, _staticTriCount * 3), _effectCullNone);
         DrawVerts(dyn, _effectCullNone);
         DrawCatchCard();
+        DrawHud();
         base.Draw(gameTime);
     }
 
@@ -483,12 +521,20 @@ public class HotRodsGame : Game
     {
         int w = GraphicsDevice.Viewport.Width;
         int h = GraphicsDevice.Viewport.Height;
-        _batch.Begin();
+        _batch.Begin(samplerState: SamplerState.PointClamp);
         if (_fishing.Caught is { } f && _fishing.Current == FishingSim.Phase.Card)
         {
             var r = new Rectangle(w / 2 - 170, h / 2 - 60, 340, 120);
             _batch.Draw(_pixel, r, new Color(24, 28, 44, 235));
-            _batch.Draw(_pixel, new Rectangle(r.X + 10, r.Y + 10, 320, 10), f.Color);
+            _batch.Draw(_pixel, new Rectangle(r.X + 10, r.Y + 10, 320, 10), f.Body);
+            _font.Draw(_batch, f.Name, new Vector2(r.X + 16, r.Y + 22), 3, ColorExt.Cream());
+            _font.Draw(_batch, f.Rarity.ToUpper(), new Vector2(r.X + 16, r.Y + 44), 2,
+                       f.Body);
+            _font.Draw(_batch, string.Format("{0:0.0} KG  +${1}", _fishing.CaughtKg,
+                                             (int)_fishing.CaughtValue),
+                       new Vector2(r.X + 16, r.Y + 66), 2, new Color(240, 214, 120));
+            _font.Draw(_batch, "X SELLS THE COOLER", new Vector2(r.X + 16, r.Y + 92), 2,
+                       new Color(150, 160, 190));
         }
         if (_fishing.Reeling)
             DrawReel();
@@ -569,6 +615,33 @@ public class HotRodsGame : Game
             batch.Draw(px, new Rectangle((int)left.X, (int)y,
                         Math.Max(1, (int)(right.X - left.X)), 1), col);
         }
+    }
+
+    private float _sellFlash;
+
+    private void DrawHud()
+    {
+        int w = GraphicsDevice.Viewport.Width;
+        int h = GraphicsDevice.Viewport.Height;
+        _batch.Begin(samplerState: SamplerState.PointClamp);
+        _font.Draw(_batch, GameData.SpotNames[_spot], new Vector2(14, 14), 3, ColorExt.Cream());
+        _font.Draw(_batch, string.Format("{0:00}:00", (int)_state.Hour), new Vector2(14, 36), 2,
+                   new Color(170, 190, 220));
+        _font.Draw(_batch, "CASTS " + _state.Casts, new Vector2(14, 56), 2,
+                   new Color(170, 190, 220));
+        string sd = _state.StrainData().Name.ToUpper();
+        _font.Draw(_batch, "WEED  " + sd, new Vector2(14, 76), 2, new Color(150, 216, 160));
+        _font.Draw(_batch, "HIGH  " + (int)(_state.High * 100) + "%",
+                   new Vector2(14, 96), 2, new Color(150, 216, 160));
+        _font.Draw(_batch, "$" + _state.Cash, new Vector2(w - 100, 14), 3, new Color(240, 214, 120));
+        _font.Draw(_batch, "COOLER " + _state.Bag.Count + "/8", new Vector2(w - 140, 40), 2,
+                   new Color(246, 170, 120));
+        if (_sellFlash > 0f)
+            _font.Draw(_batch, "SOLD!", new Vector2(w - 100, 62), 2, new Color(240, 214, 120));
+        _font.Draw(_batch, "SPACE CAST  E SMOKE  X SELL  [ ] WEED  Q PIECE",
+                   new Vector2(14, h - 24), 2, new Color(150, 160, 190));
+        _batch.End();
+        _sellFlash -= 0.016f;
     }
 
     private void DrawVerts(List<VertexPositionColor> verts, BasicEffect effect)

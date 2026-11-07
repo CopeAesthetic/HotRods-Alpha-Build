@@ -2,8 +2,9 @@ namespace HotRodsSharp;
 
 /// <summary>
 /// Phase-3 fishing loop: charge a cast, the bobber flies, waits, bites, and
-/// reeling lands a fish. Rarity rolls are a placeholder until the strain
-/// gates are ported with the smoking system.
+/// the sweep minigame lands a fish. The catch roll follows the Python rules:
+/// sober water gives commons only, smoking opens the strain's rarity band,
+/// and foreign weed caps at uncommon.
 /// </summary>
 public sealed class FishingSim
 {
@@ -12,36 +13,25 @@ public sealed class FishingSim
     public Phase Current;
     public Vector3 Bobber = new(-3.0f, 0.06f, -4.0f);
     public float Power;
-    public Fish? Caught;
+    public FishSpec? Caught;
+    public float CaughtKg;
+    public float CaughtValue;
     public float CardT;
+    public float Progress => _progress;
+    public bool Reeling => Current == Phase.Reeling;
 
+    private readonly GameState _state;
     private Vector3 _start, _target;
     private float _flyT, _waitT;
-    private Fish? _pending;
+    private FishSpec? _pending;
     private float _angle, _progress, _strikeCd;
     private static readonly Random Rng = new();
+    private static float _time;
 
-    /// <summary>Minigame state exposed for the overlay.</summary>
-    public bool Reeling => Current == Phase.Reeling;
+    public FishingSim(GameState state) => _state = state;
+
     public float NeedleAngle => _angle;
-    public float Progress => _progress;
-    public Fish? Pending => _pending;
-
-    public sealed record Fish(string Name, string Rarity, Color Color, float KgMin, float KgMax);
-
-    public static readonly Fish[] Table =
-    {
-        new("Bluegill", "common", new Color(120, 150, 170), 0.1f, 0.4f),
-        new("Crappie", "common", new Color(140, 160, 150), 0.2f, 0.6f),
-        new("Sunfish", "uncommon", new Color(235, 160, 60), 0.3f, 0.8f),
-        new("Smallmouth Bass", "uncommon", new Color(110, 150, 80), 0.4f, 1.4f),
-        new("Walleye", "rare", new Color(210, 190, 110), 0.8f, 2.5f),
-        new("Carp", "rare", new Color(190, 150, 90), 1.0f, 4.0f),
-        new("Channel Catfish", "epic", new Color(130, 110, 90), 2.0f, 9.0f),
-        new("Muskie", "epic", new Color(120, 140, 110), 3.0f, 11.0f),
-        new("Northern Pike", "legendary", new Color(90, 130, 100), 5.0f, 15.0f),
-        new("Lake Sturgeon", "legendary", new Color(100, 100, 110), 8.0f, 30.0f),
-    };
+    public static void TickTime(float dt) => _time += dt;
 
     public void Update(float dt, KeyboardState kb, Vector3 rodTip, Vector3 castDir)
     {
@@ -58,6 +48,7 @@ public sealed class FishingSim
                 Power = MathF.Min(1f, Power + dt * 1.1f);
                 if (kb.IsKeyUp(Keys.Space))
                 {
+                    _state.Casts++;
                     _start = rodTip;
                     _target = rodTip + castDir * (5f + Power * 11f);
                     _target.Y = 0.06f;
@@ -86,6 +77,8 @@ public sealed class FishingSim
                 if (kb.IsKeyDown(Keys.Space))
                 {
                     _pending = Roll();
+                    CaughtKg = RollKg(_pending);
+                    CaughtValue = CaughtKg * _pending.UsdKg;
                     _progress = 0.30f;
                     _angle = 0f;
                     _strikeCd = 0f;
@@ -93,9 +86,8 @@ public sealed class FishingSim
                 }
                 break;
             case Phase.Reeling:
-                // Dredge-style sweep: strike in the blue, recover the fish
-                float speed = 2.2f + RarityIndex(_pending!.Rarity) * 0.45f;
-                _angle = MathF.Sin(Time * speed) * 1.05f;
+                float speed = 2.2f + GameData.RarityIndex(_pending!.Rarity) * 0.45f;
+                _angle = MathF.Sin(_time * speed) * 1.05f;
                 _strikeCd -= dt;
                 if (kb.IsKeyDown(Keys.Space) && _strikeCd <= 0f)
                 {
@@ -107,6 +99,12 @@ public sealed class FishingSim
                     if (_progress >= 1f)
                     {
                         Caught = _pending;
+                        _state.Catches++;
+                        _state.Bag.Add(_pending.Id);
+                        _state.Species[_pending.Id] =
+                            _state.Species.GetValueOrDefault(_pending.Id) + 1;
+                        _state.Cash += (int)MathF.Round(CaughtValue);
+                        _state.Save();
                         CardT = 0f;
                         Current = Phase.Card;
                     }
@@ -129,26 +127,32 @@ public sealed class FishingSim
         }
     }
 
-    private static float _time;
-    private static float Time => _time;
-    public static void TickTime(float dt) => _time += dt;
-
-    private static int RarityIndex(string r) => r switch
+    /// <summary>Weighted roll inside the state's current rarity band.</summary>
+    private FishSpec Roll()
     {
-        "common" => 0, "uncommon" => 1, "rare" => 2, "epic" => 3, _ => 4,
-    };
-
-    private static Fish Roll()
-    {
-        double r = Rng.NextDouble();
-        string rarity = r < 0.50 ? "common"
-            : r < 0.75 ? "uncommon"
-            : r < 0.90 ? "rare"
-            : r < 0.98 ? "epic"
-            : "legendary";
-        var pool = Table.Where(f => f.Rarity == rarity).ToArray();
-        return pool[Rng.Next(pool.Length)];
+        var (lo, hi) = _state.RarityBand();
+        var pool = GameData.ForSpot(_state.Spot)
+                           .Where(f => GameData.RarityIndex(f.Rarity) >= lo
+                                    && GameData.RarityIndex(f.Rarity) <= hi)
+                           .ToArray();
+        if (pool.Length == 0)
+            pool = GameData.ForSpot(_state.Spot)
+                           .Where(f => f.Rarity == "common").ToArray();
+        if (pool.Length == 0)
+            pool = GameData.Species;
+        float total = pool.Sum(f => GameData.RarityWeight[GameData.RarityIndex(f.Rarity)]);
+        float r = (float)Rng.NextDouble() * total;
+        foreach (var f in pool)
+        {
+            r -= GameData.RarityWeight[GameData.RarityIndex(f.Rarity)];
+            if (r <= 0f)
+                return f;
+        }
+        return pool[^1];
     }
+
+    private static float RollKg(FishSpec sp) =>
+        sp.KgMin + (float)Rng.NextDouble() * (sp.KgMax - sp.KgMin);
 
     /// <summary>Line from the rod tip down to the bobber.</summary>
     public void EmitLine(List<VertexPositionColor> v, Vector3 tip)
@@ -165,7 +169,7 @@ public sealed class FishingSim
         if (Current == Phase.Idle || Current == Phase.Card)
             return;
         float y = 0.06f + (Current == Phase.Bite
-            ? 0.12f * MathF.Sin((float)DateTime.Now.Ticks * 0.000001f) : 0f);
+            ? 0.12f * MathF.Sin(_time * 18f) : 0f);
         Prims.AddSegment(v, new Vector3(Bobber.X, y - 0.08f, Bobber.Z),
                          new Vector3(Bobber.X, y, Bobber.Z), 0.05f,
                          new Color(210, 60, 50), 5);
