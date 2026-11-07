@@ -260,6 +260,9 @@ def main():
     for _shape in ("round", "torpedo", "trout", "cat", "gar", "eel",
                    "sturgeon", "minnow", "paddle"):
         export(fish_asset(_shape), "fish_" + _shape)
+    export(rock("rock_a", 0.34, 0.30, 3), "rock_a")
+    export(rock("rock_b", 0.22, 0.18, 11), "rock_b")
+    export(bush(), "bush")
     for _name, _ob in smokers().items():
         export(_ob, "smoker_" + _name)
     export(dock_post(), "dock_post")
@@ -508,7 +511,51 @@ def fish_asset(shape):
     return ob
 
 
+def rock(name, r0, r1, seed):
+    import math as _m
+    """A chunky low-poly rock: an octahedron pushed around."""
+    import random as _r
+    rng = _r.Random(seed)
+    v = [(0.0, r1, 0.0), (0.0, -r1, 0.0)]
+    for i in range(5):
+        ang = 3.14159 * 2 * i / 5
+        v.append((r0 * _m.cos(ang), rng.uniform(-0.2, 0.2) * r1,
+                  r0 * _m.sin(ang)))
+    f = []
+    # top fan, bottom fan, side band
+    for i in range(5):
+        j = (i + 1) % 5
+        f.append((0, 2 + i, 2 + j))
+        f.append((1, 2 + j, 2 + i))
+    for i in range(5):
+        j = (i + 1) % 5
+        f.append((2 + i, 2 + j, 2 + j + 5 if False else 2 + j))
+    return mesh_from(name, v, f)
+
+
+def bush():
+    import math as _m
+    """Three stacked blobs on a short stem."""
+    v, f = [], []
+    for cy, cr in ((0.35, 0.34), (0.52, 0.26), (0.66, 0.17)):
+        ring = []
+        base = len(v)
+        for i in range(6):
+            ang = _m.tau * i / 6
+            ring.append((_m.cos(ang) * cr, cy, _m.sin(ang) * cr))
+        v += ring + [(0.0, cy + cr * 0.9, 0.0), (0.0, cy - cr * 0.7, 0.0)]
+        for i in range(6):
+            j = (i + 1) % 6
+            f.append((base + i, base + j, base + 6))
+            f.append((base + j, base + i, base + 7))
+    v += [(0.0, 0.0, 0.0), (0.0, 0.36, 0.0)]
+    b = len(v) - 2
+    f.append((b, b + 1, b + 1))
+    return mesh_from("bush", v, f)
+
+
 if __name__ == "__main__":
     main()
+
 
 

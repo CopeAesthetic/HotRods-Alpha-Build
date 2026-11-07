@@ -78,6 +78,9 @@ public class HotRodsGame : Game
         ("cooler", new Color(200, 60, 48), 1.00f, "dock"),
         ("bucket", new Color(120, 128, 140), 1.00f, "dock"),
         ("boat", new Color(140, 150, 120), 1.00f, "water"),
+        ("rock_a", new Color(128, 122, 112), 1.0f, "land"),
+        ("rock_b", new Color(108, 104, 96), 1.0f, "land"),
+        ("bush", new Color(86, 116, 72), 1.0f, "land"),
         ("smoker_pipe", new Color(150, 196, 210), 0.55f, "dock"),
         ("smoker_beaker_bong", new Color(140, 200, 180), 0.55f, "dock"),
     };
@@ -108,6 +111,12 @@ public class HotRodsGame : Game
             ("rod_rack", -7.10f, 2.60f, 0.20f, 1.00f),
             ("cooler", -6.80f, 2.90f, 0.10f, 1.00f),
             ("bucket", -6.10f, 3.05f, 0.0f, 1.00f),
+            ("rock_a", -20.0f, -15.4f, 0.8f, 1.00f),
+            ("rock_b", -11.5f, -16.2f, 2.1f, 1.00f),
+            ("rock_a", 12.0f, -15.0f, 4.2f, 0.85f),
+            ("bush", -30.0f, -14.6f, 1.4f, 1.00f),
+            ("bush", 18.0f, -14.2f, 5.0f, 1.15f),
+            ("bush", -4.5f, -15.8f, 3.3f, 0.90f),
         },
         // Bass & Bake Lake
         new (string, float, float, float, float)[]
@@ -470,6 +479,7 @@ public class HotRodsGame : Game
         }
         if (kb.IsKeyUp(Keys.Q)) _qHeld = false;
         _smoking.Update(dt);
+        SetDayPhase();
         FishingSim.TickTime(dt);
         if (!_smoking.Active)
             _fishing.Update(dt, kb, new Vector3(-1.88f, 1.75f, 1.67f),
@@ -510,7 +520,7 @@ public class HotRodsGame : Game
 
     protected override void Draw(GameTime gameTime)
     {
-        GraphicsDevice.Clear(new Color(84, 108, 130));
+        GraphicsDevice.Clear(_skyClear);
         var water = WaterVerts();
         foreach (var effect in new[] { _effect, _effectCullNone })
         {
@@ -541,6 +551,10 @@ public class HotRodsGame : Game
         DrawVerts(dyn, _effectCullNone);
         DrawCatchCard();
         DrawHud();
+        _batch.Begin();
+        _batch.Draw(_pixel, new Rectangle(0, 0, GraphicsDevice.Viewport.Width,
+                    GraphicsDevice.Viewport.Height), _tint.col * _tint.a);
+        _batch.End();
         if (_shopOpen)
             DrawShop();
         if (_consoleOpen)
@@ -676,6 +690,36 @@ public class HotRodsGame : Game
     }
 
     private float _sellFlash;
+    private Color _skyClear = new(84, 108, 130), _skyFog = new(140, 158, 184);
+    private (Color col, float a) _tint = (new Color(255, 255, 255), 0f);
+
+    private void SetDayPhase()
+    {
+        float h = _state.Hour;
+        // dawn 5-8, day 8-17, dusk 17-20, night 20-5
+        if (h >= 8 && h < 17)
+        {
+            _skyClear = new Color(84, 116, 146); _skyFog = new Color(158, 176, 198);
+            _tint = (new Color(255, 255, 255), 0f);
+        }
+        else if (h >= 17 && h < 20)
+        {
+            _skyClear = new Color(96, 84, 116); _skyFog = new Color(196, 140, 96);
+            _tint = (new Color(255, 160, 90), 0.14f);
+        }
+        else if (h >= 5 && h < 8)
+        {
+            _skyClear = new Color(88, 92, 122); _skyFog = new Color(214, 168, 140);
+            _tint = (new Color(255, 190, 150), 0.10f);
+        }
+        else
+        {
+            _skyClear = new Color(14, 20, 42); _skyFog = new Color(20, 30, 56);
+            _tint = (new Color(24, 40, 110), 0.30f);
+        }
+        _effect.FogColor = _skyFog.ToVector3();
+        _effectCullNone.FogColor = _skyFog.ToVector3();
+    }
 
     private void DrawHud()
     {
