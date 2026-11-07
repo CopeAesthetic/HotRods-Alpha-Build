@@ -256,6 +256,7 @@ def main():
     export(crate("cooler", 0.9, 0.55, 0.6), "cooler")
     export(crate("bucket", 0.5, 0.36, 0.5, taper=0.82), "bucket")
     export(shack(), "shack")
+    export(fisherman(), "fisherman")
     for _name, _ob in smokers().items():
         export(_ob, "smoker_" + _name)
     export(dock_post(), "dock_post")
@@ -263,5 +264,133 @@ def main():
     print("assets built")
 
 
+def fisherman():
+    """The angler as one material-painted mesh at game-space coordinates.
+    Blender Y is game Y here, so the export+load round-trip preserves it."""
+    import math as _m
+    mats = {}
+    v, f, fm = [], [], []
+
+    def mat(name, rgb):
+        mats[name] = rgb
+        return name
+
+    def seg(a, b, r, sides, name):
+        ax = (b[0] - a[0], b[1] - a[1], b[2] - a[2])
+        L = _m.sqrt(ax[0]**2 + ax[1]**2 + ax[2]**2) or 1.0
+        ax = (ax[0] / L, ax[1] / L, ax[2] / L)
+        up = (0.0, 1.0, 0.0) if abs(ax[1]) < 0.9 else (0.0, 0.0, 1.0)
+        t1 = (up[1] * ax[2] - up[2] * ax[1], up[2] * ax[0] - up[0] * ax[2],
+              up[0] * ax[1] - up[1] * ax[0])
+        l1 = _m.sqrt(t1[0]**2 + t1[1]**2 + t1[2]**2) or 1.0
+        t1 = (t1[0] / l1, t1[1] / l1, t1[2] / l1)
+        t2 = (ax[1] * t1[2] - ax[2] * t1[1], ax[2] * t1[0] - ax[0] * t1[2],
+              ax[0] * t1[1] - ax[1] * t1[0])
+        base = len(v)
+        for i in range(sides):
+            ang = _m.tau * i / sides
+            ox = t1[0] * _m.cos(ang) + t2[0] * _m.sin(ang)
+            oy = t1[1] * _m.cos(ang) + t2[1] * _m.sin(ang)
+            oz = t1[2] * _m.cos(ang) + t2[2] * _m.sin(ang)
+            v.append((a[0] + ox * r, a[1] + oy * r, a[2] + oz * r))
+            v.append((b[0] + ox * r, b[1] + oy * r, b[2] + oz * r))
+        for i in range(sides):
+            j = (i + 1) % sides
+            f.append((base + 2 * i, base + 2 * j, base + 2 * j + 1, base + 2 * i + 1))
+            fm.append(name)
+
+    def box(c, w, h, d, name):
+        x0, y0, z0 = c[0] - w / 2, c[1] - h / 2, c[2] - d / 2
+        x1, y1, z1 = c[0] + w / 2, c[1] + h / 2, c[2] + d / 2
+        p = [(x0, y0, z0), (x1, y0, z0), (x1, y1, z0), (x0, y1, z0),
+             (x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)]
+        base = len(v)
+        v.extend(p)
+        for q in ((0, 1, 2, 3), (5, 4, 7, 6), (1, 5, 6, 2), (4, 0, 3, 7),
+                  (3, 2, 6, 7), (4, 5, 1, 0)):
+            f.append(tuple(base + i for i in q))
+            fm.append(name)
+
+    def disc(c, r, n, name):
+        base = len(v)
+        v.append(c)
+        for i in range(n):
+            ang = _m.tau * i / n
+            v.append((c[0] + _m.cos(ang) * r, c[1], c[2] + _m.sin(ang) * r))
+        for i in range(n):
+            f.append((base, base + 1 + i, base + 1 + (i + 1) % n))
+            fm.append(name)
+
+    def cone(tip, b, r, sides, name):
+        ax = (b[0] - tip[0], b[1] - tip[1], b[2] - tip[2])
+        L = _m.sqrt(ax[0]**2 + ax[1]**2 + ax[2]**2) or 1.0
+        ax = (ax[0] / L, ax[1] / L, ax[2] / L)
+        up = (0.0, 1.0, 0.0) if abs(ax[1]) < 0.9 else (0.0, 0.0, 1.0)
+        t1 = (up[1] * ax[2] - up[2] * ax[1], up[2] * ax[0] - up[0] * ax[2],
+              up[0] * ax[1] - up[1] * ax[0])
+        l1 = _m.sqrt(t1[0]**2 + t1[1]**2 + t1[2]**2) or 1.0
+        t1 = (t1[0] / l1, t1[1] / l1, t1[2] / l1)
+        t2 = (ax[1] * t1[2] - ax[2] * t1[1], ax[2] * t1[0] - ax[0] * t1[2],
+              ax[0] * t1[1] - ax[1] * t1[0])
+        base = len(v)
+        ring = []
+        for i in range(sides):
+            ang = _m.tau * i / sides
+            ring.append((b[0] + (t1[0] * _m.cos(ang) + t2[0] * _m.sin(ang)) * r,
+                         b[1] + (t1[1] * _m.cos(ang) + t2[1] * _m.sin(ang)) * r,
+                         b[2] + (t1[2] * _m.cos(ang) + t2[2] * _m.sin(ang)) * r))
+        v.extend(ring)
+        tip_idx = len(v)
+        for i in range(sides):
+            f.append((base + i, base + (i + 1) % sides, tip_idx))
+            fm.append(name)
+        v.append(tip)
+
+    wader = mat("fisher_wader", (78, 92, 74))
+    boot = mat("fisher_boot", (58, 48, 40))
+    shirt = mat("fisher_shirt", (150, 132, 108))
+    vest = mat("fisher_vest", (96, 110, 88))
+    skin = mat("fisher_skin", (206, 158, 116))
+    hat = mat("fisher_hat", (204, 178, 130))
+    beard = mat("fisher_beard", (96, 74, 52))
+    face = mat("fisher_face", (216, 170, 126))
+    dark = mat("fisher_dark", (38, 34, 30))
+    nose = mat("fisher_nose", (198, 140, 100))
+    mouth = mat("fisher_mouth", (88, 52, 38))
+
+    # waders and boots dangling over the dock edge
+    seg((-3.18, 0.70, 1.38), (-2.97, 0.16, 1.28), 0.095, 5, wader)
+    seg((-2.97, 0.16, 1.28), (-2.92, 0.00, 1.26), 0.075, 5, boot)
+    seg((-3.18, 0.70, 1.72), (-2.90, 0.16, 1.66), 0.095, 5, wader)
+    seg((-2.90, 0.16, 1.66), (-2.85, 0.00, 1.64), 0.075, 5, boot)
+    # torso: shirt under the padded vest
+    seg((-3.26, 0.66, 1.55), (-3.30, 1.06, 1.51), 0.150, 5, shirt)
+    seg((-3.30, 1.06, 1.51), (-3.34, 1.22, 1.50), 0.175, 5, vest)
+    # neck + collar + shoulder bar
+    disc((-3.335, 1.225, 1.495), 0.135, 8, vest)
+    seg((-3.33, 1.225, 1.495), (-3.32, 1.30, 1.49), 0.100, 5, skin)
+    seg((-3.44, 1.19, 1.455), (-3.22, 1.19, 1.57), 0.085, 5, vest)
+    # head + hat + beard + face plate
+    seg((-3.32, 1.30, 1.49), (-3.31, 1.45, 1.48), 0.115, 6, skin)
+    disc((-3.31, 1.44, 1.48), 0.24, 8, hat)
+    cone((-3.31, 1.62, 1.48), (-3.31, 1.44, 1.48), 0.145, 7, hat)
+    seg((-3.30, 1.26, 1.545), (-3.30, 1.33, 1.545), 0.10, 5, beard)
+    box((-3.305, 1.35, 1.545), 0.05, 0.15, 0.17, face)
+    box((-3.275, 1.385, 1.49), 0.02, 0.035, 0.04, dark)
+    box((-3.275, 1.385, 1.60), 0.02, 0.035, 0.04, dark)
+    box((-3.28, 1.345, 1.545), 0.055, 0.055, 0.05, nose)
+    box((-3.275, 1.305, 1.545), 0.02, 0.03, 0.115, mouth)
+
+    ob = mesh_from("fisherman", v, f)
+    for name, rgb in mats.items():
+        m = bpy.data.materials.new(name)
+        m.diffuse_color = (rgb[0] / 255.0, rgb[1] / 255.0, rgb[2] / 255.0, 1.0)
+        ob.data.materials.append(m)
+    for poly, name in zip(ob.data.polygons, fm):
+        poly.material_index = [k for k in mats][::-1].index(name) if False else list(mats).index(name)
+    return ob
+
+
 if __name__ == "__main__":
     main()
+

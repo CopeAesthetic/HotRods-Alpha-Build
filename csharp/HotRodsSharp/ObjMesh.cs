@@ -8,10 +8,12 @@ public sealed class ObjMesh
 {
     public readonly List<Vector3> Verts = new();
     public readonly List<(int a, int b, int c)> Tris = new();
+    public readonly List<string> TriMats = new();
 
     public static ObjMesh Load(string path, float scale = 1.0f)
     {
         var m = new ObjMesh();
+        string currentMat = "";
         foreach (var raw in File.ReadLines(path))
         {
             if (raw.Length == 0 || raw[0] == '#')
@@ -19,6 +21,11 @@ public sealed class ObjMesh
             var parts = raw.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length == 0)
                 continue;
+            if (parts[0] == "usemtl" && parts.Length > 1)
+            {
+                currentMat = parts[1];
+                continue;
+            }
             if (parts[0] == "v" && parts.Length >= 4)
             {
                 float bx = float.Parse(parts[1]) * scale;
@@ -35,6 +42,7 @@ public sealed class ObjMesh
                     if (i + 2 > N)
                         break;
                     m.Tris.Add((Idx(parts[1]), Idx(parts[i + 1]), Idx(parts[i + 2])));
+                    m.TriMats.Add(currentMat);
                 }
             }
         }

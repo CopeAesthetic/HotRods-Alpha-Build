@@ -294,42 +294,30 @@ public class HotRodsGame : Game
         }
     }
 
+    private static readonly Dictionary<string, Color> FisherMats = new()
+    {
+        ["fisher_wader"] = Wader, ["fisher_boot"] = Boot,
+        ["fisher_shirt"] = Shirt, ["fisher_vest"] = Vest,
+        ["fisher_skin"] = Skin, ["fisher_hat"] = Hat,
+        ["fisher_beard"] = Beard, ["fisher_face"] = Face,
+        ["fisher_dark"] = Dark, ["fisher_nose"] = Nose,
+        ["fisher_mouth"] = Mouth,
+    };
+
     private void BuildAngler(List<VertexPositionColor> s)
     {
-        // waders and boots dangling over the dock edge
-        Prims.AddSegment(s, new Vector3(-3.18f, 0.70f, 1.38f),
-                         new Vector3(-2.97f, 0.16f, 1.28f), 0.095f, Wader);
-        Prims.AddSegment(s, new Vector3(-2.97f, 0.16f, 1.28f),
-                         new Vector3(-2.92f, 0.00f, 1.26f), 0.075f, Boot);
-        Prims.AddSegment(s, new Vector3(-3.18f, 0.70f, 1.72f),
-                         new Vector3(-2.90f, 0.16f, 1.66f), 0.095f, Wader);
-        Prims.AddSegment(s, new Vector3(-2.90f, 0.16f, 1.66f),
-                         new Vector3(-2.85f, 0.00f, 1.64f), 0.075f, Boot);
-        // torso: shirt under the padded vest
-        Prims.AddSegment(s, new Vector3(-3.26f, 0.66f, 1.55f),
-                         new Vector3(-3.30f, 1.06f, 1.51f), 0.150f, Shirt);
-        Prims.AddSegment(s, new Vector3(-3.30f, 1.06f, 1.51f),
-                         new Vector3(-3.34f, 1.22f, 1.50f), 0.175f, Vest);
-        // neck + collar + shoulder bar
-        Prims.AddDisc(s, new Vector3(-3.335f, 1.225f, 1.495f), 0.135f, Vest, 8);
-        Prims.AddSegment(s, new Vector3(-3.33f, 1.225f, 1.495f),
-                         new Vector3(-3.32f, 1.30f, 1.49f), 0.100f, Skin);
-        Prims.AddSegment(s, new Vector3(-3.44f, 1.19f, 1.455f),
-                         new Vector3(-3.22f, 1.19f, 1.57f), 0.085f, Vest);
-        // head + hat + beard + face plate
-        Prims.AddSegment(s, new Vector3(-3.32f, 1.30f, 1.49f),
-                         new Vector3(-3.31f, 1.45f, 1.48f), 0.115f, Skin, 6);
-        Prims.AddDisc(s, new Vector3(-3.31f, 1.44f, 1.48f), 0.24f, Hat, 8);
-        Prims.AddCone(s, new Vector3(-3.31f, 1.62f, 1.48f),
-                      new Vector3(-3.31f, 1.44f, 1.48f), 0.145f, Hat, 7);
-        Prims.AddSegment(s, new Vector3(-3.30f, 1.26f, 1.545f),
-                         new Vector3(-3.30f, 1.33f, 1.545f), 0.10f, Beard);
-        Prims.AddBox(s, new Vector3(-3.305f, 1.35f, 1.545f), 0.05f, 0.15f, 0.17f, Face);
-        Prims.AddBox(s, new Vector3(-3.275f, 1.385f, 1.49f), 0.02f, 0.035f, 0.04f, Dark);
-        Prims.AddBox(s, new Vector3(-3.275f, 1.385f, 1.60f), 0.02f, 0.035f, 0.04f, Dark);
-        Prims.AddBox(s, new Vector3(-3.28f, 1.345f, 1.545f), 0.055f, 0.055f, 0.05f, Nose);
-        Prims.AddBox(s, new Vector3(-3.275f, 1.305f, 1.545f), 0.02f, 0.03f, 0.115f, Mouth);
-        // arms and rod are pose-dependent: drawn per frame, not baked in
+        // the fisherman is a single Blender asset, material-painted
+        var m = ObjMesh.Load(
+            Path.Combine(AppContext.BaseDirectory, "Assets", "fisherman.obj"), 1f);
+        for (int i = 0; i < m.Tris.Count; i++)
+        {
+            var (a, b, c) = m.Tris[i];
+            Color col = i < m.TriMats.Count && FisherMats.TryGetValue(m.TriMats[i], out var mc)
+                ? mc : Skin;
+            Prims.AddTri(s, m.Verts[a], m.Verts[b], m.Verts[c], col);
+        }
+        // arms and rod stay procedural: they swap between the fishing and
+        // smoking poses every frame
     }
 
     private void EmitFishingPose(List<VertexPositionColor> v)
