@@ -19,15 +19,17 @@ public sealed class FishingSim
     public bool Kept;
     public float CardT;
     public float Progress => _progress;
-    public float BlueZone => _blue;
-    public float GreenZone => _green;
+    public float BluePos => _bluePos;
+    public float GreenPos => _greenPos;
     public bool Reeling => Current == Phase.Reeling;
 
     private readonly GameState _state;
     private Vector3 _start, _target;
     private float _flyT, _waitT;
     private FishSpec? _pending;
-    private float _angle, _progress, _strikeCd, _blue = 0.10f, _green = 0.28f;
+    private float _angle, _progress, _strikeCd;
+    private float _bluePos, _greenPos;
+    private const float BlueHalf = 0.10f, GreenHalf = 0.28f;
     private static readonly Random Rng = new();
     private static float _time;
 
@@ -83,7 +85,9 @@ public sealed class FishingSim
                     CaughtKg = RollKg(_pending);
                     CaughtValue = CaughtKg * _pending.UsdKg;
                     _progress = 0.30f;
-                    _angle = 0f;
+                    _angle = (float)(Rng.NextDouble() * MathF.Tau);
+                    _bluePos = (float)(Rng.NextDouble() * MathF.Tau);
+                    _greenPos = Wrap(_bluePos + 2.4f);
                     _strikeCd = 0f;
                     Current = Phase.Reeling;
                 }
@@ -95,17 +99,29 @@ public sealed class FishingSim
                     l => l.Id == _state.EquippedId("line"))?.Grace ?? 0f;
                 float speed = (2.2f + GameData.RarityIndex(_pending!.Rarity) * 0.45f)
                               / reelF;
-                _blue = 0.10f * (1f + grace);
-                _green = 0.28f * (1f + grace);
-                _angle = MathF.Sin(_time * speed) * 1.05f;
+                float blue = BlueHalf * (1f + grace);
+                float green = GreenHalf * (1f + grace);
+                _angle = Wrap(_angle + speed * dt);      // the dial spins 360
                 _strikeCd -= dt;
                 if (kb.IsKeyDown(Keys.Space) && _strikeCd <= 0f)
                 {
                     _strikeCd = 0.14f;
-                    float a = MathF.Abs(_angle);
-                    _progress += a < _blue ? 0.09f
-                               : a < _green ? 0.03f
-                               : -0.08f;
+                    float db = MathF.Abs(Wrap(_angle - _bluePos));
+                    float dg = MathF.Abs(Wrap(_angle - _greenPos));
+                    if (db < blue)
+                    {
+                        _progress += 0.09f;
+                        (_bluePos, _greenPos) = (_greenPos, _bluePos);
+                    }
+                    else if (dg < green)
+                    {
+                        _progress += 0.03f;
+                        (_bluePos, _greenPos) = (_greenPos, _bluePos);
+                    }
+                    else
+                    {
+                        _progress -= 0.08f;
+                    }
                     if (_progress >= 1f)
                     {
                         Caught = _pending;
@@ -170,6 +186,13 @@ public sealed class FishingSim
                 return f;
         }
         return pool[^1];
+    }
+
+    private static float Wrap(float a)
+    {
+        while (a > MathF.PI) a -= MathF.Tau;
+        while (a < -MathF.PI) a += MathF.Tau;
+        return a;
     }
 
     private static float RollKg(FishSpec sp) =>

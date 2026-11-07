@@ -585,13 +585,15 @@ public class HotRodsGame : Game
         int h = GraphicsDevice.Viewport.Height;
         var c = new Vector2(w / 2f, h / 2f - 40f);
         float R = 90f;
-        for (int i = 0; i < 36; i++)
+        float blue = _fishing.BluePos, green = _fishing.GreenPos;
+        for (int i = 0; i < 48; i++)
         {
-            float a0 = -MathF.PI + MathF.Tau * i / 36;
-            float a1 = a0 + MathF.Tau / 36;
-            float mid = MathF.Abs(Wrap(a0 + a1) / 2);
+            float a0 = -MathF.PI + MathF.Tau * i / 48;
+            float a1 = a0 + MathF.Tau / 48;
+            float mid = MathF.Abs(Wrap((a0 + a1) / 2 - blue));
+            float midg = MathF.Abs(Wrap((a0 + a1) / 2 - green));
             Color col = mid < 0.10f ? new Color(90, 180, 250)
-                      : mid < 0.28f ? new Color(110, 210, 120)
+                      : midg < 0.28f ? new Color(110, 210, 120)
                       : new Color(190, 70, 70);
             var p0 = c + new Vector2(MathF.Cos(a0), MathF.Sin(a0)) * R;
             var p1 = c + new Vector2(MathF.Cos(a1), MathF.Sin(a1)) * R;
@@ -600,7 +602,7 @@ public class HotRodsGame : Game
             FillTri(_batch, _pixel, p0, p1, p2, col);
             FillTri(_batch, _pixel, p0, p2, p3, col);
         }
-        // needle: small quads along the sweep
+        // needle: full 360 sweep
         var end = c + new Vector2(MathF.Cos(_fishing.NeedleAngle),
                                   MathF.Sin(_fishing.NeedleAngle)) * (R - 14);
         for (int i = 0; i <= 16; i++)
@@ -614,8 +616,6 @@ public class HotRodsGame : Game
         _batch.Draw(_pixel, bar, new Color(40, 46, 66, 220));
         _batch.Draw(_pixel, new Rectangle(bar.X + 1, bar.Y + 1,
                     (int)(178 * _fishing.Progress), 10), new Color(120, 210, 250));
-        _batch.Draw(_pixel, new Rectangle((int)c.X - 3, (int)c.Y - (int)R + 2, 6, 8),
-                    new Color(90, 180, 250));
     }
 
     private static float Wrap(float a)
