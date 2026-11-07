@@ -15,6 +15,9 @@ public class HotRodsGame : Game
     private readonly List<VertexPositionColor> _staticVerts = new();
     private int _staticTriCount;
     private int _spot;
+    private readonly FishingSim _fishing = new();
+    private SpriteBatch _batch = null!;
+    private Texture2D _pixel = null!;
     private readonly bool[] _spotHeld = new bool[4];
 
     // water, rebuilt per frame
@@ -203,6 +206,9 @@ public class HotRodsGame : Game
         };
 
         BuildWorld();
+        _batch = new SpriteBatch(GraphicsDevice);
+        _pixel = new Texture2D(GraphicsDevice, 1, 1);
+        _pixel.SetData(new[] { Color.White });
     }
 
     private void AddProp(List<VertexPositionColor> s, string name, float x,
@@ -384,6 +390,8 @@ public class HotRodsGame : Game
         }
         _proj = Matrix.CreatePerspectiveFieldOfView(
             MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 0.1f, 250f);
+        _fishing.Update(dt, kb, new Vector3(-2.70f, 1.70f, -0.40f),
+                        new Vector3(0.18f, -0.05f, -0.98f));
         base.Update(gameTime);
     }
 
@@ -429,10 +437,37 @@ public class HotRodsGame : Game
             effect.World = Matrix.Identity;
         }
 
+        var dyn = new List<VertexPositionColor>();
+        _fishing.EmitLine(dyn, new Vector3(-2.70f, 1.70f, -0.40f));
+        _fishing.EmitBobber(dyn);
+
         // water first, then the static world over it
         DrawVerts(water, _effect);
         DrawVerts(_staticVerts.GetRange(0, _staticTriCount * 3), _effectCullNone);
+        DrawVerts(dyn, _effectCullNone);
+        DrawCatchCard();
         base.Draw(gameTime);
+    }
+
+    private void DrawCatchCard()
+    {
+        int w = GraphicsDevice.Viewport.Width;
+        int h = GraphicsDevice.Viewport.Height;
+        _batch.Begin();
+        if (_fishing.Caught is { } f && _fishing.Current == FishingSim.Phase.Card)
+        {
+            var r = new Rectangle(w / 2 - 170, h / 2 - 60, 340, 120);
+            _batch.Draw(_pixel, r, new Color(24, 28, 44, 235));
+            _batch.Draw(_pixel, new Rectangle(r.X + 10, r.Y + 10, 320, 10), f.Color);
+        }
+        if (_fishing.Current == FishingSim.Phase.Charging)
+        {
+            var meter = new Rectangle(w / 2 - 100, h - 90, 200, 14);
+            _batch.Draw(_pixel, meter, new Color(40, 46, 66, 200));
+            _batch.Draw(_pixel, new Rectangle(meter.X + 2, meter.Y + 2,
+                        (int)(196 * _fishing.Power), 10), new Color(240, 200, 90));
+        }
+        _batch.End();
     }
 
     private void DrawVerts(List<VertexPositionColor> verts, BasicEffect effect)
