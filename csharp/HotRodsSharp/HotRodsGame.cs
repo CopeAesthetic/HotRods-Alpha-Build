@@ -18,6 +18,7 @@ public class HotRodsGame : Game
     private readonly GameState _state = GameState.Load();
     private readonly FishingSim _fishing;
     private readonly SmokingSim _smoking = new();
+    private readonly FishRender _fish = new();
     private bool _eHeld, _qHeld, _xHeld, _lbHeld, _rbHeld;
     private bool _shopOpen, _bHeld, _enterHeld, _upHeld, _downHeld, _leftHeld, _rightHeld;
     private int _shopTab, _shopSel;
@@ -531,6 +532,7 @@ public class HotRodsGame : Game
             EmitFishingPose(dyn);
             _fishing.EmitLine(dyn, new Vector3(-1.88f, 1.75f, 1.67f));
             _fishing.EmitBobber(dyn);
+            EmitFightingFish(dyn);
         }
 
         // water first, then the static world over it
@@ -545,6 +547,31 @@ public class HotRodsGame : Game
             DrawConsole();
         base.Draw(gameTime);
     }
+
+    private void EmitFightingFish(List<VertexPositionColor> dyn)
+    {
+        if (_fishing.Pending is not { } sp)
+            return;
+        float t = 0f;
+        if (_fishing.Current == FishingSim.Phase.Reeling)
+        {
+            // thrash at the bobber
+            float wig = MathF.Sin(FishingSim.Clock * 6.5f);
+            _fish.Emit(dyn, sp, _fishing.Bobber + new Vector3(0f, 0.05f, 0f),
+                       wig * 0.9f, FishScale());
+        }
+        else if (_fishing.Current == FishingSim.Phase.Card)
+        {
+            t = Math.Clamp(_fishing.CardT / 2.6f, 0f, 1f);
+            var from = _fishing.Bobber + new Vector3(0f, 0.10f, 0f);
+            var to = new Vector3(-3.03f, 1.35f, 1.57f);
+            var pos = Vector3.Lerp(from, to, t) + Vector3.Up * MathF.Sin(t * MathF.PI) * 1.4f;
+            _fish.Emit(dyn, sp, pos, -1.25f, FishScale());
+        }
+    }
+
+    private float FishScale() =>
+        Math.Clamp(0.35f + _fishing.CaughtKg * 0.22f, 0.35f, 1.7f);
 
     private void DrawCatchCard()
     {

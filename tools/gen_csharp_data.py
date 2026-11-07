@@ -16,7 +16,7 @@ out.append("namespace HotRodsSharp;")
 out.append("")
 out.append("public sealed record FishSpec(string Id, string Name, int Spot,")
 out.append("        string Rarity, float KgMin, float KgMax, float UsdKg,")
-out.append("        Color Body);")
+out.append("        Color Body, string Shape);")
 out.append("")
 out.append("public sealed record Strain(string Id, string Name, int Area, int Tier,")
 out.append("        int GateMin, int GateMax, int Potency, float Luck, float Duration,")
@@ -43,10 +43,11 @@ def color(d, key, fallback):
 
 for sp in list(data.SPECIES) + list(data.HIDDEN_FISH) + list(data.SHINY_FISH):
     kg = sp["kg"]
-    out.append("        new(\"%s\", \"%s\", %d, \"%s\", %sf, %sf, %sf, %s),"
+    out.append("        new(\"%s\", \"%s\", %d, \"%s\", %sf, %sf, %sf, %s, \"%s\"),"
                % (sp["id"], sp["name"], sp.get("spot", 0), sp["rarity"],
                   kg[0], kg[1], sp.get("usd_kg", 3.0),
-                  color(sp, "body", "new Color(140, 150, 140)")))
+                  color(sp, "body", "new Color(140, 150, 140)"),
+                  sp.get("shape", "torpedo")))
 
 out.append("    };")
 out.append("")

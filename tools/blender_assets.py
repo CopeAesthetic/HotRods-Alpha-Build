@@ -257,6 +257,9 @@ def main():
     export(crate("bucket", 0.5, 0.36, 0.5, taper=0.82), "bucket")
     export(shack(), "shack")
     export(fisherman(), "fisherman")
+    for _shape in ("round", "torpedo", "trout", "cat", "gar", "eel",
+                   "sturgeon", "minnow", "paddle"):
+        export(fish_asset(_shape), "fish_" + _shape)
     for _name, _ob in smokers().items():
         export(_ob, "smoker_" + _name)
     export(dock_post(), "dock_post")
@@ -399,6 +402,113 @@ def fisherman():
     return ob
 
 
+def _fish_body(shape):
+    """Profile parameters per shape: (length, depth, width, depth curve).
+    Authored nose at +x, tail at -x, game-style Y up."""
+    import math as _m
+    P = {
+        "round":    (1.00, 0.62, 0.30, lambda t: _m.sin(_m.pi * t) ** 0.85),
+        "torpedo":  (1.30, 0.44, 0.22, lambda t: _m.sin(_m.pi * t)),
+        "trout":    (1.15, 0.48, 0.20, lambda t: _m.sin(_m.pi * t) ** 0.9),
+        "cat":      (1.10, 0.34, 0.26, lambda t: 1.0 - (2 * t - 1) ** 6),
+        "gar":      (1.90, 0.16, 0.10, lambda t: _m.sin(_m.pi * t) ** 0.5),
+        "eel":      (2.10, 0.12, 0.09, lambda t: 1.0 - (2 * t - 1) ** 4),
+        "sturgeon": (1.80, 0.26, 0.16, lambda t: _m.sin(_m.pi * t) ** 0.8),
+        "minnow":   (0.80, 0.26, 0.12, lambda t: _m.sin(_m.pi * t)),
+        "paddle":   (1.60, 0.30, 0.16, lambda t: _m.sin(_m.pi * t) ** 0.8),
+    }
+    return P[shape]
+
+
+def fish_asset(shape):
+    """A low-poly fish for one silhouette family, materials: body, belly,
+    fin, eye. Species colours are applied at load time."""
+    import math as _m
+    L, D, W, prof = _fish_body(shape)
+    rings = 6
+    v, f, fm = [], [], []
+    ring_pts = []                      # (x, half-height, half-width)
+    for i in range(rings):
+        t = i / (rings - 1)
+        x = L / 2 - t * L              # nose at +x, tail at -x
+        h = D / 2 * prof(t)
+        w = W / 2 * prof(t) * (1.0 if shape not in ("cat", "eel") else 1.15)
+        ring_pts.append((x, h, w))
+    base = len(v)
+    for (x, h, w) in ring_pts:        # 6 points per ring around the X axis
+        for k in range(6):
+            ang = _m.tau * k / 6
+            v.append((x, h * _m.cos(ang), w * _m.sin(ang)))
+    for i in range(rings - 1):
+        for k in range(6):
+            j = (k + 1) % 6
+            a = base + i * 6 + k
+            b = base + i * 6 + j
+            c2 = base + (i + 1) * 6 + j
+            d2 = base + (i + 1) * 6 + k
+            # top four panels = body, bottom two = belly
+            mat = "fish_belly" if k >= 4 else "fish_body"
+            f.append((a, b, c2, d2))
+            fm.append(mat)
+    # nose cap
+    f.append(tuple(base + k for k in range(6)))
+    fm.append("fish_body")
+    # tail: a V at the rear
+    tx = -L / 2
+    v.append((tx, 0.0, 0.0))
+    v.append((tx - 0.16, D * 0.42, 0.0))
+    v.append((tx - 0.16, -D * 0.42, 0.0))
+    t0 = len(v) - 3
+    f += [(t0, t0 + 1, t0 + 2), (t0 + 2, t0 + 1, t0)]
+    fm += ["fish_fin", "fish_fin"]
+    # dorsal fin ridge
+    if shape not in ("eel",):
+        dx = (ring_pts[2][0] + ring_pts[3][0]) / 2
+        fh = D * (0.55 if shape == "round" else 0.45)
+        d0 = len(v)
+        v.append((dx - 0.10, D / 2 * 0.8, 0.0))
+        v.append((dx + 0.10, D / 2 * 0.8, 0.0))
+        v.append((dx, D / 2 * 0.8 + fh, 0.0))
+        f += [(d0, d0 + 1, d0 + 2), (d0 + 2, d0 + 1, d0)]
+        fm += ["fish_fin", "fish_fin"]
+    # pectoral fins
+    px = ring_pts[1][0]
+    p0 = len(v)
+    v.append((px, 0.0, W / 2))
+    v.append((px - 0.14, -D * 0.12, W * 0.75))
+    v.append((px + 0.06, -D * 0.05, W * 0.6))
+    f += [(p0, p0 + 1, p0 + 2), (p0 + 2, p0 + 1, p0)]
+    fm += ["fish_fin", "fish_fin"]
+    # eyes
+    ex = L / 2 - 0.10
+    v.append((ex, D * 0.22, W * 0.75))
+    v.append((ex, D * 0.22, -W * 0.75))
+    e0 = len(v) - 2
+    for k in range(6):
+        ang = _m.tau * k / 6
+        v.append((ex + _m.cos(ang) * 0.045, D * 0.22 + _m.sin(ang) * 0.045, W * 0.75))
+    for k in range(6):
+        f.append((e0, e0 + 2 + k, e0 + 2 + (k + 1) % 6))
+        fm.append("fish_eye")
+    for k in range(6):
+        ang = _m.tau * k / 6
+        v.append((ex + _m.cos(ang) * 0.045, D * 0.22 + _m.sin(ang) * 0.045, -W * 0.75))
+    for k in range(6):
+        f.append((e0 + 1, e0 + 8 + k, e0 + 8 + (k + 1) % 6))
+        fm.append("fish_eye")
+
+    ob = mesh_from("fish_" + shape, v, f)
+    for name, rgb in (("fish_body", (120, 150, 120)), ("fish_belly", (200, 190, 150)),
+                      ("fish_fin", (90, 110, 90)), ("fish_eye", (20, 20, 20))):
+        m = bpy.data.materials.new(name)
+        m.diffuse_color = (rgb[0] / 255.0, rgb[1] / 255.0, rgb[2] / 255.0, 1.0)
+        ob.data.materials.append(m)
+    for poly, name in zip(ob.data.polygons, fm):
+        poly.material_index = {"fish_body": 0, "fish_belly": 1, "fish_fin": 2, "fish_eye": 3}[name]
+    return ob
+
+
 if __name__ == "__main__":
     main()
+
 

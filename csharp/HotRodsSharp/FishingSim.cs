@@ -27,6 +27,7 @@ public sealed class FishingSim
     private Vector3 _start, _target;
     private float _flyT, _waitT;
     private FishSpec? _pending;
+    public FishSpec? Pending => _pending;
     private float _angle, _progress, _strikeCd;
     private float _bluePos, _greenPos;
     private const float BlueHalf = 0.10f, GreenHalf = 0.28f;
@@ -36,6 +37,7 @@ public sealed class FishingSim
     public FishingSim(GameState state) => _state = state;
 
     public float NeedleAngle => _angle;
+    public static float Clock => _time;
     public static void TickTime(float dt) => _time += dt;
 
     public void Update(float dt, KeyboardState kb, Vector3 rodTip, Vector3 castDir)
