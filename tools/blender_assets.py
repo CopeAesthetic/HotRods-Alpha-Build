@@ -298,6 +298,14 @@ def fisherman():
             j = (i + 1) % sides
             f.append((base + 2 * i, base + 2 * j, base + 2 * j + 1, base + 2 * i + 1))
             fm.append(name)
+        # end caps: fan to the axis points so the figure reads solid
+        v.append(a)
+        v.append(b)
+        for i in range(sides):
+            f.append((base + 2 * i, base + 2 * ((i + 1) % sides), len(v) - 2))
+            fm.append(name)
+            f.append((base + 2 * ((i + 1) % sides) + 1, base + 2 * i + 1, len(v) - 1))
+            fm.append(name)
 
     def box(c, w, h, d, name):
         x0, y0, z0 = c[0] - w / 2, c[1] - h / 2, c[2] - d / 2

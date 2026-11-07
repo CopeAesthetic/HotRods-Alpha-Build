@@ -205,6 +205,7 @@ public class HotRodsGame : Game
             FogStart = 14f,
             FogEnd = 42f,
         };
+        _effect.GraphicsDevice.RasterizerState = RasterizerState.CullNone;
         _effectCullNone = new BasicEffect(GraphicsDevice)
         {
             VertexColorEnabled = true,
@@ -214,6 +215,7 @@ public class HotRodsGame : Game
             FogStart = 14f,
             FogEnd = 42f,
         };
+        _effectCullNone.GraphicsDevice.RasterizerState = RasterizerState.CullNone;
 
         BuildWorld();
         _batch = new SpriteBatch(GraphicsDevice);
@@ -323,7 +325,7 @@ public class HotRodsGame : Game
     private void EmitFishingPose(List<VertexPositionColor> v)
     {
         var hand = new Vector3(-3.03f, 1.00f, 1.57f);
-        var tip = new Vector3(-2.70f, 1.70f, -0.40f);
+        var tip = hand + new Vector3(1.15f, 0.75f, 0.10f);   // along the face
         Prims.AddSegment(v, new Vector3(-3.23f, 1.19f, 1.56f),
                          new Vector3(-3.12f, 1.06f, 1.62f), 0.065f, Vest);
         Prims.AddSegment(v, new Vector3(-3.12f, 1.06f, 1.62f), hand, 0.055f, Skin);
@@ -452,8 +454,8 @@ public class HotRodsGame : Game
         _smoking.Update(dt);
         FishingSim.TickTime(dt);
         if (!_smoking.Active)
-            _fishing.Update(dt, kb, new Vector3(-2.70f, 1.70f, -0.40f),
-                            new Vector3(0.18f, -0.05f, -0.98f));
+            _fishing.Update(dt, kb, new Vector3(-1.88f, 1.75f, 1.67f),
+                            Vector3.Normalize(new Vector3(1.0f, -0.1f, 0.05f)));
         base.Update(gameTime);
     }
 
@@ -510,7 +512,7 @@ public class HotRodsGame : Game
         else
         {
             EmitFishingPose(dyn);
-            _fishing.EmitLine(dyn, new Vector3(-2.70f, 1.70f, -0.40f));
+            _fishing.EmitLine(dyn, new Vector3(-1.88f, 1.75f, 1.67f));
             _fishing.EmitBobber(dyn);
         }
 

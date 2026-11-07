@@ -63,6 +63,8 @@ public static class Prims
         {
             int j = (i + 1) % sides;
             AddQuad(v, ringA[i], ringA[j], ringB[j], ringB[i], col);
+            AddTri(v, a, ringA[i], ringA[j], col);   // solid end caps
+            AddTri(v, b, ringB[j], ringB[i], col);
         }
     }
 
