@@ -21,6 +21,10 @@ public class HotRodsGame : Game
     private readonly FishRender _fish = new();
     private bool _eHeld, _qHeld, _xHeld, _lbHeld, _rbHeld;
     private bool _shopOpen, _bHeld, _enterHeld, _upHeld, _downHeld, _leftHeld, _rightHeld;
+    private bool _journalOpen, _zaaOpen, _paused, _jHeld, _zHeld, _escHeld;
+    private int _journalSel, _zaaSel;
+    private string _uiMsg = "";
+    private float _uiMsgT;
     private int _shopTab, _shopSel;
     private string _shopMsg = "";
     private float _shopMsgT;
@@ -414,6 +418,32 @@ public class HotRodsGame : Game
             base.Update(gameTime);
             return;
         }
+        if (kb.IsKeyDown(Keys.J) && !_jHeld)
+        {
+            _journalOpen = !_journalOpen;
+            _journalSel = 0;
+            _jHeld = true;
+        }
+        if (kb.IsKeyUp(Keys.J)) _jHeld = false;
+        if (kb.IsKeyDown(Keys.Z) && !_zHeld)
+        {
+            _zaaOpen = !_zaaOpen;
+            _zaaSel = 0;
+            _zHeld = true;
+        }
+        if (kb.IsKeyUp(Keys.Z)) _zHeld = false;
+        if (kb.IsKeyDown(Keys.Escape) && !_escHeld)
+        {
+            _paused = !_paused;
+            _escHeld = true;
+        }
+        if (kb.IsKeyUp(Keys.Escape)) _escHeld = false;
+        if (_journalOpen || _zaaOpen || _paused)
+        {
+            UpdateOverlays(dt, kb);
+            base.Update(gameTime);
+            return;
+        }
         if (kb.IsKeyDown(Keys.Tab) && !_tabHeld)
         {
             _mode = (_mode + 1) % 3;
@@ -590,6 +620,12 @@ public class HotRodsGame : Game
         _batch.End();
         if (_shopOpen)
             DrawShop();
+        if (_journalOpen)
+            DrawJournal();
+        if (_zaaOpen)
+            DrawZaa();
+        if (_paused)
+            DrawPause();
         if (_consoleOpen)
             DrawConsole();
         base.Draw(gameTime);
@@ -825,10 +861,160 @@ public class HotRodsGame : Game
                    new Color(246, 170, 120));
         if (_sellFlash > 0f)
             _font.Draw(_batch, "SOLD!", new Vector2(w - 100, 62), 2, new Color(240, 214, 120));
-        _font.Draw(_batch, "SPACE CAST  E SMOKE  X SELL  [ ] WEED  Q PIECE",
+        _font.Draw(_batch, "SPACE CAST  E SMOKE  B SHOP  J LOG  Z JARS  ESC MENU",
                    new Vector2(14, h - 24), 2, new Color(150, 160, 190));
         _batch.End();
         _sellFlash -= 0.016f;
+    }
+
+    private void UpdateOverlays(float dt, KeyboardState kb)
+    {
+        _uiMsgT -= dt;
+        void Edge(ref bool held, Keys k, Action a)
+        {
+            if (kb.IsKeyDown(k) && !held) { a(); held = true; }
+            if (kb.IsKeyUp(k)) held = false;
+        }
+        int max = _journalOpen ? GameData.Species.Length
+                : _zaaOpen ? GameData.Strains.Length : 0;
+        if (_journalOpen || _zaaOpen)
+        {
+            Edge(ref _upHeld, Keys.Up, () =>
+            {
+                if (_journalOpen) _journalSel = Math.Max(0, _journalSel - 1);
+                else _zaaSel = Math.Max(0, _zaaSel - 1);
+            });
+            Edge(ref _downHeld, Keys.Down, () =>
+            {
+                if (_journalOpen) _journalSel = Math.Min(max - 1, _journalSel + 1);
+                else _zaaSel = Math.Min(max - 1, _zaaSel + 1);
+            });
+        }
+        if (_zaaOpen)
+            Edge(ref _enterHeld, Keys.Enter, PickStrain);
+        if (_paused)
+        {
+            Edge(ref _enterHeld, Keys.Enter, () => Exit());
+            if (kb.IsKeyDown(Keys.S) && !_leftHeld)
+            {
+                _state.Save();
+                _uiMsg = "saved";
+                _uiMsgT = 2f;
+                _leftHeld = true;
+            }
+            if (kb.IsKeyUp(Keys.S)) _leftHeld = false;
+        }
+
+        void PickStrain()
+        {
+            var st = GameData.Strains[_zaaSel];
+            if (_state.JarOpen(st))
+            {
+                _state.Strain = st.Id;
+                _state.StrainIndex = _zaaSel;
+                _state.Save();
+                _uiMsg = "smoking " + st.Name;
+                _uiMsgT = 2f;
+            }
+            else
+            {
+                _uiMsg = "jar locked - sell a tier " + st.Tier + " fish";
+                _uiMsgT = 2f;
+            }
+        }
+    }
+
+    private static Color RarityCol(string r) => r switch
+    {
+        "uncommon" => new Color(130, 210, 130),
+        "rare" => new Color(110, 160, 235),
+        "epic" => new Color(196, 130, 235),
+        "legendary" => new Color(240, 200, 90),
+        _ => new Color(160, 166, 180),
+    };
+
+    private void DrawJournal()
+    {
+        int w = GraphicsDevice.Viewport.Width;
+        int h = GraphicsDevice.Viewport.Height;
+        _batch.Begin(samplerState: SamplerState.PointClamp);
+        _batch.Draw(_pixel, new Rectangle(0, 0, w, h), new Color(10, 14, 26, 235));
+        int caught = _state.Species.Count;
+        _font.Draw(_batch, "JOURNAL  -  " + caught + "/" + GameData.Species.Length + " species",
+                   new Vector2(40, 30), 3, new Color(238, 232, 212));
+        int y = 80;
+        for (int i = 0; i < GameData.Species.Length; i++)
+        {
+            var sp = GameData.Species[i];
+            bool have = _state.Species.ContainsKey(sp.Id);
+            var col = have ? RarityCol(sp.Rarity) : new Color(96, 102, 124);
+            string line = (i == _journalSel ? ">" : " ") + " "
+                + (have ? sp.Name.ToUpper() : "???")
+                + "  (" + sp.Rarity.ToUpper() + ")";
+            _font.Draw(_batch, line, new Vector2(60, y), 2, col);
+            if (have)
+                _font.Draw(_batch, "x" + _state.Species[sp.Id], new Vector2(w - 160, y), 2, col);
+            y += 24;
+            if (y > h - 80)
+                break;
+        }
+        if (_uiMsgT > 0f)
+            _font.Draw(_batch, _uiMsg, new Vector2(40, h - 60), 2, new Color(150, 216, 160));
+        _font.Draw(_batch, "J CLOSE", new Vector2(40, h - 30), 2, new Color(130, 140, 170));
+        _batch.End();
+    }
+
+    private void DrawZaa()
+    {
+        int w = GraphicsDevice.Viewport.Width;
+        int h = GraphicsDevice.Viewport.Height;
+        _batch.Begin(samplerState: SamplerState.PointClamp);
+        _batch.Draw(_pixel, new Rectangle(0, 0, w, h), new Color(12, 18, 22, 235));
+        _font.Draw(_batch, "SAL'S JARS  -  pick your smoke", new Vector2(40, 30), 3,
+                   new Color(150, 216, 160));
+        int y = 80;
+        for (int i = 0; i < GameData.Strains.Length; i++)
+        {
+            var st = GameData.Strains[i];
+            bool open = _state.JarOpen(st);
+            bool current = _state.Strain == st.Id;
+            var col = current ? new Color(255, 240, 140)
+                    : open ? new Color(150, 216, 160) : new Color(96, 102, 124);
+            string line = (i == _zaaSel ? ">" : " ") + " "
+                + (open || current ? st.Name.ToUpper() : "???  (TIER " + st.Tier + ")");
+            _font.Draw(_batch, line, new Vector2(60, y), 2, col);
+            if (open)
+                _font.Draw(_batch, "P" + st.Potency + "  L+" + (int)(st.Luck * 100),
+                           new Vector2(w - 200, y), 2, col);
+            y += 24;
+            if (y > h - 80)
+                break;
+        }
+        if (_uiMsgT > 0f)
+            _font.Draw(_batch, _uiMsg, new Vector2(40, h - 60), 2, new Color(150, 216, 160));
+        _font.Draw(_batch, "UP/DOWN PICK  ENTER LIGHT UP  Z CLOSE", new Vector2(40, h - 30),
+                   2, new Color(130, 140, 170));
+        _batch.End();
+    }
+
+    private void DrawPause()
+    {
+        int w = GraphicsDevice.Viewport.Width;
+        int h = GraphicsDevice.Viewport.Height;
+        _batch.Begin(samplerState: SamplerState.PointClamp);
+        _batch.Draw(_pixel, new Rectangle(0, 0, w, h), new Color(6, 8, 16, 210));
+        _font.Draw(_batch, "PAUSED", new Vector2(w / 2f - 40, h / 2f - 70), 4,
+                   new Color(238, 232, 212));
+        _font.Draw(_batch, "S  SAVE", new Vector2(w / 2f - 70, h / 2f - 10), 2,
+                   new Color(170, 180, 210));
+        _font.Draw(_batch, "ENTER  QUIT", new Vector2(w / 2f - 70, h / 2f + 16), 2,
+                   new Color(170, 180, 210));
+        _font.Draw(_batch, "ESC  RESUME", new Vector2(w / 2f - 70, h / 2f + 42), 2,
+                   new Color(170, 180, 210));
+        if (_uiMsgT > 0f)
+            _font.Draw(_batch, _uiMsg, new Vector2(w / 2f - 60, h / 2f + 80), 2,
+                       new Color(150, 216, 160));
+        _batch.End();
     }
 
     private void UpdateShop(float dt, KeyboardState kb)
