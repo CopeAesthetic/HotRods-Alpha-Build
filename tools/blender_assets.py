@@ -57,21 +57,26 @@ def export(ob, name):
 
 
 def tree(name="tree", height=3.4, spread=1.5):
-    """Low-poly conifer: a trunk plus three stacked skirted cones."""
+    """Low-poly conifer: a trunk plus four stacked skirted cones."""
+    import math as _m
     v = [(-0.12, 0.0, -0.12), (0.12, 0.0, -0.12), (0.12, 0.0, 0.12), (-0.12, 0.0, 0.12)]
     v += [(0.12, height * 0.45, 0.12), (0.12, height * 0.45, -0.12),
           (-0.12, height * 0.45, -0.12), (-0.12, height * 0.45, 0.12)]
     f = [(0, 1, 2, 3), (4, 5, 1, 0), (5, 6, 2, 1), (6, 7, 3, 2), (7, 4, 0, 3)]
     base = len(v)
-    for tier, (y, r) in enumerate(((height * 0.35, spread),
-                                   (height * 0.62, spread * 0.72),
-                                   (height * 0.84, spread * 0.45))):
-        ring = [(r, y, 0.0), (0.0, y, r), (-r, y, 0.0), (0.0, y, -r)]
-        apex = (0.0, y + height * 0.30, 0.0)
+    for tier, (y, r) in enumerate(((height * 0.30, spread),
+                                   (height * 0.52, spread * 0.78),
+                                   (height * 0.72, spread * 0.55),
+                                   (height * 0.88, spread * 0.32))):
+        ring = []
+        for k in range(8):
+            a = _m.tau * k / 8
+            ring.append((r * _m.cos(a), y, r * _m.sin(a)))
+        apex = (0.0, y + height * 0.26, 0.0)
         v += ring + [apex]
-        b = base + tier * 5
-        f += [(b, b + 1, b + 4), (b + 1, b + 2, b + 4),
-              (b + 2, b + 3, b + 4), (b + 3, b, b + 4)]
+        b = base + tier * 9
+        for k in range(8):
+            f.append((b + k, b + (k + 1) % 8, b + 8))
     return mesh_from(name, v, f)
 
 
@@ -79,8 +84,8 @@ def reeds():
     """A clump of solid blades - prisms, so they read from any angle."""
     import math as _m
     v, f = [], []
-    for i in range(5):
-        a = _m.tau * i / 5
+    for i in range(7):
+        a = _m.tau * i / 7
         r = 0.10 + 0.06 * (i % 3)
         x, z = _m.cos(a) * r, _m.sin(a) * r
         h = 0.85 + 0.5 * ((i * 7) % 5) / 5.0
@@ -99,7 +104,7 @@ def lily():
     """Flat notched pad."""
     import math as _m
     v, f = [(0.0, 0.0, 0.0)], []
-    n = 9
+    n = 16
     for i in range(n):
         a = _m.tau * i / n + 0.22
         v.append((_m.cos(a) * 0.42, 0.0, _m.sin(a) * 0.42))
@@ -183,7 +188,7 @@ def lantern(name="lantern"):
     return mesh_from(name, v, f)
 
 
-def tube(name, r0, r1, h, sides=6):
+def tube(name, r0, r1, h, sides=10):
     """A capped frustum: the workhorse for pipes, papers and bong necks."""
     import math as _m
     v, f = [], []
@@ -373,22 +378,22 @@ def fisherman():
     mouth = mat("fisher_mouth", (88, 52, 38))
 
     # waders and boots dangling over the dock edge
-    seg((-3.18, 0.70, 1.38), (-2.97, 0.16, 1.28), 0.095, 5, wader)
-    seg((-2.97, 0.16, 1.28), (-2.92, 0.00, 1.26), 0.075, 5, boot)
-    seg((-3.18, 0.70, 1.72), (-2.90, 0.16, 1.66), 0.095, 5, wader)
-    seg((-2.90, 0.16, 1.66), (-2.85, 0.00, 1.64), 0.075, 5, boot)
+    seg((-3.18, 0.70, 1.38), (-2.97, 0.16, 1.28), 0.095, 9, wader)
+    seg((-2.97, 0.16, 1.28), (-2.92, 0.00, 1.26), 0.075, 9, boot)
+    seg((-3.18, 0.70, 1.72), (-2.90, 0.16, 1.66), 0.095, 9, wader)
+    seg((-2.90, 0.16, 1.66), (-2.85, 0.00, 1.64), 0.075, 9, boot)
     # torso: shirt under the padded vest
-    seg((-3.26, 0.66, 1.55), (-3.30, 1.06, 1.51), 0.150, 5, shirt)
-    seg((-3.30, 1.06, 1.51), (-3.34, 1.22, 1.50), 0.175, 5, vest)
+    seg((-3.26, 0.66, 1.55), (-3.30, 1.06, 1.51), 0.150, 9, shirt)
+    seg((-3.30, 1.06, 1.51), (-3.34, 1.22, 1.50), 0.175, 9, vest)
     # neck + collar + shoulder bar
-    disc((-3.335, 1.225, 1.495), 0.135, 8, vest)
-    seg((-3.33, 1.225, 1.495), (-3.32, 1.30, 1.49), 0.100, 5, skin)
-    seg((-3.44, 1.19, 1.455), (-3.22, 1.19, 1.57), 0.085, 5, vest)
+    disc((-3.335, 1.225, 1.495), 0.135, 14, vest)
+    seg((-3.33, 1.225, 1.495), (-3.32, 1.30, 1.49), 0.100, 9, skin)
+    seg((-3.44, 1.19, 1.455), (-3.22, 1.19, 1.57), 0.085, 9, vest)
     # head + hat + beard + face plate
-    seg((-3.32, 1.30, 1.49), (-3.31, 1.45, 1.48), 0.115, 6, skin)
-    disc((-3.31, 1.44, 1.48), 0.24, 8, hat)
-    cone((-3.31, 1.62, 1.48), (-3.31, 1.44, 1.48), 0.145, 7, hat)
-    seg((-3.30, 1.26, 1.545), (-3.30, 1.33, 1.545), 0.10, 5, beard)
+    seg((-3.32, 1.30, 1.49), (-3.31, 1.45, 1.48), 0.115, 10, skin)
+    disc((-3.31, 1.44, 1.48), 0.24, 16, hat)
+    cone((-3.31, 1.62, 1.48), (-3.31, 1.44, 1.48), 0.145, 12, hat)
+    seg((-3.30, 1.26, 1.545), (-3.30, 1.33, 1.545), 0.10, 9, beard)
     box((-3.305, 1.35, 1.545), 0.05, 0.15, 0.17, face)
     box((-3.275, 1.385, 1.49), 0.02, 0.035, 0.04, dark)
     box((-3.275, 1.385, 1.60), 0.02, 0.035, 0.04, dark)
@@ -428,7 +433,7 @@ def fish_asset(shape):
     fin, eye. Species colours are applied at load time."""
     import math as _m
     L, D, W, prof = _fish_body(shape)
-    rings = 6
+    rings = 8
     v, f, fm = [], [], []
     ring_pts = []                      # (x, half-height, half-width)
     for i in range(rings):
@@ -439,22 +444,22 @@ def fish_asset(shape):
         ring_pts.append((x, h, w))
     base = len(v)
     for (x, h, w) in ring_pts:        # 6 points per ring around the X axis
-        for k in range(6):
-            ang = _m.tau * k / 6
+        for k in range(10):
+            ang = _m.tau * k / 10
             v.append((x, h * _m.cos(ang), w * _m.sin(ang)))
     for i in range(rings - 1):
-        for k in range(6):
-            j = (k + 1) % 6
-            a = base + i * 6 + k
-            b = base + i * 6 + j
-            c2 = base + (i + 1) * 6 + j
-            d2 = base + (i + 1) * 6 + k
-            # top four panels = body, bottom two = belly
-            mat = "fish_belly" if k >= 4 else "fish_body"
+        for k in range(10):
+            j = (k + 1) % 10
+            a = base + i * 10 + k
+            b = base + i * 10 + j
+            c2 = base + (i + 1) * 10 + j
+            d2 = base + (i + 1) * 10 + k
+            # top seven panels = body, bottom three = belly
+            mat = "fish_belly" if k >= 7 else "fish_body"
             f.append((a, b, c2, d2))
             fm.append(mat)
     # nose cap
-    f.append(tuple(base + k for k in range(6)))
+    f.append(tuple(base + k for k in range(10)))
     fm.append("fish_body")
     # tail: a V at the rear
     tx = -L / 2
@@ -487,17 +492,17 @@ def fish_asset(shape):
     v.append((ex, D * 0.22, W * 0.75))
     v.append((ex, D * 0.22, -W * 0.75))
     e0 = len(v) - 2
-    for k in range(6):
-        ang = _m.tau * k / 6
+    for k in range(8):
+        ang = _m.tau * k / 8
         v.append((ex + _m.cos(ang) * 0.045, D * 0.22 + _m.sin(ang) * 0.045, W * 0.75))
-    for k in range(6):
-        f.append((e0, e0 + 2 + k, e0 + 2 + (k + 1) % 6))
+    for k in range(8):
+        f.append((e0, e0 + 2 + k, e0 + 2 + (k + 1) % 8))
         fm.append("fish_eye")
-    for k in range(6):
-        ang = _m.tau * k / 6
+    for k in range(8):
+        ang = _m.tau * k / 8
         v.append((ex + _m.cos(ang) * 0.045, D * 0.22 + _m.sin(ang) * 0.045, -W * 0.75))
-    for k in range(6):
-        f.append((e0 + 1, e0 + 8 + k, e0 + 8 + (k + 1) % 6))
+    for k in range(8):
+        f.append((e0 + 1, e0 + 10 + k, e0 + 10 + (k + 1) % 8))
         fm.append("fish_eye")
 
     ob = mesh_from("fish_" + shape, v, f)
@@ -517,19 +522,23 @@ def rock(name, r0, r1, seed):
     import random as _r
     rng = _r.Random(seed)
     v = [(0.0, r1, 0.0), (0.0, -r1, 0.0)]
-    for i in range(5):
-        ang = 3.14159 * 2 * i / 5
-        v.append((r0 * _m.cos(ang), rng.uniform(-0.2, 0.2) * r1,
-                  r0 * _m.sin(ang)))
+    ring0, ring1 = [], []
+    for i in range(7):
+        ang = _m.tau * i / 7
+        off = rng.uniform(-0.15, 0.15) * r0
+        ring0.append((r0 * _m.cos(ang) + off, rng.uniform(-0.25, 0.25) * r1,
+                      r0 * _m.sin(ang) + off))
+        ring1.append(((r0 * 0.7) * _m.cos(ang) + off * 0.7,
+                      rng.uniform(0.25, 0.55) * r1, (r0 * 0.7) * _m.sin(ang) + off * 0.7))
+    v += ring0 + ring1
     f = []
-    # top fan, bottom fan, side band
-    for i in range(5):
-        j = (i + 1) % 5
-        f.append((0, 2 + i, 2 + j))
-        f.append((1, 2 + j, 2 + i))
-    for i in range(5):
-        j = (i + 1) % 5
-        f.append((2 + i, 2 + j, 2 + j + 5 if False else 2 + j))
+    for i in range(7):
+        j = (i + 1) % 7
+        f.append((0, 2 + i, 2 + j))                    # top fan
+        f.append((2 + j, 2 + i, 2 + 7 + j))            # upper band
+        f.append((2 + i, 2 + 7 + i, 2 + 7 + j))
+        f.append((1, 2 + 7 + j, 2 + 7 + i))            # lower band
+        f.append((1, 2 + j, 2 + 7 + j))
     return mesh_from(name, v, f)
 
 
@@ -537,17 +546,17 @@ def bush():
     import math as _m
     """Three stacked blobs on a short stem."""
     v, f = [], []
-    for cy, cr in ((0.35, 0.34), (0.52, 0.26), (0.66, 0.17)):
+    for cy, cr in ((0.30, 0.36), (0.48, 0.30), (0.62, 0.22), (0.73, 0.13)):
         ring = []
         base = len(v)
-        for i in range(6):
-            ang = _m.tau * i / 6
+        for i in range(9):
+            ang = _m.tau * i / 9
             ring.append((_m.cos(ang) * cr, cy, _m.sin(ang) * cr))
         v += ring + [(0.0, cy + cr * 0.9, 0.0), (0.0, cy - cr * 0.7, 0.0)]
-        for i in range(6):
-            j = (i + 1) % 6
-            f.append((base + i, base + j, base + 6))
-            f.append((base + j, base + i, base + 7))
+        for i in range(9):
+            j = (i + 1) % 9
+            f.append((base + i, base + j, base + 9))
+            f.append((base + j, base + i, base + 10))
     v += [(0.0, 0.0, 0.0), (0.0, 0.36, 0.0)]
     b = len(v) - 2
     f.append((b, b + 1, b + 1))
