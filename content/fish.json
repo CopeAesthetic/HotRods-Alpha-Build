@@ -1,0 +1,1301 @@
+{
+  "species": [
+    {
+      "id": "bluegill",
+      "name": "Bonggill",
+      "sci": "Lepomis macrochirus",
+      "spot": 0,
+      "rarity": "common",
+      "kg": [
+        0.08,
+        0.55
+      ],
+      "usd_kg": 3.6,
+      "diff": 0.14,
+      "shape": "round",
+      "pattern": "bands",
+      "body": [
+        118,
+        146,
+        120
+      ],
+      "fin": [
+        86,
+        112,
+        92
+      ],
+      "accent": [
+        66,
+        86,
+        74
+      ],
+      "flavor": "The gateway fish of every childhood. Fights twice its size and loses to a worm.",
+      "hint": "Warm shallows. Eats almost anything you offer."
+    },
+    {
+      "id": "pumpkinseed",
+      "name": "Puffkinseed",
+      "sci": "Lepomis gibbosus",
+      "spot": 0,
+      "rarity": "common",
+      "kg": [
+        0.05,
+        0.3
+      ],
+      "usd_kg": 4.0,
+      "diff": 0.12,
+      "shape": "round",
+      "pattern": "spots",
+      "body": [
+        150,
+        158,
+        96
+      ],
+      "fin": [
+        118,
+        128,
+        78
+      ],
+      "accent": [
+        238,
+        140,
+        72
+      ],
+      "flavor": "A sunfish with better branding. That red patch behind the gill is not, in fact, an ear.",
+      "hint": "Golden-olive, orange belly, red ear. Very proud of itself."
+    },
+    {
+      "id": "green_sunfish",
+      "name": "Green Sunbaked",
+      "sci": "Lepomis cyanellus",
+      "spot": 0,
+      "rarity": "common",
+      "kg": [
+        0.08,
+        0.45
+      ],
+      "usd_kg": 3.2,
+      "diff": 0.16,
+      "shape": "round",
+      "pattern": "spots",
+      "body": [
+        106,
+        130,
+        86
+      ],
+      "fin": [
+        78,
+        98,
+        66
+      ],
+      "accent": [
+        150,
+        196,
+        178
+      ],
+      "flavor": "A mouth big enough to eat things it has no business eating, including your bait, your hook and your patience.",
+      "hint": "Olive-green with electric blue speckles. Mean little face."
+    },
+    {
+      "id": "yellow_bullhead",
+      "name": "Yellow Bowlhead",
+      "sci": "Ameiurus natalis",
+      "spot": 0,
+      "rarity": "uncommon",
+      "kg": [
+        0.2,
+        1.4
+      ],
+      "usd_kg": 3.8,
+      "diff": 0.3,
+      "shape": "cat",
+      "pattern": "none",
+      "body": [
+        112,
+        98,
+        66
+      ],
+      "fin": [
+        84,
+        72,
+        50
+      ],
+      "accent": [
+        186,
+        166,
+        120
+      ],
+      "flavor": "Whiskers, no dignity, and a flavour that has fed a hundred thousand fish fries.",
+      "hint": "Something with whiskers just bumped the line."
+    },
+    {
+      "id": "largemouth_bass",
+      "name": "Largemouth Blazed",
+      "sci": "Micropterus salmoides",
+      "spot": 0,
+      "rarity": "uncommon",
+      "kg": [
+        0.4,
+        3.0
+      ],
+      "usd_kg": 4.6,
+      "diff": 0.4,
+      "shape": "round",
+      "pattern": "lateral",
+      "body": [
+        106,
+        138,
+        88
+      ],
+      "fin": [
+        76,
+        102,
+        64
+      ],
+      "accent": [
+        46,
+        66,
+        48
+      ],
+      "flavor": "Everyone's favourite. Named for a mouth that is, frankly, a lot.",
+      "hint": "Green, wide-mouthed, and sulking under the lily pads."
+    },
+    {
+      "id": "common_carp",
+      "name": "Carp Diem",
+      "sci": "Cyprinus carpio",
+      "spot": 0,
+      "rarity": "rare",
+      "kg": [
+        1.5,
+        9.0
+      ],
+      "usd_kg": 2.2,
+      "diff": 0.52,
+      "shape": "torpedo",
+      "pattern": "scales",
+      "body": [
+        168,
+        140,
+        86
+      ],
+      "fin": [
+        128,
+        102,
+        66
+      ],
+      "accent": [
+        206,
+        182,
+        132
+      ],
+      "flavor": "A European import with excellent PR and terrible table manners. Will eat your bait, your float and the idea of fishing.",
+      "hint": "A bronze slab with barbels and opinions."
+    },
+    {
+      "id": "flathead_catfish",
+      "name": "Catatonic Catfish",
+      "sci": "Pylodictis olivaris",
+      "spot": 0,
+      "rarity": "epic",
+      "kg": [
+        4.0,
+        20.0
+      ],
+      "usd_kg": 6.0,
+      "diff": 0.68,
+      "shape": "cat",
+      "pattern": "spots",
+      "body": [
+        116,
+        98,
+        70
+      ],
+      "fin": [
+        86,
+        72,
+        52
+      ],
+      "accent": [
+        160,
+        136,
+        96
+      ],
+      "flavor": "The pond's apex predator. Has eaten things you would not believe, and one thing you would rather not.",
+      "hint": "Whatever is making that wake is not a bluegill."
+    },
+    {
+      "id": "golden_koi",
+      "name": "Golden Kief",
+      "sci": "Cyprinus rubrofuscus",
+      "spot": 0,
+      "rarity": "legendary",
+      "kg": [
+        1.0,
+        5.0
+      ],
+      "usd_kg": 45.0,
+      "diff": 0.8,
+      "shape": "round",
+      "pattern": "gradient",
+      "body": [
+        250,
+        190,
+        90
+      ],
+      "fin": [
+        255,
+        232,
+        180
+      ],
+      "accent": [
+        255,
+        250,
+        235
+      ],
+      "cond": "high",
+      "flavor": "Someone's ornamental pet, now feral, enormous and fabulous. Someone is still missing it.",
+      "hint": "A flash of gold in a pond that has no business holding it."
+    },
+    {
+      "id": "yellow_perch",
+      "name": "Mellow Perch",
+      "sci": "Perca flavescens",
+      "spot": 1,
+      "rarity": "common",
+      "kg": [
+        0.1,
+        0.55
+      ],
+      "usd_kg": 8.0,
+      "diff": 0.22,
+      "shape": "round",
+      "pattern": "bands",
+      "body": [
+        196,
+        186,
+        104
+      ],
+      "fin": [
+        226,
+        142,
+        60
+      ],
+      "accent": [
+        62,
+        70,
+        44
+      ],
+      "flavor": "Six dark bars, orange fins, and a chip on its shoulder the size of a fillet knife.",
+      "hint": "Yellow with dark bars, hanging around the weed edge."
+    },
+    {
+      "id": "black_crappie",
+      "name": "Black Hashpie",
+      "sci": "Pomoxis nigromaculatus",
+      "spot": 1,
+      "rarity": "common",
+      "kg": [
+        0.15,
+        0.8
+      ],
+      "usd_kg": 9.0,
+      "diff": 0.26,
+      "shape": "round",
+      "pattern": "spots",
+      "body": [
+        176,
+        186,
+        192
+      ],
+      "fin": [
+        140,
+        150,
+        162
+      ],
+      "accent": [
+        44,
+        48,
+        58
+      ],
+      "flavor": "Speckled, slab-sided and a genuine delight in a fryer. Says 'panfish' with its whole body.",
+      "hint": "Silver with black speckles, stacked up over structure."
+    },
+    {
+      "id": "rainbow_trout",
+      "name": "Rainbow Runtz",
+      "sci": "Oncorhynchus mykiss",
+      "spot": 1,
+      "rarity": "uncommon",
+      "kg": [
+        0.4,
+        2.8
+      ],
+      "usd_kg": 12.0,
+      "diff": 0.38,
+      "shape": "torpedo",
+      "pattern": "lateral",
+      "body": [
+        168,
+        180,
+        188
+      ],
+      "fin": [
+        148,
+        160,
+        172
+      ],
+      "accent": [
+        232,
+        138,
+        150
+      ],
+      "flavor": "The pink stripe is a warning to nobody. Stocked by the thousand, caught by the thousand, still beautiful.",
+      "hint": "A pink stripe and a lot of black spots, moving fast."
+    },
+    {
+      "id": "smallmouth_bass",
+      "name": "Smallmouth Blaze",
+      "sci": "Micropterus dolomieu",
+      "spot": 1,
+      "rarity": "uncommon",
+      "kg": [
+        0.4,
+        2.4
+      ],
+      "usd_kg": 9.5,
+      "diff": 0.42,
+      "shape": "torpedo",
+      "pattern": "bands",
+      "body": [
+        150,
+        132,
+        96
+      ],
+      "fin": [
+        116,
+        98,
+        70
+      ],
+      "accent": [
+        78,
+        64,
+        46
+      ],
+      "flavor": "Bronze, bad-tempered, and worth every cast. Fights like it has read your technique and disagrees.",
+      "hint": "Bronze with vertical bars, holding in the rocks."
+    },
+    {
+      "id": "northern_pike",
+      "name": "Northern Pipe",
+      "sci": "Esox lucius",
+      "spot": 1,
+      "rarity": "rare",
+      "kg": [
+        1.0,
+        7.0
+      ],
+      "usd_kg": 7.5,
+      "diff": 0.56,
+      "shape": "torpedo",
+      "pattern": "spots",
+      "body": [
+        108,
+        138,
+        84
+      ],
+      "fin": [
+        84,
+        110,
+        68
+      ],
+      "accent": [
+        198,
+        214,
+        152
+      ],
+      "flavor": "A freshwater barracuda with a duck's bill and a bad attitude. Has teeth where you do not expect teeth.",
+      "hint": "A long green shadow with light spots, sitting very still."
+    },
+    {
+      "id": "walleye",
+      "name": "Wally High",
+      "sci": "Sander vitreus",
+      "spot": 1,
+      "rarity": "rare",
+      "kg": [
+        0.5,
+        4.0
+      ],
+      "usd_kg": 15.0,
+      "diff": 0.5,
+      "shape": "torpedo",
+      "pattern": "none",
+      "body": [
+        178,
+        166,
+        120
+      ],
+      "fin": [
+        142,
+        130,
+        92
+      ],
+      "accent": [
+        240,
+        240,
+        228
+      ],
+      "cond": "night",
+      "flavor": "Nocturnal, glassy-eyed and delicious. Honestly unfair to the other fish.",
+      "hint": "Only after dark. Eyes that catch the dock light."
+    },
+    {
+      "id": "muskellunge",
+      "name": "Musky Munchies",
+      "sci": "Esox masquinongy",
+      "spot": 1,
+      "rarity": "epic",
+      "kg": [
+        4.0,
+        16.0
+      ],
+      "usd_kg": 8.0,
+      "diff": 0.74,
+      "shape": "torpedo",
+      "pattern": "spots",
+      "body": [
+        124,
+        146,
+        110
+      ],
+      "fin": [
+        96,
+        116,
+        88
+      ],
+      "accent": [
+        54,
+        70,
+        50
+      ],
+      "flavor": "The fish of ten thousand casts. Some people call it a hobby; others call it a personality.",
+      "hint": "Something in this lake is older than you and knows it."
+    },
+    {
+      "id": "golden_trout",
+      "name": "Golden Runtz",
+      "sci": "Oncorhynchus mykiss",
+      "spot": 1,
+      "rarity": "legendary",
+      "kg": [
+        0.5,
+        2.5
+      ],
+      "usd_kg": 45.0,
+      "diff": 0.78,
+      "shape": "torpedo",
+      "pattern": "gradient",
+      "body": [
+        250,
+        212,
+        88
+      ],
+      "fin": [
+        236,
+        178,
+        60
+      ],
+      "accent": [
+        255,
+        246,
+        180
+      ],
+      "cond": "high",
+      "flavor": "A hatchery accident that became a legend. Bright as a coin and about as easy to catch sober.",
+      "hint": "Yellow as a coin, and only visible to the properly relaxed."
+    },
+    {
+      "id": "bowfin",
+      "name": "Bongfin",
+      "sci": "Amia calva",
+      "spot": 2,
+      "rarity": "common",
+      "kg": [
+        0.5,
+        3.0
+      ],
+      "usd_kg": 4.0,
+      "diff": 0.34,
+      "shape": "sturgeon",
+      "pattern": "none",
+      "body": [
+        122,
+        116,
+        78
+      ],
+      "fin": [
+        92,
+        88,
+        58
+      ],
+      "accent": [
+        168,
+        160,
+        110
+      ],
+      "flavor": "A living fossil with lungs, a long dorsal fin, and no patience for your nonsense.",
+      "hint": "Long, olive and primitive. It can breathe air. It will."
+    },
+    {
+      "id": "brown_bullhead",
+      "name": "Brown Bowlhead",
+      "sci": "Ameiurus nebulosus",
+      "spot": 2,
+      "rarity": "common",
+      "kg": [
+        0.2,
+        1.6
+      ],
+      "usd_kg": 4.2,
+      "diff": 0.28,
+      "shape": "cat",
+      "pattern": "spots",
+      "body": [
+        108,
+        84,
+        60
+      ],
+      "fin": [
+        82,
+        62,
+        44
+      ],
+      "accent": [
+        150,
+        124,
+        92
+      ],
+      "flavor": "Mud, whiskers and a surprising amount of personality. The marsh in fish form.",
+      "hint": "Mottled brown, whiskers first."
+    },
+    {
+      "id": "longnose_gar",
+      "name": "Longnose Ganja",
+      "sci": "Lepisosteus osseus",
+      "spot": 2,
+      "rarity": "uncommon",
+      "kg": [
+        0.8,
+        4.0
+      ],
+      "usd_kg": 5.0,
+      "diff": 0.4,
+      "shape": "gar",
+      "pattern": "spots",
+      "body": [
+        128,
+        138,
+        96
+      ],
+      "fin": [
+        100,
+        110,
+        76
+      ],
+      "accent": [
+        60,
+        66,
+        44
+      ],
+      "flavor": "Half fish, half tweezers. Those scales will dull a knife and your sense of optimism.",
+      "hint": "A floating stick with teeth, wearing spots."
+    },
+    {
+      "id": "american_eel",
+      "name": "Spliff Eel",
+      "sci": "Anguilla rostrata",
+      "spot": 2,
+      "rarity": "uncommon",
+      "kg": [
+        0.3,
+        1.8
+      ],
+      "usd_kg": 16.0,
+      "diff": 0.44,
+      "shape": "eel",
+      "pattern": "none",
+      "body": [
+        110,
+        112,
+        86
+      ],
+      "fin": [
+        86,
+        88,
+        68
+      ],
+      "accent": [
+        150,
+        150,
+        116
+      ],
+      "flavor": "Spends its whole life getting somewhere, then turns around and goes back to the Sargasso Sea. Relatable.",
+      "hint": "A muscular ribbon, and worth real money."
+    },
+    {
+      "id": "blue_catfish",
+      "name": "Blue Catnap",
+      "sci": "Ictalurus furcatus",
+      "spot": 2,
+      "rarity": "rare",
+      "kg": [
+        2.0,
+        12.0
+      ],
+      "usd_kg": 4.8,
+      "diff": 0.58,
+      "shape": "cat",
+      "pattern": "none",
+      "body": [
+        118,
+        132,
+        150
+      ],
+      "fin": [
+        90,
+        104,
+        120
+      ],
+      "accent": [
+        170,
+        186,
+        200
+      ],
+      "flavor": "Grey, enormous, and entirely unbothered by your rod or your ambitions.",
+      "hint": "A blue-grey slab that just pulled the float under without asking."
+    },
+    {
+      "id": "snakehead",
+      "name": "Northern Bakehead",
+      "sci": "Channa argus",
+      "spot": 2,
+      "rarity": "rare",
+      "kg": [
+        0.8,
+        4.0
+      ],
+      "usd_kg": 8.5,
+      "diff": 0.62,
+      "shape": "torpedo",
+      "pattern": "spots",
+      "body": [
+        128,
+        110,
+        84
+      ],
+      "fin": [
+        100,
+        84,
+        64
+      ],
+      "accent": [
+        66,
+        56,
+        44
+      ],
+      "flavor": "An invasive species that can walk between ponds. Not a joke. Delicious, though, which is the only good news.",
+      "hint": "Blotchy brown, long fins, and an expression that knows something."
+    },
+    {
+      "id": "alligator_gar",
+      "name": "Alligator Hash",
+      "sci": "Atractosteus spatula",
+      "spot": 2,
+      "rarity": "epic",
+      "kg": [
+        6.0,
+        28.0
+      ],
+      "usd_kg": 5.5,
+      "diff": 0.76,
+      "shape": "gar",
+      "pattern": "spots",
+      "body": [
+        118,
+        120,
+        84
+      ],
+      "fin": [
+        92,
+        94,
+        64
+      ],
+      "accent": [
+        60,
+        62,
+        44
+      ],
+      "flavor": "A fish with a crocodile's snout and an ancient grudge. Most of the marsh's old stories are about one of these.",
+      "hint": "The water went quiet. That is not a good sign."
+    },
+    {
+      "id": "paddlefish",
+      "name": "Paddle Stash",
+      "sci": "Polyodon spathula",
+      "spot": 2,
+      "rarity": "legendary",
+      "kg": [
+        5.0,
+        20.0
+      ],
+      "usd_kg": 12.0,
+      "diff": 0.8,
+      "shape": "paddle",
+      "pattern": "none",
+      "body": [
+        140,
+        152,
+        164
+      ],
+      "fin": [
+        112,
+        124,
+        136
+      ],
+      "accent": [
+        196,
+        208,
+        218
+      ],
+      "cond": "high",
+      "flavor": "Filters plankton with a paddle and has been doing roughly this for a hundred million years. No notes.",
+      "hint": "A grey shape with a rostrum like a canoe paddle."
+    },
+    {
+      "id": "cisco",
+      "name": "Cisco Sesh",
+      "sci": "Coregonus artedi",
+      "spot": 3,
+      "rarity": "common",
+      "kg": [
+        0.15,
+        0.7
+      ],
+      "usd_kg": 7.0,
+      "diff": 0.3,
+      "shape": "minnow",
+      "pattern": "none",
+      "body": [
+        198,
+        206,
+        214
+      ],
+      "fin": [
+        160,
+        170,
+        182
+      ],
+      "accent": [
+        236,
+        242,
+        248
+      ],
+      "flavor": "A cold-water sardine for lakes. Silver, nervous, and delicious straight out of the smoker.",
+      "hint": "Silver and small, schooling deep."
+    },
+    {
+      "id": "burbot",
+      "name": "Burbot Dabs",
+      "sci": "Lota lota",
+      "spot": 3,
+      "rarity": "common",
+      "kg": [
+        0.5,
+        3.5
+      ],
+      "usd_kg": 10.0,
+      "diff": 0.36,
+      "shape": "eel",
+      "pattern": "bands",
+      "body": [
+        140,
+        132,
+        96
+      ],
+      "fin": [
+        110,
+        102,
+        72
+      ],
+      "accent": [
+        190,
+        180,
+        130
+      ],
+      "flavor": "The only cod that lives in fresh water. Ugly in a way that grows on you around three in the morning.",
+      "hint": "Mottled, eel-shaped, and out hunting at night."
+    },
+    {
+      "id": "lake_whitefish",
+      "name": "White Widowfish",
+      "sci": "Coregonus clupeaformis",
+      "spot": 3,
+      "rarity": "uncommon",
+      "kg": [
+        0.5,
+        2.4
+      ],
+      "usd_kg": 9.0,
+      "diff": 0.34,
+      "shape": "torpedo",
+      "pattern": "none",
+      "body": [
+        196,
+        202,
+        196
+      ],
+      "fin": [
+        160,
+        168,
+        164
+      ],
+      "accent": [
+        232,
+        238,
+        232
+      ],
+      "flavor": "Understated, delicious, and quietly beloved by everyone who has ever eaten one.",
+      "hint": "Silver-sided and deep-bodied, sitting low."
+    },
+    {
+      "id": "deepwater_sculpin",
+      "name": "Deepwater Skunkpin",
+      "sci": "Myoxocephalus thompsonii",
+      "spot": 3,
+      "rarity": "uncommon",
+      "kg": [
+        0.03,
+        0.2
+      ],
+      "usd_kg": 8.0,
+      "diff": 0.24,
+      "shape": "round",
+      "pattern": "spots",
+      "body": [
+        196,
+        176,
+        170
+      ],
+      "fin": [
+        166,
+        148,
+        146
+      ],
+      "accent": [
+        226,
+        212,
+        206
+      ],
+      "flavor": "A deep-water gargoyle the size of your thumb. Has seen the bottom of the trench and refuses to discuss it.",
+      "hint": "A pale little thing from water you cannot see into."
+    },
+    {
+      "id": "brook_trout",
+      "name": "Brook Terp",
+      "sci": "Salvelinus fontinalis",
+      "spot": 3,
+      "rarity": "rare",
+      "kg": [
+        0.3,
+        1.6
+      ],
+      "usd_kg": 14.0,
+      "diff": 0.46,
+      "shape": "torpedo",
+      "pattern": "spots",
+      "body": [
+        108,
+        124,
+        88
+      ],
+      "fin": [
+        86,
+        100,
+        72
+      ],
+      "accent": [
+        236,
+        150,
+        80
+      ],
+      "flavor": "The prettiest fish in the water, and it knows it. Orange belly, white-edged fins, absolutely no humility.",
+      "hint": "Olive with pale worm-marks and an orange belly."
+    },
+    {
+      "id": "sauger",
+      "name": "Sour Sauger",
+      "sci": "Sander canadensis",
+      "spot": 3,
+      "rarity": "rare",
+      "kg": [
+        0.4,
+        2.0
+      ],
+      "usd_kg": 12.0,
+      "diff": 0.54,
+      "shape": "torpedo",
+      "pattern": "bands",
+      "body": [
+        160,
+        148,
+        106
+      ],
+      "fin": [
+        128,
+        118,
+        84
+      ],
+      "accent": [
+        70,
+        64,
+        48
+      ],
+      "flavor": "Walleye's smaller, sandpaper cousin. Same glassy eyes, same nocturnal habits, none of the credit.",
+      "hint": "Mottled gold with dark saddles, low and slow."
+    },
+    {
+      "id": "lake_trout",
+      "name": "Lake Toke",
+      "sci": "Salvelinus namaycush",
+      "spot": 3,
+      "rarity": "epic",
+      "kg": [
+        3.0,
+        12.0
+      ],
+      "usd_kg": 12.0,
+      "diff": 0.72,
+      "shape": "torpedo",
+      "pattern": "spots",
+      "body": [
+        128,
+        144,
+        136
+      ],
+      "fin": [
+        100,
+        116,
+        110
+      ],
+      "accent": [
+        214,
+        226,
+        220
+      ],
+      "flavor": "A deep-water heavyweight that takes a decade to grow up. Nobody told it the food chain was supposed to be subtle.",
+      "hint": "Grey-green with pale spots, rising from the cold."
+    },
+    {
+      "id": "lake_sturgeon",
+      "name": "Sturgeon Stogie",
+      "sci": "Acipenser fulvescens",
+      "spot": 3,
+      "rarity": "legendary",
+      "kg": [
+        8.0,
+        35.0
+      ],
+      "usd_kg": 22.0,
+      "diff": 0.86,
+      "shape": "sturgeon",
+      "pattern": "none",
+      "body": [
+        120,
+        116,
+        102
+      ],
+      "fin": [
+        94,
+        90,
+        78
+      ],
+      "accent": [
+        172,
+        166,
+        148
+      ],
+      "cond": "night+high",
+      "flavor": "Older than your family name, and most of them are still endangered. Catch it, weigh it, and put it back.",
+      "hint": "Something down there predates the lake itself."
+    }
+  ],
+  "hidden": [
+    {
+      "id": "bongwater_bream",
+      "name": "Bongwater Bream",
+      "sci": "Abramis bongwateris",
+      "spot": 0,
+      "rarity": "legendary",
+      "kg": [
+        0.4,
+        2.2
+      ],
+      "usd_kg": 90,
+      "diff": 0.82,
+      "shape": "round",
+      "pattern": "glow",
+      "body": [
+        150,
+        220,
+        180
+      ],
+      "fin": [
+        110,
+        180,
+        150
+      ],
+      "accent": [
+        220,
+        255,
+        230
+      ],
+      "cond": "strain:lake_deep",
+      "flavor": "It only surfaces for pike punch. Nobody knows why. It is very relaxed.",
+      "hint": "Something in the pond responds to the smell of the lake."
+    },
+    {
+      "id": "bassquatch",
+      "name": "Bassquatch",
+      "sci": "Micropterus cryptidus",
+      "spot": 1,
+      "rarity": "legendary",
+      "kg": [
+        3.0,
+        12.0
+      ],
+      "usd_kg": 70,
+      "diff": 0.88,
+      "shape": "round",
+      "pattern": "spots",
+      "body": [
+        74,
+        96,
+        70
+      ],
+      "fin": [
+        52,
+        72,
+        52
+      ],
+      "accent": [
+        140,
+        160,
+        110
+      ],
+      "cond": "strain:marsh_wisp",
+      "flavor": "A bass that should not exist, photographed badly by every local.",
+      "hint": "The marsh's chronic brings it up from the deep."
+    },
+    {
+      "id": "ganja_gar",
+      "name": "Ganja Gar",
+      "sci": "Atractosteus sativus",
+      "spot": 2,
+      "rarity": "legendary",
+      "kg": [
+        5.0,
+        18.0
+      ],
+      "usd_kg": 80,
+      "diff": 0.9,
+      "shape": "gar",
+      "pattern": "spots",
+      "body": [
+        108,
+        140,
+        84
+      ],
+      "fin": [
+        80,
+        108,
+        62
+      ],
+      "accent": [
+        196,
+        232,
+        140
+      ],
+      "cond": "strain:cosmic",
+      "flavor": "Long, green, and completely unbothered by your presence or your rod.",
+      "hint": "Smoke the trench's best and something old comes up to look at you."
+    },
+    {
+      "id": "spliff_serpent",
+      "name": "Spliff Serpent",
+      "sci": "Anguilla somnifera",
+      "spot": 3,
+      "rarity": "legendary",
+      "kg": [
+        4.0,
+        14.0
+      ],
+      "usd_kg": 100,
+      "diff": 0.92,
+      "shape": "eel",
+      "pattern": "glow",
+      "body": [
+        170,
+        214,
+        236
+      ],
+      "fin": [
+        130,
+        176,
+        206
+      ],
+      "accent": [
+        232,
+        250,
+        255
+      ],
+      "cond": "strain:pond_haze",
+      "flavor": "Coils around the line and hums. Weighs more than it looks.",
+      "hint": "The pond's skunk, down in the trench. Don't ask."
+    }
+  ],
+  "shiny": [
+    {
+      "id": "shiny_golden_koi",
+      "name": "Shiny Golden Kief",
+      "sci": "Cyprinus aurum",
+      "shiny_of": "golden_koi",
+      "spot": 0,
+      "rarity": "legendary",
+      "kg": [
+        2.0,
+        9.0
+      ],
+      "usd_kg": 260,
+      "diff": 0.95,
+      "shape": "round",
+      "pattern": "glow",
+      "body": [
+        255,
+        226,
+        140
+      ],
+      "fin": [
+        240,
+        200,
+        90
+      ],
+      "accent": [
+        255,
+        248,
+        214
+      ],
+      "cond": "strain:koi_kief",
+      "flavor": "It glitters like it knows something you don't."
+    },
+    {
+      "id": "shiny_musky",
+      "name": "Shiny Musky Munchies",
+      "sci": "Esox splendor",
+      "shiny_of": "muskellunge",
+      "spot": 1,
+      "rarity": "legendary",
+      "kg": [
+        10.0,
+        26.0
+      ],
+      "usd_kg": 180,
+      "diff": 0.96,
+      "shape": "round",
+      "pattern": "spots",
+      "body": [
+        255,
+        232,
+        150
+      ],
+      "fin": [
+        236,
+        196,
+        92
+      ],
+      "accent": [
+        255,
+        250,
+        220
+      ],
+      "cond": "strain:bass_bong",
+      "flavor": "Every scale a different shade of gold. Nobody believes the photos."
+    },
+    {
+      "id": "shiny_alligator_gar",
+      "name": "Shiny Alligator Hash",
+      "sci": "Atractosteus aureus",
+      "shiny_of": "alligator_gar",
+      "spot": 2,
+      "rarity": "legendary",
+      "kg": [
+        18.0,
+        40.0
+      ],
+      "usd_kg": 190,
+      "diff": 0.97,
+      "shape": "gar",
+      "pattern": "spots",
+      "body": [
+        255,
+        222,
+        128
+      ],
+      "fin": [
+        238,
+        194,
+        86
+      ],
+      "accent": [
+        255,
+        246,
+        206
+      ],
+      "cond": "strain:gar_gasm",
+      "flavor": "Older than the marsh and twice as smug."
+    },
+    {
+      "id": "shiny_lake_trout",
+      "name": "Shiny Lake Toke",
+      "sci": "Salvelinus lucens",
+      "shiny_of": "lake_trout",
+      "spot": 3,
+      "rarity": "legendary",
+      "kg": [
+        12.0,
+        30.0
+      ],
+      "usd_kg": 210,
+      "diff": 0.97,
+      "shape": "trout",
+      "pattern": "spots",
+      "body": [
+        255,
+        228,
+        144
+      ],
+      "fin": [
+        240,
+        198,
+        94
+      ],
+      "accent": [
+        255,
+        250,
+        216
+      ],
+      "cond": "strain:coelacanth_chronic",
+      "flavor": "Comes up gold from water that has never seen the sun."
+    }
+  ]
+}

@@ -12,7 +12,7 @@ jobs:
       - run: python tests/screens.py
       - run: python tests/test_flow.py
       - run: python tests/test_soak.py
-      - run: pyinstaller --noconfirm --windowed --name "Hot Rods" main.py
+      - run: pyinstaller --noconfirm --windowed --name "Hot Rods" --add-data "content;content" main.py
       - uses: actions/upload-artifact@v4
         with:
           name: Hot-Rods-Windows
@@ -28,9 +28,17 @@ jobs:
       - run: python tests/screens.py
       - run: python tests/test_flow.py
       - run: python tests/test_soak.py
-      - run: pyinstaller --noconfirm --windowed --name "Hot Rods" main.py
+      - run: pyinstaller --noconfirm --windowed --name "Hot Rods" --add-data "content:content" main.py
       - run: ditto -c -k --sequesterRsrc --keepParent "dist/Hot Rods.app" "Hot Rods-mac.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: Hot-Rods-macOS
           path: Hot Rods-mac.zip
+  csharp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - run: dotnet build csharp/HotRodsSharp -c Release

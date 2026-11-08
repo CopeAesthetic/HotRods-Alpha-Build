@@ -21,6 +21,9 @@
           CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../assets/audio/*.wav" Link="Audio/%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" />
+    <!-- Single source of truth: content JSON shared with the Python prototype. -->
+    <None Include="../../content/*.json" Link="content/%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

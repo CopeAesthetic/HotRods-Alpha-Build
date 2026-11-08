@@ -1,0 +1,28 @@
+{
+  "shiny_odds": 0.02,
+  "spot_pay": [
+    1.0,
+    3.0,
+    7.0,
+    15.0
+  ],
+  "gear_spot": {
+    "carbon": 1,
+    "moon": 3,
+    "braid": 1,
+    "ghost": 3,
+    "fly": 1,
+    "jig": 2,
+    "gold": 3,
+    "medium": 1,
+    "huge": 3,
+    "beaker_bong": 2,
+    "heady_bong": 3
+  },
+  "ice_cost": 15,
+  "ice_minutes": 5.0,
+  "spoil_rate": 0.15,
+  "spoil_floor": 0.35,
+  "concentrate_potency": 7,
+  "concentrate_mult": 3.0
+}

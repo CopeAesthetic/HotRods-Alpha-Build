@@ -1,0 +1,58 @@
+[
+  {
+    "id": "pond",
+    "name": "Bongwater Pond",
+    "blurb": "The most fished water in the county. Everyone starts here - and Sal's shack is right on the bank.",
+    "need_species": 0,
+    "need_cash": 0,
+    "tint": [
+      118,
+      150,
+      108
+    ],
+    "murk": 0.18,
+    "waterline": 0.42
+  },
+  {
+    "id": "lake",
+    "name": "Bass & Bake Lake",
+    "blurb": "Deeper, colder, and full of moonlight. Bring a jacket.",
+    "need_species": 5,
+    "need_cash": 120,
+    "tint": [
+      88,
+      132,
+      162
+    ],
+    "murk": 0.14,
+    "waterline": 0.4
+  },
+  {
+    "id": "marsh",
+    "name": "Munchies Marsh",
+    "blurb": "The frogs know your name. The water does not want to talk about it.",
+    "need_species": 11,
+    "need_cash": 420,
+    "tint": [
+      104,
+      118,
+      78
+    ],
+    "murk": 0.34,
+    "waterline": 0.44
+  },
+  {
+    "id": "trench",
+    "name": "Tokers Trench",
+    "blurb": "Past the buoys, where the water goes down and the stars come out.",
+    "need_species": 18,
+    "need_cash": 900,
+    "tint": [
+      78,
+      70,
+      138
+    ],
+    "murk": 0.46,
+    "waterline": 0.38
+  }
+]
