@@ -369,7 +369,7 @@ public partial class HotRodsGame : Game
     /// the screen glows from the dynamic pass so it reads at night too.</summary>
     private void BuildCooler(List<VertexPositionNormalColor> s)
     {
-        var c = new Vector3(-3.55f, 0.80f, 1.02f);
+        var c = new Vector3(-3.55f, 0.80f, -0.20f);
         PrimsLit.AddBox(s, c, 0.55f, 0.45f, 0.75f, new Color(200, 60, 48));
         PrimsLit.AddBox(s, new Vector3(c.X, c.Y + 0.26f, c.Z), 0.57f, 0.06f, 0.77f,
                         new Color(232, 236, 240));
@@ -380,7 +380,7 @@ public partial class HotRodsGame : Game
     /// <summary>Unlit phone-screen glow so it stays bright after dark.</summary>
     private void EmitPhoneGlow(List<VertexPositionColor> v)
     {
-        Prims.AddBox(v, new Vector3(-3.57f, 1.155f, 1.01f), 0.11f, 0.012f, 0.20f,
+        Prims.AddBox(v, new Vector3(-3.53f, 1.155f, -0.21f), 0.11f, 0.012f, 0.20f,
                      new Color(90, 232, 205));
     }
 
@@ -430,9 +430,9 @@ public partial class HotRodsGame : Game
         // first-person viewmodel: hands on the rod, angled out toward the
         // cast area. The sim's rod tip lives at the same place the line
         // draws from.
-        var grip = new Vector3(-3.02f, 1.18f, 1.40f);
-        var mid = new Vector3(-2.76f, 1.40f, 0.60f);
-        var tip = new Vector3(-2.55f, 1.60f, -1.60f);
+        var grip = new Vector3(-3.04f, 1.28f, 1.05f);
+        var mid = new Vector3(-2.86f, 1.44f, 0.35f);
+        var tip = new Vector3(-2.66f, 1.58f, -0.90f);
         var jacket = new Color(226, 178, 66);
         // sleeves then hands
         Prims.AddSegment(v, grip - (mid - grip) * 0.35f, grip, 0.082f, jacket);
@@ -450,7 +450,7 @@ public partial class HotRodsGame : Game
 
     /// <summary>FP rod tip and cast direction (the bobber flies out over
     /// the lake ahead of the view).</summary>
-    private static readonly Vector3 FpRodTip = new(-2.55f, 1.60f, -1.60f);
+    private static readonly Vector3 FpRodTip = new(-2.66f, 1.58f, -0.90f);
 
     protected override void Update(GameTime gameTime)
     {
@@ -1316,7 +1316,7 @@ public partial class HotRodsGame : Game
         if (_mapOpen) { MapClick(pos); return; }
 
         // the glowing phone on the cooler opens the menu
-        if (HitRect(new Vector3(-3.57f, 1.16f, 1.02f), 0.10f, 0.05f, 0.15f)
+        if (HitRect(new Vector3(-3.53f, 1.16f, -0.20f), 0.10f, 0.05f, 0.15f)
             is { } pr && pr.Contains(mouse))
         {
             _menuOpen = true;
@@ -1325,7 +1325,7 @@ public partial class HotRodsGame : Game
             return;
         }
         // the cooler itself opens Sal's shack
-        if (HitRect(new Vector3(-3.55f, 0.95f, 1.02f), 0.32f, 0.34f, 0.42f)
+        if (HitRect(new Vector3(-3.55f, 0.80f, -0.20f), 0.32f, 0.30f, 0.42f)
             is { } cr && cr.Contains(mouse))
         {
             _dealerOpen = true;
