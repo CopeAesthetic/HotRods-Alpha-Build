@@ -369,7 +369,7 @@ public partial class HotRodsGame : Game
     /// the screen glows from the dynamic pass so it reads at night too.</summary>
     private void BuildCooler(List<VertexPositionNormalColor> s)
     {
-        var c = new Vector3(-3.55f, 0.80f, -0.20f);
+        var c = new Vector3(-2.25f, 0.80f, 0.72f);
         PrimsLit.AddBox(s, c, 0.55f, 0.45f, 0.75f, new Color(200, 60, 48));
         PrimsLit.AddBox(s, new Vector3(c.X, c.Y + 0.26f, c.Z), 0.57f, 0.06f, 0.77f,
                         new Color(232, 236, 240));
@@ -380,7 +380,7 @@ public partial class HotRodsGame : Game
     /// <summary>Unlit phone-screen glow so it stays bright after dark.</summary>
     private void EmitPhoneGlow(List<VertexPositionColor> v)
     {
-        Prims.AddBox(v, new Vector3(-3.53f, 1.155f, -0.21f), 0.11f, 0.012f, 0.20f,
+        Prims.AddBox(v, new Vector3(-2.25f, 1.155f, 0.71f), 0.11f, 0.012f, 0.20f,
                      new Color(90, 232, 205));
     }
 
@@ -430,9 +430,9 @@ public partial class HotRodsGame : Game
         // first-person viewmodel: hands on the rod, angled out toward the
         // cast area. The sim's rod tip lives at the same place the line
         // draws from.
-        var grip = new Vector3(-3.04f, 1.28f, 1.05f);
-        var mid = new Vector3(-2.86f, 1.44f, 0.35f);
-        var tip = new Vector3(-2.66f, 1.58f, -0.90f);
+        var grip = new Vector3(-3.16f, 1.20f, 1.62f);
+        var mid = new Vector3(-2.45f, 1.42f, 1.55f);
+        var tip = new Vector3(-0.85f, 1.60f, 1.45f);
         var jacket = new Color(226, 178, 66);
         // sleeves then hands
         Prims.AddSegment(v, grip - (mid - grip) * 0.35f, grip, 0.082f, jacket);
@@ -450,7 +450,7 @@ public partial class HotRodsGame : Game
 
     /// <summary>FP rod tip and cast direction (the bobber flies out over
     /// the lake ahead of the view).</summary>
-    private static readonly Vector3 FpRodTip = new(-2.66f, 1.58f, -0.90f);
+    private static readonly Vector3 FpRodTip = new(-0.85f, 1.60f, 1.45f);
 
     protected override void Update(GameTime gameTime)
     {
@@ -591,11 +591,12 @@ public partial class HotRodsGame : Game
         _state.Hour = (_state.Hour + dt / 30f) % 24f;   // 12-minute day, like Python
         _state.Played += dt / 60f;
 
-        // first person: head height at the dock, facing the cast area out
-        // over the water. Click-drag looks around (clamped); a proper high
-        // wobbles the view and landing a fish shakes it.
+        // first person: head height at the dock, rotated 90 degrees so the
+        // view runs down the length of the open water instead of across it.
+        // Click-drag looks around (clamped); a proper high wobbles the view
+        // and landing a fish shakes it.
         var eye = new Vector3(-3.22f, 1.42f, 1.44f);
-        var fwd = Vector3.Normalize(new Vector3(-2.4f, 0.7f, -24.0f) - eye);
+        var fwd = Vector3.Normalize(new Vector3(24.8f, 0.82f, -1.06f) - eye);
         var right = Vector3.Normalize(Vector3.Cross(fwd, Vector3.Up));
         fwd = Vector3.Normalize(Vector3.Transform(fwd, Matrix.CreateRotationY(_lookYaw)));
         fwd = Vector3.Normalize(Vector3.Transform(
@@ -607,7 +608,7 @@ public partial class HotRodsGame : Game
         eye.Y += _fishing.ShakeT * 0.10f * MathF.Cos(_t * 37f);
         _view = Matrix.CreateLookAt(eye, eye + fwd, Vector3.Up);
         _proj = Matrix.CreatePerspectiveFieldOfView(
-            MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 0.1f, 250f);
+            MathHelper.ToRadians(62f), GraphicsDevice.Viewport.AspectRatio, 0.1f, 250f);
         if (kb.IsKeyDown(Keys.E) && !_eHeld)
         {
             _smoking.Start();
@@ -634,7 +635,7 @@ public partial class HotRodsGame : Game
         }
         if (!_smoking.Active)
             _fishing.Update(dt, kb, FpRodTip,
-                            Vector3.Normalize(new Vector3(0.15f, -0.15f, -1.0f)));
+                            Vector3.Normalize(new Vector3(1.0f, -0.12f, -0.10f)));
         base.Update(gameTime);
     }
 
@@ -1066,6 +1067,65 @@ public partial class HotRodsGame : Game
         return 1f - a * b;
     }
 
+    private static Rectangle[] IconRects()
+    {
+        int h = 480;   // window is fixed 800x480; icons anchor bottom-left
+        var rects = new Rectangle[6];
+        for (int i = 0; i < 6; i++)
+            rects[i] = new Rectangle(12 + i * 44, h - 44, 40, 36);
+        return rects;
+    }
+
+    /// <summary>Pixel-art icon tiles for the menu shortcuts, bottom-left.</summary>
+    private void DrawIcons()
+    {
+        var rects = IconRects();
+        var hover = Mouse.GetState().Position;
+        for (int i = 0; i < rects.Length; i++)
+        {
+            var r = rects[i];
+            bool over = r.Contains(hover);
+            _batch.Draw(_pixel, r, over ? new Color(38, 46, 68) : new Color(18, 22, 36, 242));
+            _batch.Draw(_pixel, new Rectangle(r.X, r.Y, r.Width, 2),
+                        over ? new Color(255, 255, 200) : new Color(66, 74, 102));
+            int cx = r.X + 8, cy = r.Y + 7;
+            switch (i)
+            {
+                case 0: // phone -> menu
+                    _batch.Draw(_pixel, new Rectangle(cx + 4, cy + 1, 16, 22), new Color(28, 32, 40));
+                    _batch.Draw(_pixel, new Rectangle(cx + 7, cy + 5, 10, 14), new Color(90, 232, 205));
+                    break;
+                case 1: // cooler -> sal's shack
+                    _batch.Draw(_pixel, new Rectangle(cx + 2, cy + 4, 20, 18), new Color(200, 60, 48));
+                    _batch.Draw(_pixel, new Rectangle(cx + 1, cy + 2, 22, 3), new Color(232, 236, 240));
+                    _batch.Draw(_pixel, new Rectangle(cx + 2, cy + 10, 20, 2), new Color(150, 40, 32));
+                    break;
+                case 2: // map
+                    _batch.Draw(_pixel, new Rectangle(cx + 2, cy + 2, 20, 20), new Color(196, 168, 118));
+                    _batch.Draw(_pixel, new Rectangle(cx + 6, cy + 16, 2, 2), new Color(84, 140, 84));
+                    _batch.Draw(_pixel, new Rectangle(cx + 12, cy + 12, 2, 2), new Color(84, 140, 84));
+                    _batch.Draw(_pixel, new Rectangle(cx + 16, cy + 5, 2, 2), new Color(120, 190, 130));
+                    break;
+                case 3: // jars
+                    _batch.Draw(_pixel, new Rectangle(cx + 5, cy + 1, 14, 4), new Color(120, 128, 148));
+                    _batch.Draw(_pixel, new Rectangle(cx + 5, cy + 5, 14, 16), new Color(120, 216, 160));
+                    _batch.Draw(_pixel, new Rectangle(cx + 8, cy + 8, 8, 8), new Color(60, 150, 100));
+                    break;
+                case 4: // journal
+                    _batch.Draw(_pixel, new Rectangle(cx + 3, cy + 1, 18, 21), new Color(238, 232, 212));
+                    _batch.Draw(_pixel, new Rectangle(cx + 12, cy + 1, 2, 21), new Color(160, 150, 120));
+                    _batch.Draw(_pixel, new Rectangle(cx + 6, cy + 6, 4, 1), new Color(120, 110, 90));
+                    _batch.Draw(_pixel, new Rectangle(cx + 6, cy + 10, 4, 1), new Color(120, 110, 90));
+                    break;
+                case 5: // stoke lanes
+                    _batch.Draw(_pixel, new Rectangle(cx + 3, cy + 6, 5, 12), new Color(120, 190, 130));
+                    _batch.Draw(_pixel, new Rectangle(cx + 10, cy + 3, 5, 15), new Color(150, 210, 236));
+                    _batch.Draw(_pixel, new Rectangle(cx + 17, cy + 8, 5, 10), new Color(214, 150, 236));
+                    break;
+            }
+        }
+    }
+
     private void DrawHud()
     {
         int w = GraphicsDevice.Viewport.Width;
@@ -1088,7 +1148,8 @@ public partial class HotRodsGame : Game
         if (_sellFlash > 0f)
             _font.Draw(_batch, "SOLD!", new Vector2(w - 100, 62), 2, new Color(240, 214, 120));
         _font.Draw(_batch, "SPACE CAST  E SMOKE  Q PIECE  X SELL  ESC MENU",
-                   new Vector2(14, h - 24), 2, new Color(150, 160, 190));
+                   new Vector2(292, h - 24), 2, new Color(150, 160, 190));
+        DrawIcons();
         _batch.End();
         _sellFlash -= 0.016f;
     }
@@ -1314,9 +1375,30 @@ public partial class HotRodsGame : Game
         if (_shopOpen) { ShopClick(pos); return; }
         if (_dealerOpen) { DealerClick(pos); return; }
         if (_mapOpen) { MapClick(pos); return; }
+        if (_zaaOpen || _journalOpen || _stokeOpen || _helpOpen)
+            return;
+
+        // the bottom-left icon bar
+        var rects = IconRects();
+        for (int i = 0; i < rects.Length; i++)
+        {
+            if (!rects[i].Contains(mouse))
+                continue;
+            switch (i)
+            {
+                case 0: _menuOpen = true; _menuSel = 0; break;
+                case 1: _dealerOpen = true; _dealerSel = 0; _dealerArea = _state.Spot; break;
+                case 2: _mapOpen = true; _mapSel = _spot; break;
+                case 3: _zaaOpen = true; _zaaSel = 0; break;
+                case 4: _journalOpen = true; _journalSel = 0; break;
+                case 5: _stokeOpen = true; _stokeSel = 0; break;
+            }
+            PlaySfx("click");
+            return;
+        }
 
         // the glowing phone on the cooler opens the menu
-        if (HitRect(new Vector3(-3.53f, 1.16f, -0.20f), 0.10f, 0.05f, 0.15f)
+        if (HitRect(new Vector3(-2.25f, 1.16f, 0.72f), 0.10f, 0.05f, 0.15f)
             is { } pr && pr.Contains(mouse))
         {
             _menuOpen = true;
@@ -1325,7 +1407,7 @@ public partial class HotRodsGame : Game
             return;
         }
         // the cooler itself opens Sal's shack
-        if (HitRect(new Vector3(-3.55f, 0.80f, -0.20f), 0.32f, 0.30f, 0.42f)
+        if (HitRect(new Vector3(-2.25f, 0.80f, 0.72f), 0.32f, 0.30f, 0.42f)
             is { } cr && cr.Contains(mouse))
         {
             _dealerOpen = true;
