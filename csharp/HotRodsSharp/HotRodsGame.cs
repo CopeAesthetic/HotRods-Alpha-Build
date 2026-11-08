@@ -97,8 +97,8 @@ public partial class HotRodsGame : Game
         ("rock_b", new Color(108, 104, 96), 1.0f, "land"),
         ("bush", new Color(86, 116, 72), 1.0f, "land"),
         ("kn_plant", new Color(74, 112, 58), 8.0f, "land"),
-        ("kn_rocks_low", new Color(128, 124, 118), 3.0f, "land"),
-        ("kn_rocks_high", new Color(122, 118, 112), 2.6f, "land"),
+        ("kn_rocks-low", new Color(128, 124, 118), 3.0f, "land"),
+        ("kn_rocks-high", new Color(122, 118, 112), 2.6f, "land"),
         ("kn_fence", new Color(140, 108, 74), 2.6f, "land"),
         ("kn_tent", new Color(172, 116, 72), 2.4f, "land"),
         ("kn_bridge", new Color(146, 110, 76), 2.2f, "land"),
@@ -178,7 +178,7 @@ public partial class HotRodsGame : Game
             ("kn_plant", -8.0f, -10.0f, 4.4f, 1.00f),
             ("kn_plant", -2.0f, -10.6f, 0.8f, 1.15f),
             ("kn_plant", 4.0f, -9.8f, 5.6f, 1.00f),
-            ("kn_rocks_low", -20.0f, -9.4f, 1.9f, 1.00f),
+            ("kn_rocks-low", -20.0f, -9.4f, 1.9f, 1.00f),
         },
         // Tokers Trench
         new (string, float, float, float, float)[]
@@ -187,8 +187,8 @@ public partial class HotRodsGame : Game
             ("tree_b", -8.0f, -11.6f, 4.0f, 1.55f),
             ("tree_a", 6.0f, -10.8f, 2.9f, 1.40f),
             ("tree_b", 18.0f, -11.4f, 5.6f, 1.50f),
-            ("kn_rocks_high", -14.0f, -8.8f, 3.1f, 1.00f),
-            ("kn_rocks_high", 10.0f, -8.4f, 5.9f, 0.85f),
+            ("kn_rocks-high", -14.0f, -8.8f, 3.1f, 1.00f),
+            ("kn_rocks-high", 10.0f, -8.4f, 5.9f, 0.85f),
             ("kn_flag", 20.0f, -6.5f, 2.2f, 1.00f),
         },
     };
@@ -282,11 +282,27 @@ public partial class HotRodsGame : Game
     private void AddProp(List<VertexPositionColor> s, string name, float x,
                          float z, float rot, float scale, float yBias = 0f)
     {
-        var (_, col, bscale, ground) = Manifest.First(m => m.name == name);
+        var entry = Manifest.FirstOrDefault(m => m.name == name);
+        if (entry.name == null)
+        {
+            Console.WriteLine($"[world] no manifest entry for {name} - skipped");
+            return;
+        }
+        var (_, col, bscale, ground) = entry;
         bool blenderAxes = !name.StartsWith("kn_");
-        var mesh = ObjMesh.Load(
-            Path.Combine(AppContext.BaseDirectory, "Assets", name + ".obj"),
-            scale * bscale, blenderAxes);
+        ObjMesh mesh;
+        try
+        {
+            mesh = ObjMesh.Load(
+                Path.Combine(AppContext.BaseDirectory, "Assets", name + ".obj"),
+                scale * bscale, blenderAxes);
+        }
+        catch (FileNotFoundException)
+        {
+            // a missing prop mesh skips the prop instead of crashing the world
+            Console.WriteLine($"[world] missing asset {name}.obj - skipped");
+            return;
+        }
         mesh.Transform(rot, new Vector3(x, Ground[ground] + yBias, z));
         foreach (var (a, b, c) in mesh.Tris)
             Prims.AddTri(s, mesh.Verts[a], mesh.Verts[b], mesh.Verts[c], col);
