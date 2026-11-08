@@ -877,49 +877,57 @@ public partial class HotRodsGame : Game
         _batch.End();
     }
 
-    /// <summary>Python-style reel: a sweep marker runs back and forth while
-    /// the zone window wanders. Time the pull - green core +3, zone +1, a
-    /// miss costs 2 and too many misses lose the fish.</summary>
+    /// <summary>Python-style reel as a full-width bar at the bottom of the
+    /// screen: the sweep marker runs back and forth while the zone window
+    /// wanders. Time the pull - green core +3, zone +1, a miss costs 2.</summary>
     private void DrawReel()
     {
         int w = GraphicsDevice.Viewport.Width;
         int h = GraphicsDevice.Viewport.Height;
-        var bar = new Rectangle(w / 2 - 170, h / 2 - 10, 340, 28);
+        var bar = new Rectangle(16, h - 48, w - 32, 24);
+        _batch.Draw(_pixel, bar, new Color(18, 22, 36, 220));
         // zone window
         int zx = bar.X + (int)(bar.Width * Math.Clamp(
                     _fishing.Zone - _fishing.ZoneW * 0.5f, 0f, 1f));
         int zw = (int)(bar.Width * _fishing.ZoneW);
-        _batch.Draw(_pixel, new Rectangle(zx, bar.Y, zw, bar.Height),
+        _batch.Draw(_pixel, new Rectangle(zx, bar.Y + 1, zw, bar.Height - 7),
                     new Color(96, 150, 220, 170));
         // perfect core
         int px = bar.X + (int)(bar.Width * Math.Clamp(
                     _fishing.Zone - _fishing.ZoneW * 0.09f * 0.5f, 0f, 1f));
         int pw = (int)(bar.Width * _fishing.ZoneW * 0.09f);
-        _batch.Draw(_pixel, new Rectangle(px, bar.Y + 8, pw, bar.Height - 16),
+        _batch.Draw(_pixel, new Rectangle(px, bar.Y + 5, pw, bar.Height - 17),
                     new Color(120, 240, 130, 200));
         // sweep marker
         int sx = bar.X + (int)(bar.Width * _fishing.Sweep);
-        _batch.Draw(_pixel, new Rectangle(sx - 2, bar.Y - 5, 4, bar.Height + 10),
+        _batch.Draw(_pixel, new Rectangle(sx - 2, bar.Y - 4, 4, bar.Height + 2),
                     new Color(255, 240, 140));
-        // progress
-        var pb = new Rectangle(w / 2 - 170, h / 2 + 30, 340, 12);
-        _batch.Draw(_pixel, pb, new Color(40, 46, 66, 220));
-        _batch.Draw(_pixel, new Rectangle(pb.X + 1, pb.Y + 1,
-                    (int)(338 * _fishing.Progress), 10), new Color(120, 210, 250));
-        _font.Draw(_batch, "SPACE - TIME THE PULL", new Vector2(w / 2f - 66, h / 2 + 48),
+        // progress: thin fill along the bar's bottom edge
+        _batch.Draw(_pixel, new Rectangle(bar.X, bar.Bottom - 4, bar.Width, 4),
+                    new Color(10, 12, 20, 220));
+        _batch.Draw(_pixel, new Rectangle(bar.X + 1, bar.Bottom - 3,
+                    (int)((bar.Width - 2) * _fishing.Progress), 2),
+                    new Color(120, 210, 250));
+        // frame
+        _batch.Draw(_pixel, new Rectangle(bar.X, bar.Y, bar.Width, 2),
+                    new Color(70, 80, 110));
+        _batch.Draw(_pixel, new Rectangle(bar.X, bar.Bottom - 1, bar.Width, 2),
+                    new Color(70, 80, 110));
+        // hints and pull feedback above the bar
+        _font.Draw(_batch, "SPACE - TIME THE PULL", new Vector2(w - 330, bar.Y - 26),
                    2, new Color(200, 208, 230));
         switch (_fishing.LastPull)
         {
             case FishingSim.PullGrade.Perfect:
-                _font.Draw(_batch, "PERFECT +3", new Vector2(w / 2f - 36, h / 2 - 44),
+                _font.Draw(_batch, "PERFECT +3", new Vector2(w / 2f - 36, bar.Y - 30),
                            3, new Color(255, 220, 90));
                 break;
             case FishingSim.PullGrade.Good:
-                _font.Draw(_batch, "GOOD +1", new Vector2(w / 2f - 28, h / 2 - 44),
+                _font.Draw(_batch, "GOOD +1", new Vector2(w / 2f - 28, bar.Y - 30),
                            3, new Color(150, 220, 130));
                 break;
             case FishingSim.PullGrade.Miss:
-                _font.Draw(_batch, "MISS -2", new Vector2(w / 2f - 28, h / 2 - 44),
+                _font.Draw(_batch, "MISS -2", new Vector2(w / 2f - 28, bar.Y - 30),
                            3, new Color(240, 120, 100));
                 break;
         }
