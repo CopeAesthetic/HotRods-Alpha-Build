@@ -875,6 +875,18 @@ public partial class HotRodsGame : Game
             _font.Draw(_batch, "X SELLS THE COOLER", new Vector2(r.X + 16, r.Y + 116), 2,
                        new Color(150, 160, 190));
         }
+        if (_fishing.Current == FishingSim.Phase.Bite)
+        {
+            float pulse = 0.5f + 0.5f * MathF.Sin(_t * 12f);
+            var col = new Color(255, 210, 90) * (0.75f + 0.25f * pulse);
+            _font.Draw(_batch, "FISH ON!", new Vector2(w / 2f - 64, h * 0.30f), 4, col);
+            var cd = new Rectangle(w / 2 - 100, (int)(h * 0.30f) + 30, 200, 8);
+            _batch.Draw(_pixel, cd, new Color(30, 34, 52, 230));
+            float remain = Math.Clamp(1f - _fishing.BiteT / FishingSim.BiteWindow, 0f, 1f);
+            _batch.Draw(_pixel, new Rectangle(cd.X + 1, cd.Y + 1, (int)(198 * remain), 6),
+                        new Color(255, 180, 80));
+            _font.Draw(_batch, "SPACE!", new Vector2(w / 2f - 18, h * 0.30f + 46), 2, col);
+        }
         if (_fishing.Reeling)
             DrawReel();
         if (_fishing.Current == FishingSim.Phase.Charging)

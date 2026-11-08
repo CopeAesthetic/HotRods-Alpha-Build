@@ -35,6 +35,8 @@ public sealed class FishingSim
     public int Needed;
     public float IdleT;
     public PullGrade LastPull;
+    public const float BiteWindow = 2.0f;   // FISH ON! - hook it or lose it
+    public float BiteT => _biteT;
 
     /// <summary>Fired when the bobber lands, nibbles or a fish bites.</summary>
     public event Action<Vector3>? Ripple;
@@ -131,8 +133,8 @@ public sealed class FishingSim
                 break;
             case Phase.Bite:
                 _biteT += dt;
-                // the hook window: longer while you're high
-                if (_biteT >= 0.9f + 0.42f * _state.High)
+                // FISH ON! - two seconds to set the hook or the fish escapes
+                if (_biteT >= BiteWindow)
                 {
                     Current = Phase.Idle;
                     _pending = null;
