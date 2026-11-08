@@ -250,9 +250,9 @@ public partial class HotRodsGame
             "SPACE  CAST - HOLD TO CHARGE, TAP AT THE BITE",
             "REEL  - KEEP THE NEEDLE IN THE BLUE, THEN GREEN",
             "E  SMOKE    Q  SWITCH PIECE    Z  PICK YOUR JAR",
-            "B  TRADING POST    D  SAL'S SHACK    J  JOURNAL",
-            "K  STOKE TREE    H  HELP    TAB  CAMERA    ESC  PAUSE",
-            "1-4  TRAVEL BETWEEN WATERS    X  SELL THE COOLER",
+            "B  TRADING POST - BUY WATERS IN THE WATERS TAB",
+            "D  SALS SHACK    J  JOURNAL    K  STOKE TREE",
+            "T  MAP TO TRAVEL    X  SELL THE COOLER    ESC  PAUSE",
         };
         int y = 80;
         foreach (var s in lines)

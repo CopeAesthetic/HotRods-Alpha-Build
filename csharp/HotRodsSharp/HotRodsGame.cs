@@ -22,10 +22,10 @@ public partial class HotRodsGame : Game
     private bool _eHeld, _qHeld, _xHeld, _lbHeld, _rbHeld;
     private bool _shopOpen, _bHeld, _enterHeld, _upHeld, _downHeld, _leftHeld, _rightHeld;
     private bool _journalOpen, _zaaOpen, _paused, _jHeld, _zHeld, _escHeld;
-    private bool _atTitle = true, _tripsOpen, _dealerOpen, _stokeOpen, _helpOpen;
+    private bool _atTitle = true, _tripsOpen, _dealerOpen, _stokeOpen, _helpOpen, _mapOpen;
     private GameState? _boundState;          // level-up toast subscription
     private bool _dHeld, _kHeld, _hHeld, _tKeyHeld, _fHeld, _uHeld;
-    private int _titleSel, _tripsSel = 1, _dealerSel, _dealerArea, _stokeSel;
+    private int _titleSel, _tripsSel = 1, _dealerSel, _dealerArea, _stokeSel, _mapSel;
     private int _dealerFocus;                 // 0 cooler, 1 jars
     private int _scrapConfirm;                // trips: slot awaiting confirm
     private float _newConfirm, _scrapConfirmT;
@@ -49,17 +49,12 @@ public partial class HotRodsGame : Game
     private SpriteBatch _batch = null!;
     private Texture2D _pixel = null!;
     private RenderTarget2D _lowRes = null!;   // PS1-style half-res 3D target
-    private readonly bool[] _spotHeld = new bool[4];
-
     // water, rebuilt per frame
     private float _t;
 
     // camera
-    private int _mode;                    // 0 third, 1 first, 2 free
-    private float _yaw, _pitch = 0.45f, _dist = 2.8f;
     private Matrix _view = Matrix.Identity, _proj = Matrix.Identity;
-    private readonly Vector3 _angler = new(-3.2f, 1.0f, 1.5f);
-    private bool _tabHeld;
+    private bool _tabHeld;                  // dealer: cooler/jars focus toggle
 
     // palette
     private static readonly Color Sand = new(200, 186, 150);
@@ -487,6 +482,19 @@ public partial class HotRodsGame : Game
             base.Update(gameTime);
             return;
         }
+        if (kb.IsKeyDown(Keys.T) && !_tKeyHeld)
+        {
+            _mapOpen = !_mapOpen;
+            _mapSel = _spot;
+            _tKeyHeld = true;
+        }
+        if (kb.IsKeyUp(Keys.T)) _tKeyHeld = false;
+        if (_mapOpen)
+        {
+            UpdateMap(dt, kb);
+            base.Update(gameTime);
+            return;
+        }
         if (kb.IsKeyDown(Keys.H) && !_hHeld)
         {
             _helpOpen = !_helpOpen;
@@ -539,38 +547,6 @@ public partial class HotRodsGame : Game
             base.Update(gameTime);
             return;
         }
-        if (kb.IsKeyDown(Keys.Tab) && !_tabHeld)
-        {
-            _mode = (_mode + 1) % 3;
-            _tabHeld = true;
-        }
-        if (kb.IsKeyUp(Keys.Tab)) _tabHeld = false;
-        for (int i = 0; i < 4; i++)
-        {
-            var key = (Keys)((int)Keys.D1 + i);
-            if (kb.IsKeyDown(key) && !_spotHeld[i])
-            {
-                if (i == _spot)
-                {
-                    // already there
-                }
-                else if (_state.TryTravel(i) is var (ok, msg) && !ok)
-                {
-                    _uiMsg = msg;
-                    _uiMsgT = 3f;
-                    PlaySfx("click");
-                }
-                else
-                {
-                    _spot = i;
-                    _state.Spot = i;
-                    _state.Save();
-                    BuildWorld();
-                    SteamMan.SetPresence("fishing at " + GameData.SpotNames[_spot]);
-                }
-            }
-            _spotHeld[i] = kb.IsKeyDown(key);
-        }
         // economy keys: sell the cooler, cycle strains
         if (kb.IsKeyDown(Keys.X) && !_xHeld)
         {
@@ -605,45 +581,17 @@ public partial class HotRodsGame : Game
         _state.Hour = (_state.Hour + dt / 30f) % 24f;   // 12-minute day, like Python
         _state.Played += dt / 60f;
 
-        if (_mode == 0)                    // third: locked arc around the angler
-        {
-            if (kb.IsKeyDown(Keys.Left)) _yaw = MathF.Max(-0.95f, _yaw - 1.1f * dt);
-            if (kb.IsKeyDown(Keys.Right)) _yaw = MathF.Min(0.95f, _yaw + 1.1f * dt);
-            if (kb.IsKeyDown(Keys.Up)) _pitch = MathF.Min(0.45f, _pitch + 0.6f * dt);
-            if (kb.IsKeyDown(Keys.Down)) _pitch = MathF.Max(-0.30f, _pitch - 0.6f * dt);
-            _dist = 2.8f;
-        }
-        else if (_mode == 2)               // free: full orbit, longer arm
-        {
-            if (kb.IsKeyDown(Keys.Left)) _yaw -= 1.1f * dt;
-            if (kb.IsKeyDown(Keys.Right)) _yaw += 1.1f * dt;
-            if (kb.IsKeyDown(Keys.Up)) _pitch = MathF.Min(0.9f, _pitch + 0.6f * dt);
-            if (kb.IsKeyDown(Keys.Down)) _pitch = MathF.Max(-0.2f, _pitch - 0.6f * dt);
-            _dist = Math.Clamp(_dist, 2f, 30f);
-        }
-
-        // a proper high wobbles the camera; landing a fish shakes it
-        if (_mode != 1)
-        {
-            _yaw += _state.High * 0.05f * MathF.Sin(_t * 1.15f) * dt;
-            _pitch += _state.High * 0.04f * MathF.Cos(_t * 0.9f) * dt;
-            _yaw += _fishing.ShakeT * 0.06f * MathF.Sin(_t * 43f);
-            _pitch += _fishing.ShakeT * 0.05f * MathF.Cos(_t * 37f);
-        }
-
-        if (_mode == 1)                    // first person: at the head, toward water
-        {
-            _view = Matrix.CreateLookAt(new Vector3(-3.31f, 1.47f, 1.52f),
-                                        new Vector3(-1.5f, 0.6f, -9.0f), Vector3.Up);
-        }
-        else
-        {
-            var eye = new Vector3(
-                _angler.X + _dist * MathF.Cos(_pitch) * MathF.Sin(_yaw),
-                _angler.Y + _dist * MathF.Sin(_pitch),
-                _angler.Z + _dist * MathF.Cos(_pitch) * MathF.Cos(_yaw));
-            _view = Matrix.CreateLookAt(eye, _angler, Vector3.Up);
-        }
+        // one fixed third-person view: behind and above the angler, framed
+        // so the dock, the angler and the fishing water share the shot.
+        // A proper high wobbles it and landing a fish shakes it.
+        var eye = new Vector3(-6.9f, 2.7f, 3.8f);
+        var target = new Vector3(-1.6f, 0.7f, -7.0f);
+        float wobble = _state.High * 0.09f;
+        eye.Y += MathF.Sin(_t * 1.15f) * wobble;
+        eye.X += MathF.Cos(_t * 0.9f) * wobble * 0.5f;
+        eye.X += _fishing.ShakeT * 0.12f * MathF.Sin(_t * 43f);
+        eye.Y += _fishing.ShakeT * 0.10f * MathF.Cos(_t * 37f);
+        _view = Matrix.CreateLookAt(eye, target, Vector3.Up);
         _proj = Matrix.CreatePerspectiveFieldOfView(
             MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 0.1f, 250f);
         if (kb.IsKeyDown(Keys.E) && !_eHeld)
@@ -786,6 +734,8 @@ public partial class HotRodsGame : Game
             DrawDealer();
         if (_stokeOpen)
             DrawStoke();
+        if (_mapOpen)
+            DrawMap();
         if (_helpOpen)
             DrawHelp();
         if (_consoleOpen)
@@ -1014,17 +964,35 @@ public partial class HotRodsGame : Game
         }
     }
 
-    private static readonly (float x, float y, int size, float bright)[] _stars =
+    // stars live in world space on a dome ahead of the dock, so the sky
+    // stays put when the camera moves
+    private static readonly (float x, float y, float z, int size, float bright)[] _stars =
         MakeStars(7);
 
-    private static (float, float, int, float)[] MakeStars(int seed)
+    private static (float, float, float, int, float)[] MakeStars(int seed)
     {
         var rng = new Random(seed);
-        var stars = new (float, float, int, float)[70];
+        var stars = new (float, float, float, int, float)[70];
         for (int i = 0; i < stars.Length; i++)
-            stars[i] = ((float)rng.NextDouble(), (float)rng.NextDouble(),
-                        rng.Next(1, 3), 0.35f + (float)rng.NextDouble() * 0.65f);
+            stars[i] = (-60f + (float)rng.NextDouble() * 120f,
+                        6f + (float)rng.NextDouble() * 44f,
+                        -75f + (float)rng.NextDouble() * 70f,
+                        rng.Next(1, 3),
+                        0.35f + (float)rng.NextDouble() * 0.65f);
         return stars;
+    }
+
+    /// <summary>Project a world-space sky point to low-res screen space,
+    /// or null when it sits outside the camera frustum.</summary>
+    private Vector2? SkyPoint(Vector3 world, int w, int h)
+    {
+        var clip = Vector4.Transform(new Vector4(world, 1f), _view * _proj);
+        if (clip.W <= 0.0001f)
+            return null;
+        float x = clip.X / clip.W, y = clip.Y / clip.W, z = clip.Z / clip.W;
+        if (z < 0f || z > 1f || x < -1f || x > 1f || y < -1f || y > 1f)
+            return null;
+        return new Vector2((x + 1f) * 0.5f * w, (1f - y) * 0.5f * h);
     }
 
     // sky keyframes around the clock (hour, sky, fog, tint colour/alpha)
@@ -1088,7 +1056,7 @@ public partial class HotRodsGame : Game
                    new Color(246, 170, 120));
         if (_sellFlash > 0f)
             _font.Draw(_batch, "SOLD!", new Vector2(w - 100, 62), 2, new Color(240, 214, 120));
-        _font.Draw(_batch, "SPACE CAST  E SMOKE  B SHOP  D SAL  J LOG  Z JARS  K STOKE",
+        _font.Draw(_batch, "SPACE CAST  E SMOKE  B SHOP  D SAL  J LOG  Z JARS  K STOKE  T MAP",
                    new Vector2(14, h - 24), 2, new Color(150, 160, 190));
         _batch.End();
         _sellFlash -= 0.016f;
@@ -1278,8 +1246,8 @@ public partial class HotRodsGame : Game
         }
         Edge(ref _upHeld, Keys.Up, () => _shopSel = Math.Max(0, _shopSel - 1));
         Edge(ref _downHeld, Keys.Down, () => _shopSel++);
-        Edge(ref _leftHeld, Keys.Left, () => { _shopTab = (_shopTab + 4) % 5; _shopSel = 0; });
-        Edge(ref _rightHeld, Keys.Right, () => { _shopTab = (_shopTab + 1) % 5; _shopSel = 0; });
+        Edge(ref _leftHeld, Keys.Left, () => { _shopTab = (_shopTab + 5) % 6; _shopSel = 0; });
+        Edge(ref _rightHeld, Keys.Right, () => { _shopTab = (_shopTab + 1) % 6; _shopSel = 0; });
         Edge(ref _enterHeld, Keys.Enter, Buy);
         if (kb.IsKeyDown(Keys.Escape)) { _shopOpen = false; }
 
@@ -1293,11 +1261,19 @@ public partial class HotRodsGame : Game
                 var (ok, msg) = _state.BuyGear(kind, gear[_shopSel]);
                 _shopMsg = msg; _shopMsgT = 2.2f;
             }
-            else
+            else if (_shopTab == 4)
             {
                 if (_shopSel >= GameData.Strains.Length) return;
                 var (ok, msg) = _state.BuyStrain(GameData.Strains[_shopSel]);
                 _shopMsg = msg; _shopMsgT = 2.2f;
+            }
+            else
+            {
+                if (_shopSel >= 4) return;
+                var (ok, msg) = _state.TryTravel(_shopSel);
+                _shopMsg = ok ? "water unlocked - press T for the map" : msg;
+                _shopMsgT = 2.6f;
+                PlaySfx("click");
             }
         }
     }
@@ -1310,9 +1286,9 @@ public partial class HotRodsGame : Game
         _batch.Draw(_pixel, new Rectangle(0, 0, w, h), new Color(10, 14, 26, 225));
         _font.Draw(_batch, "TRADING POST  -  $" + _state.Cash, new Vector2(40, 30), 3,
                    new Color(240, 214, 120));
-        string[] tabs = { "RODS", "LINES", "LURES", "COOLERS", "WEED" };
-        for (int i = 0; i < 5; i++)
-            _font.Draw(_batch, tabs[i], new Vector2(40 + i * 130, 60), 2,
+        string[] tabs = { "RODS", "LINES", "LURES", "COOLERS", "WEED", "WATERS" };
+        for (int i = 0; i < 6; i++)
+            _font.Draw(_batch, tabs[i], new Vector2(40 + i * 118, 60), 2,
                        i == _shopTab ? new Color(255, 255, 255)
                                      : new Color(110, 120, 150));
         int y = 100;
@@ -1338,7 +1314,7 @@ public partial class HotRodsGame : Game
                 y += 46;
             }
         }
-        else
+        else if (_shopTab == 4)
         {
             for (int i = 0; i < GameData.Strains.Length; i++)
             {
@@ -1355,6 +1331,29 @@ public partial class HotRodsGame : Game
                 _font.Draw(_batch, open ? "$" + st.Price : "LOCKED",
                            new Vector2(w - 240, y), 2, col);
                 y += 28;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                bool unlocked = _state.SpotUnlocked(i);
+                bool here = i == _spot;
+                var sp = GameData.Spots[i];
+                var col = i == _shopSel ? new Color(255, 255, 200)
+                          : unlocked ? new Color(150, 216, 160)
+                          : new Color(110, 116, 140);
+                _font.Draw(_batch, (i == _shopSel ? ">" : "  ") + " "
+                           + (unlocked || here ? sp.Name.ToUpper() : "???"),
+                           new Vector2(60, y), 2, col);
+                string right = here ? "HERE" : unlocked ? "UNLOCKED" : "$" + sp.NeedCash;
+                _font.Draw(_batch, right, new Vector2(w - 240, y), 2, col);
+                string sub = unlocked || here ? sp.Blurb
+                    : "Catch all " + GameData.SpeciesList.Count(f => f.Spot == Math.Max(0, i - 1))
+                      + " in " + GameData.SpotNames[Math.Max(0, i - 1)] + " first";
+                _font.Draw(_batch, sub, new Vector2(80, y + 22), 2,
+                           new Color(120, 130, 160));
+                y += 46;
             }
         }
         if (_shopMsgT > 0f)
@@ -1512,33 +1511,43 @@ public partial class HotRodsGame : Game
         float sunA = 1f - night;
         if (sunA > 0.04f)
         {
+            // the sun crosses the world sky, east to west over the water
             float p = Math.Clamp((hour - 5f) / 15f, 0f, 1f);
-            int sx = (int)(w * (0.18f + 0.64f * p));
-            int sy = (int)(h * (0.58f - 0.42f * MathF.Sin(p * MathF.PI)));
-            _batch.Draw(_pixel, new Rectangle(sx - 16, sy - 16, 32, 32),
-                        new Color(255, 170, 80) * (0.30f * sunA));
-            _batch.Draw(_pixel, new Rectangle(sx - 10, sy - 10, 20, 20),
-                        new Color(255, 214, 120) * sunA);
+            var sunWorld = new Vector3(MathF.Sin(p * MathF.PI) * 46f,
+                                       24f + MathF.Sin(p * MathF.PI) * 26f,
+                                       -16f - p * 36f);
+            if (SkyPoint(sunWorld, w, h) is { } sp)
+            {
+                _batch.Draw(_pixel, new Rectangle((int)sp.X - 16, (int)sp.Y - 16, 32, 32),
+                            new Color(255, 170, 80) * (0.30f * sunA));
+                _batch.Draw(_pixel, new Rectangle((int)sp.X - 10, (int)sp.Y - 10, 20, 20),
+                            new Color(255, 214, 120) * sunA);
+            }
         }
         if (night > 0.45f)
         {
             float ma = (night - 0.45f) / 0.55f;
-            int mx = (int)(w * 0.74f), my = (int)(h * 0.16f);
-            _batch.Draw(_pixel, new Rectangle(mx - 8, my - 8, 16, 16),
-                        new Color(226, 232, 240) * ma);
-            _batch.Draw(_pixel, new Rectangle(mx - 4, my - 12, 5, 5),
-                        new Color(150, 160, 180) * ma);
-            _batch.Draw(_pixel, new Rectangle(mx + 2, my + 3, 4, 4),
-                        new Color(150, 160, 180) * ma);
+            if (SkyPoint(new Vector3(-30f, 38f, -30f), w, h) is { } mp)
+            {
+                int mx = (int)mp.X, my = (int)mp.Y;
+                _batch.Draw(_pixel, new Rectangle(mx - 8, my - 8, 16, 16),
+                            new Color(226, 232, 240) * ma);
+                _batch.Draw(_pixel, new Rectangle(mx - 4, my - 12, 5, 5),
+                            new Color(150, 160, 180) * ma);
+                _batch.Draw(_pixel, new Rectangle(mx + 2, my + 3, 4, 4),
+                            new Color(150, 160, 180) * ma);
+            }
         }
         if (night > 0.06f)
         {
-            foreach (var (sx01, sy01, sz, bright) in _stars)
+            foreach (var (sx, sy, sz, ssize, bright) in _stars)
             {
-                float a = MathF.Min(1f, night) * bright;
-                _batch.Draw(_pixel, new Rectangle((int)(sx01 * w),
-                            (int)(sy01 * h * 0.55f), sz, sz),
-                            new Color(220, 230, 255) * a);
+                if (SkyPoint(new Vector3(sx, sy, sz), w, h) is { } stp)
+                {
+                    float a = MathF.Min(1f, night) * bright;
+                    _batch.Draw(_pixel, new Rectangle((int)stp.X, (int)stp.Y,
+                                ssize, ssize), new Color(220, 230, 255) * a);
+                }
             }
         }
         _batch.End();
