@@ -17,11 +17,16 @@ public sealed class FishingSim
     public float CaughtKg;
     public float CaughtValue;
     public bool Kept;
+    public bool FirstCatch;      // species was new - card shows the discovery bonus
     public float CardT;
+    public float ShakeT;         // camera shake on landing a fish
     public float Progress => _progress;
     public float BluePos => _bluePos;
     public float GreenPos => _greenPos;
     public bool Reeling => Current == Phase.Reeling;
+
+    /// <summary>Fired when the bobber lands or a fish bites (ripple rings).</summary>
+    public event Action<Vector3>? Ripple;
 
     private GameState _state;
     private Vector3 _start, _target;
@@ -48,6 +53,7 @@ public sealed class FishingSim
 
     public void Update(float dt, KeyboardState kb, Vector3 rodTip, Vector3 castDir)
     {
+        ShakeT = MathF.Max(0f, ShakeT - dt);
         switch (Current)
         {
             case Phase.Idle:
@@ -79,6 +85,7 @@ public sealed class FishingSim
                 {
                     Bobber = _target;
                     Sfx("splash");
+                    Ripple?.Invoke(Bobber);
                     _waitT = 2f + (float)Rng.NextDouble() * 4f;
                     Current = Phase.Waiting;
                 }
@@ -86,7 +93,10 @@ public sealed class FishingSim
             case Phase.Waiting:
                 _waitT -= dt;
                 if (_waitT <= 0f)
+                {
                     Current = Phase.Bite;
+                    Ripple?.Invoke(Bobber);
+                }
                 break;
             case Phase.Bite:
                 if (kb.IsKeyDown(Keys.Space))
@@ -142,10 +152,11 @@ public sealed class FishingSim
                         Kept = _state.Bag.Count < slots;
                         if (!Kept)
                             _state.Cash += (int)MathF.Round(CaughtValue); // sold on spot
-                        _state.OnCatch(_pending.Id, CaughtKg, Kept);
+                        FirstCatch = _state.OnCatch(_pending.Id, CaughtKg, Kept);
                         _state.Cash += (int)MathF.Round(CaughtValue);
                         _state.Save();
                         CardT = 0f;
+                        ShakeT = 0.45f;
                         Current = Phase.Card;
                     }
                     else if (_progress <= 0f)
@@ -291,12 +302,14 @@ public sealed class FishingSim
                          new Color(220, 230, 240), 3);
     }
 
-    /// <summary>Red/white bobber.</summary>
+    /// <summary>Red/white bobber, gently riding the swell while waiting.</summary>
     public void EmitBobber(List<VertexPositionColor> v)
     {
         if (Current == Phase.Idle || Current == Phase.Card)
             return;
-        float y = 0.06f + (Current == Phase.Bite
+        float idle = Current == Phase.Waiting
+            ? 0.045f * MathF.Sin(_time * 2.6f) : 0f;
+        float y = 0.06f + idle + (Current == Phase.Bite
             ? 0.12f * MathF.Sin(_time * 18f) : 0f);
         Prims.AddSegment(v, new Vector3(Bobber.X, y - 0.08f, Bobber.Z),
                          new Vector3(Bobber.X, y, Bobber.Z), 0.05f,

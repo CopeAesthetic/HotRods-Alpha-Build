@@ -9,6 +9,8 @@ public partial class HotRodsGame
     // ---------------------------------------------------------------- board --
     private void Board(int slot)
     {
+        if (_boundState != null)
+            _boundState.LeveledUp -= OnLevelUp;
         _state = GameState.Load(slot);
         _fishing.SetState(_state);
         _spot = Math.Clamp(_state.Spot, 0, 3);
@@ -17,9 +19,18 @@ public partial class HotRodsGame
         _tripsOpen = false;
         _paused = false;
         _helpOpen = false;
+        _boundState = _state;
+        _state.LeveledUp += OnLevelUp;
         _state.Save();
         BuildWorld();
         SteamMan.SetPresence("fishing at " + GameData.SpotNames[_spot]);
+    }
+
+    private void OnLevelUp(int level)
+    {
+        _uiMsg = "LEVEL " + level + "! +1 STOKE POINT - PRESS K";
+        _uiMsgT = 4f;
+        PlaySfx("click");
     }
 
     private void NewGame(int slot)

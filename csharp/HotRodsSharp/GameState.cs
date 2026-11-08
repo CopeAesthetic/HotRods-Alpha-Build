@@ -29,8 +29,14 @@ public sealed class GameState
     public int StrainIndex { get; set; }
     public int SalTier { get; set; } = -1;                // best rarity ever sold
     public int MaxWater { get; set; }
+    /// <summary>Waters the trip has paid to reach (travel gating).</summary>
+    public HashSet<int> Unlocked { get; set; } = new() { 0 };
     public Dictionary<string, HashSet<string>> OwnedGear { get; set; } = new();
     public Dictionary<string, string> Equipped { get; set; } = new();
+
+    /// <summary>Fires once per level gained (stoke point earned). Events are
+    /// not serialized by System.Text.Json, so this never touches save files.</summary>
+    public event Action<int>? LeveledUp;
 
     // ------------------------------------------------------------------ save --
     private static string SlotPath(int slot) => slot == 1
@@ -57,6 +63,10 @@ public sealed class GameState
                 if (st != null)
                 {
                     st.Slot = slot;
+                    // legacy saves predate travel gating: grant waters up to
+                    // the furthest one visited so nobody loses access
+                    for (int i = 1; i <= st.MaxWater; i++)
+                        st.Unlocked.Add(i);
                     return st;
                 }
             }
@@ -105,7 +115,10 @@ public sealed class GameState
     {
         int before = Level;
         Xp += amount;
-        StokePts += Math.Max(0, Level - before);
+        int gained = Math.Max(0, Level - before);
+        StokePts += gained;
+        for (int i = 1; i <= gained; i++)
+            LeveledUp?.Invoke(before + i);
     }
 
     public int StokeRank(string lane) =>
@@ -191,8 +204,12 @@ public sealed class GameState
         return best;
     }
 
-    /// <summary>Record a catch: species log, hidden jar unlocks, xp, cooler.</summary>
-    public void OnCatch(string fishId, float kg, bool toBag)
+    /// <summary>
+    /// Record a catch: species log, hidden jar unlocks, xp (Python formula
+    /// 6 + rarity*4 + 12 if new), discovery bonus (1x value on first catch),
+    /// cooler. Returns true when the species was new.
+    /// </summary>
+    public bool OnCatch(string fishId, float kg, bool toBag)
     {
         bool first = !Species.ContainsKey(fishId);
         Species[fishId] = Species.GetValueOrDefault(fishId) + 1;
@@ -201,13 +218,49 @@ public sealed class GameState
         {
             foreach (var st in GameData.Strains.Where(s => s.UnlockFish == fishId))
                 HiddenJars.Add(st.Id);
-            AddXp((GameData.RarityIndex(sp.Rarity) + 1) * (first ? 40 : 20));
+            int ri = GameData.RarityIndex(sp.Rarity);
+            AddXp(6 + ri * 4 + (first ? 12 : 0));
+            if (first)
+                Cash += (int)MathF.Round(kg * sp.UsdKg);   // discovery bonus
         }
         if (toBag)
         {
             Bag.Add(fishId);
             BagKg.Add(kg);
         }
+        return first;
+    }
+
+    // ---------------------------------------------------------------- travel --
+    public bool SpotUnlocked(int index) => index == 0 || Unlocked.Contains(index);
+
+    public int SpeciesFound(int spot) => GameData.SpeciesList
+        .Count(sp => sp.Spot == spot && Species.ContainsKey(sp.Id));
+
+    /// <summary>Python can_travel: the previous water must be fished out,
+    /// then the spot's need_cash buys the trip.</summary>
+    public (bool ok, string msg) TryTravel(int index)
+    {
+        if (index < 0 || index >= 4)
+            return (false, "no such water");
+        if (SpotUnlocked(index))
+            return (true, "");
+        if (index > 0)
+        {
+            int prev = index - 1;
+            int need = GameData.SpeciesList.Count(sp => sp.Spot == prev);
+            int got = SpeciesFound(prev);
+            if (got < need)
+                return (false, "Catch all " + need + " in "
+                              + GameData.SpotNames[prev] + " (" + got + "/" + need + ")");
+        }
+        int cost = GameData.Spots[index].NeedCash;
+        if (Cash < cost)
+            return (false, "Need $" + cost + " to get there");
+        Cash -= cost;
+        Unlocked.Add(index);
+        MaxWater = Math.Max(MaxWater, index);
+        return (true, "");
     }
 
     // ------------------------------------------------------------------- gear --
