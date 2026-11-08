@@ -14,6 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from game import config as C  # noqa: E402
 from game import data  # noqa: E402
 
 OUT = ROOT / "content"
@@ -51,6 +52,7 @@ def main() -> None:
         "spoil_floor": data.SPOIL_FLOOR,
         "concentrate_potency": data.CONCENTRATE_POTENCY,
         "concentrate_mult": data.CONCENTRATE_MULT,
+        "rarity_weight": C.RARITY_WEIGHT,
     })
     dump("tips.json", data.TIPS)
 

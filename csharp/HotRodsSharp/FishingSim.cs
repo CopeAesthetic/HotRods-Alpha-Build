@@ -167,28 +167,109 @@ public sealed class FishingSim
         }
     }
 
-    /// <summary>Weighted roll inside the state's current rarity band.</summary>
-    private FishSpec Roll()
+    /// <summary>
+    /// Catch roll, ported from the Python fishing.py _choose_species:
+    /// hidden fish are a flat 1-in-4 when their strain is active, shinies a
+    /// 2% roll while high on the matching strain, and the normal pool is the
+    /// water's 32 species gated by rarity band, time/high conditions, lure
+    /// bias, night swings, high swings and cast depth.
+    /// </summary>
+    public FishSpec Roll()
     {
         var (lo, hi) = _state.RarityBand();
-        var pool = GameData.ForSpot(_state.Spot)
-                           .Where(f => GameData.RarityIndex(f.Rarity) >= lo
-                                    && GameData.RarityIndex(f.Rarity) <= hi)
-                           .ToArray();
-        if (pool.Length == 0)
-            pool = GameData.ForSpot(_state.Spot)
-                           .Where(f => f.Rarity == "common").ToArray();
-        if (pool.Length == 0)
-            pool = GameData.Species;
-        float total = pool.Sum(f => GameData.RarityWeight[GameData.RarityIndex(f.Rarity)]);
-        float r = (float)Rng.NextDouble() * total;
-        foreach (var f in pool)
+        int spot = _state.Spot;
+        bool high = _state.High > 0.10f;
+        bool night = _state.Hour >= 20f || _state.Hour < 5.5f;
+        string strain = _state.Strain;
+
+        // hidden: flat 1-in-4 when its strain is active
+        var secret = GameData.HiddenFish.FirstOrDefault(h => h.Spot == spot);
+        if (secret != null && Rng.NextDouble() < 0.25)
         {
-            r -= GameData.RarityWeight[GameData.RarityIndex(f.Rarity)];
-            if (r <= 0f)
-                return f;
+            if (secret.Cond == null
+                || (secret.Cond.StartsWith("strain:") && high
+                    && strain == secret.Cond.Split(':', 2)[1]))
+                return secret;
         }
-        return pool[^1];
+
+        // shiny: 2% roll while high on the matching strain
+        // (Python also needs the dab rig + concentrate; that system is a TODO)
+        foreach (var sh in GameData.ShinyFish)
+        {
+            if (sh.Spot != spot || sh.Cond == null || !sh.Cond.StartsWith("strain:"))
+                continue;
+            string want = sh.Cond.Split(':', 2)[1];
+            if (high && strain == want && Rng.NextDouble() < GameData.ShinyOdds)
+                return sh;
+        }
+
+        var lure = GameData.Lures.FirstOrDefault(l => l.Id == _state.EquippedId("lure"));
+        var bias = lure?.Bias;
+        var nightBias = lure?.NightBias;
+        float strainLuck = high ? _state.StrainData().Luck : 0f;  // smoker luck TODO
+        float depthBonus = 0.55f + 0.75f * Power;
+
+        var weights = new List<(FishSpec sp, float w)>();
+        float total = 0f;
+        foreach (var sp in GameData.SpeciesList.Where(f => f.Spot == spot))
+        {
+            int ri = GameData.RarityIndex(sp.Rarity);
+            if (!(lo <= ri && ri <= hi))
+                continue;
+            if (sp.Cond is { } cond)
+            {
+                if (cond.StartsWith("strain:"))
+                {
+                    if (!(high && strain == cond.Split(':', 2)[1]))
+                        continue;
+                }
+                else if (cond == "night" && !night)
+                    continue;
+                else if (cond == "high" && !high)
+                    continue;
+                else if (cond == "night+high" && !(night && high))
+                    continue;
+            }
+            string r = sp.Rarity;
+            float w = GameData.RarityWeights[ri];
+            if (bias != null && bias.TryGetValue(r, out var b))
+                w *= b;
+            if (night)
+            {
+                if (nightBias != null && nightBias.TryGetValue(r, out var nb))
+                    w *= nb;
+                w *= r switch
+                {
+                    "common" => 0.85f, "uncommon" => 1.0f, "rare" => 1.3f,
+                    "epic" => 1.45f, "legendary" => 1.25f, _ => 1f,
+                };
+            }
+            if (_state.High > 0.05f)
+            {
+                float swing = r switch
+                {
+                    "common" => -0.30f, "uncommon" => 0.06f, "rare" => 0.45f,
+                    "epic" => 0.85f, "legendary" => 1.30f, _ => 0f,
+                };
+                w *= MathF.Max(0.05f, 1f + _state.High * swing * (0.55f + strainLuck));
+            }
+            if (r is "rare" or "epic" or "legendary")
+                w *= depthBonus;
+            w = MathF.Max(0.001f, w);
+            weights.Add((sp, w));
+            total += w;
+        }
+        if (weights.Count == 0)
+            return GameData.SpeciesList.First(f => f.Spot == spot && f.Rarity == "common");
+        float roll = (float)Rng.NextDouble() * total;
+        float acc = 0f;
+        foreach (var (sp, w) in weights)
+        {
+            acc += w;
+            if (roll <= acc)
+                return sp;
+        }
+        return weights[^1].sp;
     }
 
     private static float Wrap(float a)

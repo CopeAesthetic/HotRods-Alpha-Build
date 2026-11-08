@@ -40,7 +40,9 @@ public static class GameData
     public static readonly string[] RarityOrder =
         { "common", "uncommon", "rare", "epic", "legendary" };
 
-    public static readonly float[] RarityWeight = { 10f, 5f, 2.5f, 1f, 0.4f };
+    /// <summary>Loaded from economy.json so the roll matches the Python sim.</summary>
+    public static float[] RarityWeights { get; private set; } =
+        { 62f, 25f, 10f, 2.6f, 0.55f };
 
     // fish: SpeciesList (32) + HiddenFish (4) + ShinyFish (4); Species is the
     // merged view the sim has always rolled from.
@@ -111,6 +113,10 @@ public static class GameData
         SpoilFloor = econ.SpoilFloor;
         ConcentratePotency = econ.ConcentratePotency;
         ConcentrateMult = econ.ConcentrateMult;
+        if (econ.RarityWeight != null)
+            RarityWeights = RarityOrder
+                .Select(r => econ.RarityWeight.TryGetValue(r, out var w) ? w : 1f)
+                .ToArray();
     }
 
     private static T LoadJson<T>(string name)
@@ -270,4 +276,5 @@ sealed class EconomyDto
     public float SpoilFloor { get; set; }
     public int ConcentratePotency { get; set; }
     public float ConcentrateMult { get; set; }
+    public Dictionary<string, float>? RarityWeight { get; set; }
 }

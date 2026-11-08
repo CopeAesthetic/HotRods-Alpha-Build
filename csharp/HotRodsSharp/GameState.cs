@@ -262,7 +262,7 @@ public sealed class GameState
 
     public (int lo, int hi) RarityBand()
     {
-        if (High <= 0f)
+        if (High <= 0.10f)          // Python is_high: chill > 10 of 100
             return (0, 0);
         var sd = StrainData();
         int lo = sd.GateMin, hi = sd.GateMax;
