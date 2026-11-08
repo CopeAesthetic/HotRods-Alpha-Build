@@ -47,6 +47,7 @@ public partial class HotRodsGame : Game
     private BitmapFont _font = null!;
     private SpriteBatch _batch = null!;
     private Texture2D _pixel = null!;
+    private RenderTarget2D _lowRes = null!;   // PS1-style half-res 3D target
     private readonly bool[] _spotHeld = new bool[4];
 
     // water, rebuilt per frame
@@ -277,6 +278,8 @@ public partial class HotRodsGame : Game
         _fishing.Sfx = PlaySfx;
         _pixel = new Texture2D(GraphicsDevice, 1, 1);
         _pixel.SetData(new[] { Color.White });
+        _lowRes = new RenderTarget2D(GraphicsDevice,
+            GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height / 2);
     }
 
     private void AddProp(List<VertexPositionColor> s, string name, float x,
@@ -324,7 +327,27 @@ public partial class HotRodsGame : Game
         BuildDock(s, Docks[_spot]);
         BuildShore(s, Banks[_spot]);
         BuildAngler(s);
+        SnapVerts(s);
         _staticTriCount = s.Count / 3;
+    }
+
+    /// <summary>
+    /// PS1-style vertex snapping: quantise static geometry to a coarse grid so
+    /// triangles jitter and wobble as the camera moves, like early-2000s
+    /// hardware. Dynamic pieces (water, arms, fish) stay smooth.
+    /// </summary>
+    private static void SnapVerts(List<VertexPositionColor> verts)
+    {
+        const float grid = 40f;
+        for (int i = 0; i < verts.Count; i++)
+        {
+            var p = verts[i].Position;
+            verts[i] = new VertexPositionColor(
+                new Vector3(MathF.Round(p.X * grid) / grid,
+                            MathF.Round(p.Y * grid) / grid,
+                            MathF.Round(p.Z * grid) / grid),
+                verts[i].Color);
+        }
     }
 
     private void BuildDock(List<VertexPositionColor> s,
@@ -414,6 +437,7 @@ public partial class HotRodsGame : Game
     {
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
         _t += dt;
+        SteamMan.RunCallbacks();
         var kb = Keyboard.GetState();
         if (kb.IsKeyDown(Keys.OemTilde) && !_tickHeld)
         {
@@ -529,6 +553,7 @@ public partial class HotRodsGame : Game
                 _state.MaxWater = Math.Max(_state.MaxWater, i);
                 _state.Save();
                 BuildWorld();
+                SteamMan.SetPresence("fishing at " + GameData.SpotNames[_spot]);
             }
             _spotHeld[i] = kb.IsKeyDown(key);
         }
@@ -665,6 +690,9 @@ public partial class HotRodsGame : Game
             base.Draw(gameTime);
             return;
         }
+        // ---- low-res 3D pass: the world renders at half window res and
+        // ---- point-upscales, like the Python 480x270 software renderer
+        GraphicsDevice.SetRenderTarget(_lowRes);
         GraphicsDevice.Clear(_skyClear);
         DrawSky();
         GraphicsDevice.RasterizerState = RasterizerState.CullNone;
@@ -698,11 +726,18 @@ public partial class HotRodsGame : Game
         DrawVerts(_staticVerts.GetRange(0, _staticTriCount * 3), _effectCullNone);
         DrawVerts(dyn, _effectCullNone);
         DrawCatchCard();
-        DrawHud();
         _batch.Begin();
         _batch.Draw(_pixel, new Rectangle(0, 0, GraphicsDevice.Viewport.Width,
                     GraphicsDevice.Viewport.Height), _tint.col * _tint.a);
         _batch.End();
+        GraphicsDevice.SetRenderTarget(null);
+
+        // ---- present: point-upscale the low-res frame, then full-res UI
+        _batch.Begin(samplerState: SamplerState.PointClamp);
+        _batch.Draw(_lowRes, new Rectangle(0, 0, GraphicsDevice.Viewport.Width,
+                    GraphicsDevice.Viewport.Height), Color.White);
+        _batch.End();
+        DrawHud();
         if (_shopOpen)
             DrawShop();
         if (_journalOpen)
@@ -719,7 +754,19 @@ public partial class HotRodsGame : Game
             DrawHelp();
         if (_consoleOpen)
             DrawConsole();
+        DrawScanlines();
         base.Draw(gameTime);
+    }
+
+    /// <summary>Subtle CRT scanlines over the finished frame.</summary>
+    private void DrawScanlines()
+    {
+        int w = GraphicsDevice.Viewport.Width;
+        int h = GraphicsDevice.Viewport.Height;
+        _batch.Begin(samplerState: SamplerState.PointClamp);
+        for (int y = 0; y < h; y += 2)
+            _batch.Draw(_pixel, new Rectangle(0, y, w, 1), new Color(0, 0, 0, 20));
+        _batch.End();
     }
 
     private void EmitShimmer(List<VertexPositionColor> dyn)
@@ -990,6 +1037,7 @@ public partial class HotRodsGame : Game
                 _state.Save();
                 _atTitle = true;
                 _paused = false;
+                SteamMan.SetPresence("menu");
             }
             Edge(ref _enterHeld, Keys.Enter, ToTitle);
             Edge(ref _tKeyHeld, Keys.T, ToTitle);

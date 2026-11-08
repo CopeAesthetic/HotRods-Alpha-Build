@@ -19,6 +19,7 @@ public partial class HotRodsGame
         _helpOpen = false;
         _state.Save();
         BuildWorld();
+        SteamMan.SetPresence("fishing at " + GameData.SpotNames[_spot]);
     }
 
     private void NewGame(int slot)
@@ -223,6 +224,7 @@ public partial class HotRodsGame
         if (_helpOpen)
             DrawHelp();
         _batch.End();
+        DrawScanlines();
     }
 
     // ------------------------------------------------------------------ help --
