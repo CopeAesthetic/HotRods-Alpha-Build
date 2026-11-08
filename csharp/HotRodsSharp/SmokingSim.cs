@@ -29,8 +29,8 @@ public sealed class SmokingSim
     public float Speed = 1f;
 
     private static readonly Vector3 Waist = new(-3.13f, 0.98f, 1.53f);
-    private static readonly Vector3 Mouth = new(-3.275f, 1.315f, 1.565f);
-    private static readonly Vector3 Face = new(-3.155f, 1.315f, 1.565f);
+    private static readonly Vector3 Mouth = new(-3.24f, 1.33f, 1.33f);
+    private static readonly Vector3 Face = new(-3.16f, 1.35f, 1.36f);
 
     private static readonly (string id, Color col, float lay, float yaw)[] Items =
     {

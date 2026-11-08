@@ -180,4 +180,51 @@ public static class PrimsLit
             AddTriFlat(v, b, ringB[j], ringB[i], col);
         }
     }
+
+    /// <summary>Tapered tube: radius goes rA at a to rB at b, smooth normals.</summary>
+    public static void AddTaperedSegment(List<VertexPositionNormalColor> v,
+        Vector3 a, Vector3 b, float rA, float rB, Color col, int sides = 8)
+    {
+        var axis = Vector3.Normalize(b - a);
+        var up = MathF.Abs(axis.Y) < 0.9f ? Vector3.Up : Vector3.Forward;
+        var t1 = Vector3.Normalize(Vector3.Cross(up, axis));
+        var t2 = Vector3.Cross(axis, t1);
+        var ringA = new Vector3[sides];
+        var ringB = new Vector3[sides];
+        var nrA = new Vector3[sides];
+        var nrB = new Vector3[sides];
+        for (int i = 0; i < sides; i++)
+        {
+            float ang = MathF.Tau * i / sides;
+            var dir = t1 * MathF.Cos(ang) + t2 * MathF.Sin(ang);
+            ringA[i] = a + dir * rA;
+            ringB[i] = b + dir * rB;
+            nrA[i] = nrB[i] = Vector3.Normalize(dir);
+        }
+        for (int i = 0; i < sides; i++)
+        {
+            int j = (i + 1) % sides;
+            AddTriS(v, ringA[i], ringA[j], ringB[j], nrA[i], nrA[j], nrB[j], col);
+            AddTriS(v, ringA[i], ringB[j], ringB[i], nrA[i], nrB[j], nrB[i], col);
+            AddTriFlat(v, a, ringA[i], ringA[j], col);
+            AddTriFlat(v, b, ringB[j], ringB[i], col);
+        }
+    }
+
+    /// <summary>Flat disc facing <paramref name="normal"/> (hat brims, pucks).</summary>
+    public static void AddDisc(List<VertexPositionNormalColor> v, Vector3 c, float r,
+                               Color col, Vector3 normal, int n = 10)
+    {
+        var up = MathF.Abs(normal.Y) < 0.9f ? Vector3.Up : Vector3.Forward;
+        var t1 = Vector3.Normalize(Vector3.Cross(up, normal));
+        var t2 = Vector3.Cross(normal, t1);
+        var ring = new Vector3[n];
+        for (int i = 0; i < n; i++)
+        {
+            float ang = MathF.Tau * i / n;
+            ring[i] = c + (t1 * MathF.Cos(ang) + t2 * MathF.Sin(ang)) * r;
+        }
+        for (int i = 0; i < n; i++)
+            AddTriS(v, c, ring[i], ring[(i + 1) % n], normal, normal, normal, col);
+}
 }

@@ -403,45 +403,12 @@ public partial class HotRodsGame : Game
         }
     }
 
-    private static readonly Dictionary<string, Color> FisherMats = new()
-    {
-        ["fisher_wader"] = Wader, ["fisher_boot"] = Boot,
-        ["fisher_shirt"] = Shirt, ["fisher_vest"] = Vest,
-        ["fisher_skin"] = Skin, ["fisher_hat"] = Hat,
-        ["fisher_beard"] = Beard, ["fisher_face"] = Face,
-        ["fisher_dark"] = Dark, ["fisher_nose"] = Nose,
-        ["fisher_mouth"] = Mouth,
-    };
-
     private void BuildAngler(List<VertexPositionNormalColor> s)
     {
-        // the fisherman is a single Blender asset, material-painted;
-        // smooth-shaded with one light pass per material group
-        var m = ObjMesh.Load(
-            Path.Combine(AppContext.BaseDirectory, "Assets", "fisherman.obj"), 1f);
-        var normals = new Vector3[m.Verts.Count];
-        foreach (var (a, b, c) in m.Tris)
-        {
-            var n = Vector3.Cross(m.Verts[b] - m.Verts[a], m.Verts[c] - m.Verts[a]);
-            if (n.LengthSquared() > 0.000001f)
-            {
-                n = Vector3.Normalize(n);
-                normals[a] += n; normals[b] += n; normals[c] += n;
-            }
-        }
-        for (int i = 0; i < normals.Length; i++)
-            normals[i] = normals[i].LengthSquared() > 0.0001f
-                ? Vector3.Normalize(normals[i]) : Vector3.Up;
-        for (int i = 0; i < m.Tris.Count; i++)
-        {
-            var (a, b, c) = m.Tris[i];
-            Color col = i < m.TriMats.Count && FisherMats.TryGetValue(m.TriMats[i], out var mc)
-                ? mc : Skin;
-            PrimsLit.AddTriS(s, m.Verts[a], m.Verts[b], m.Verts[c],
-                             normals[a], normals[b], normals[c], col);
-        }
-        // arms and rod stay procedural: they swap between the fishing and
-        // smoking poses every frame
+        // the stoner fisherman: rebuilt from primitives (Character.Build),
+        // smooth-lit like the rest of the static world. Arms and rod stay
+        // procedural: they swap between fishing and smoking poses each frame.
+        Character.Build(s);
     }
 
     private void EmitFishingPose(List<VertexPositionColor> v)
@@ -574,11 +541,11 @@ public partial class HotRodsGame : Game
         _state.Hour = (_state.Hour + dt / 30f) % 24f;   // 12-minute day, like Python
         _state.Played += dt / 60f;
 
-        // one fixed third-person view: behind and above the angler, framed
-        // so the dock, the angler and the fishing water share the shot.
+        // over-the-right-shoulder view: the camera sits just off the
+        // angler's right shoulder and looks out across the lake.
         // A proper high wobbles it and landing a fish shakes it.
-        var eye = new Vector3(-6.9f, 2.7f, 3.8f);
-        var target = new Vector3(-0.6f, 0.8f, -6.0f);
+        var eye = new Vector3(-2.75f, 1.45f, 2.20f);
+        var target = new Vector3(-1.0f, 0.55f, -24.0f);
         float wobble = _state.High * 0.09f;
         eye.Y += MathF.Sin(_t * 1.15f) * wobble;
         eye.X += MathF.Cos(_t * 0.9f) * wobble * 0.5f;
