@@ -763,12 +763,7 @@ public partial class HotRodsGame : Game
         _batch.Draw(_pixel, new Rectangle(0, 0, GraphicsDevice.Viewport.Width,
                     GraphicsDevice.Viewport.Height), _tint.col * _tint.a);
         _batch.End();
-        bool fighting = _fishing.Current is FishingSim.Phase.Bite
-                        or FishingSim.Phase.Hook or FishingSim.Phase.Reeling;
-        if (!fighting)
-            DrawHud();
-        // fish on the line: the HUD drops entirely so the rope bar is the
-        // only focus - the world stays bright, the fight itself escalates
+        DrawHud();   // the HUD stays up; the rope bar sits lower-centre
         if (_shopOpen)
             DrawShop();
         if (_journalOpen)
@@ -930,7 +925,7 @@ public partial class HotRodsGame : Game
     {
         int w = GraphicsDevice.Viewport.Width;
         int h = GraphicsDevice.Viewport.Height;
-        var bar = new Rectangle(16, h - 48, w - 32, 24);
+        var bar = new Rectangle(w / 2 - 170, h - 96, 340, 24);
         // the rope heats up as the fight builds
         DrawRope(bar, Color.Lerp(new Color(176, 148, 96), new Color(206, 84, 52),
                                  _fishing.Progress));
@@ -970,19 +965,20 @@ public partial class HotRodsGame : Game
         if (d <= core)
             _font.Draw(_batch, "NOW!", new Vector2(w / 2f - 14, bar.Y - 30), 3,
                        new Color(150, 255, 150));
+        if (d <= core || d <= half)
+            _font.Draw(_batch, "SPACE!", new Vector2(w / 2f - 18, bar.Y + 28), 2,
+                       new Color(150, 255, 150));
         // progress: thin fill along the bar's bottom edge
         _batch.Draw(_pixel, new Rectangle(bar.X + 3, bar.Bottom - 4, bar.Width - 6, 3),
                     new Color(10, 12, 20, 200));
         _batch.Draw(_pixel, new Rectangle(bar.X + 4, bar.Bottom - 3,
                     (int)((bar.Width - 8) * _fishing.Progress), 2),
                     new Color(120, 210, 250));
-        // escalating mood label + hint above the bar
+        // escalating mood label above the bar
         string mood = _fishing.Progress > 0.75f ? "ALMOST THERE!"
                     : _fishing.Progress > 0.34f ? "KEEP GOING!" : "PULL ON THE BLUE";
-        _font.Draw(_batch, mood, new Vector2(24, bar.Y - 26), 2,
+        _font.Draw(_batch, mood, new Vector2(bar.X, bar.Y - 26), 2,
                    new Color(220, 226, 240));
-        _font.Draw(_batch, "SPACE - TIME THE PULL", new Vector2(w - 330, bar.Y - 26),
-                   2, new Color(200, 208, 230));
         switch (_fishing.LastPull)
         {
             case FishingSim.PullGrade.Perfect:
