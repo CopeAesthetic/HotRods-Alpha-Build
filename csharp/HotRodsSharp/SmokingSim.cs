@@ -25,6 +25,9 @@ public sealed class SmokingSim
     private int _item;
     private float _clock;
 
+    /// <summary>Ceremony speed multiplier (stoke smoke lane: +6% per rank).</summary>
+    public float Speed = 1f;
+
     private static readonly Vector3 Waist = new(-3.13f, 0.98f, 1.53f);
     private static readonly Vector3 Mouth = new(-3.275f, 1.315f, 1.565f);
     private static readonly Vector3 Face = new(-3.155f, 1.315f, 1.565f);
@@ -59,7 +62,7 @@ public sealed class SmokingSim
     {
         _clock += dt;
         if (Active)
-            _t = MathF.Min(Total, _t + dt);
+            _t = MathF.Min(Total, _t + dt * Speed);
     }
 
     private ObjMesh Mesh(string id)

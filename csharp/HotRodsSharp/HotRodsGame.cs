@@ -5,7 +5,7 @@ namespace HotRodsSharp;
 /// shore built from the Python layout tables, animated water, the fisherman
 /// model, and three camera modes (third / first / free, TAB to cycle).
 /// </summary>
-public class HotRodsGame : Game
+public partial class HotRodsGame : Game
 {
     private readonly GraphicsDeviceManager _graphics;
     private BasicEffect _effect = null!;
@@ -15,13 +15,21 @@ public class HotRodsGame : Game
     private readonly List<VertexPositionColor> _staticVerts = new();
     private int _staticTriCount;
     private int _spot;
-    private readonly GameState _state = GameState.Load();
+    private GameState _state = GameState.Load();
     private readonly FishingSim _fishing;
     private readonly SmokingSim _smoking = new();
     private readonly FishRender _fish = new();
     private bool _eHeld, _qHeld, _xHeld, _lbHeld, _rbHeld;
     private bool _shopOpen, _bHeld, _enterHeld, _upHeld, _downHeld, _leftHeld, _rightHeld;
     private bool _journalOpen, _zaaOpen, _paused, _jHeld, _zHeld, _escHeld;
+    private bool _atTitle = true, _tripsOpen, _dealerOpen, _stokeOpen, _helpOpen;
+    private bool _dHeld, _kHeld, _hHeld, _tKeyHeld, _fHeld, _uHeld;
+    private int _titleSel, _tripsSel = 1, _dealerSel, _dealerArea, _stokeSel;
+    private int _dealerFocus;                 // 0 cooler, 1 jars
+    private int _scrapConfirm;                // trips: slot awaiting confirm
+    private float _newConfirm, _scrapConfirmT;
+    private string _menuMsg = "";
+    private float _menuMsgT;
     private int _journalSel, _zaaSel;
     private string _uiMsg = "";
     private float _uiMsgT;
@@ -236,7 +244,7 @@ public class HotRodsGame : Game
         _fishing = new FishingSim(_state);
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
-        Window.Title = "Hot Rods (C# port) - TAB cycles camera";
+        Window.Title = "Hot Rods";
     }
 
     protected override void LoadContent()
@@ -391,7 +399,6 @@ public class HotRodsGame : Game
         float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
         _t += dt;
         var kb = Keyboard.GetState();
-        if (kb.IsKeyDown(Keys.Escape)) Exit();
         if (kb.IsKeyDown(Keys.OemTilde) && !_tickHeld)
         {
             _consoleOpen = !_consoleOpen;
@@ -402,6 +409,52 @@ public class HotRodsGame : Game
         if (_consoleOpen)
         {
             UpdateConsole(kb);
+            base.Update(gameTime);
+            return;
+        }
+        if (_atTitle)
+        {
+            UpdateTitle(dt, kb);
+            base.Update(gameTime);
+            return;
+        }
+        if (kb.IsKeyDown(Keys.D) && !_dHeld)
+        {
+            _dealerOpen = !_dealerOpen;
+            _dealerSel = 0;
+            _dealerArea = _state.Spot;
+            _dHeld = true;
+        }
+        if (kb.IsKeyUp(Keys.D)) _dHeld = false;
+        if (_dealerOpen)
+        {
+            UpdateDealer(dt, kb);
+            base.Update(gameTime);
+            return;
+        }
+        if (kb.IsKeyDown(Keys.K) && !_kHeld)
+        {
+            _stokeOpen = !_stokeOpen;
+            _stokeSel = 0;
+            _kHeld = true;
+        }
+        if (kb.IsKeyUp(Keys.K)) _kHeld = false;
+        if (_stokeOpen)
+        {
+            UpdateStoke(dt, kb);
+            base.Update(gameTime);
+            return;
+        }
+        if (kb.IsKeyDown(Keys.H) && !_hHeld)
+        {
+            _helpOpen = !_helpOpen;
+            _hHeld = true;
+        }
+        if (kb.IsKeyUp(Keys.H)) _hHeld = false;
+        if (_helpOpen)
+        {
+            if (kb.IsKeyDown(Keys.Escape))
+                _helpOpen = false;
             base.Update(gameTime);
             return;
         }
@@ -491,8 +544,11 @@ public class HotRodsGame : Game
         if (_wasSmoking && !_smoking.Active)
             _state.High = 1.0f;
         _wasSmoking = _smoking.Active;
-        _state.High = MathF.Max(0f, _state.High - dt / 45f);
+        _smoking.Speed = 1f + 0.06f * _state.StokeRank("smoke");
+        _state.High = MathF.Max(0f, _state.High
+            - dt / (45f * (1f + 0.05f * _state.StokeRank("vibes"))));
         _state.Hour = (_state.Hour + dt / 60f) % 24f;
+        _state.Played += dt / 60f;
 
         if (_mode == 0)                    // third: locked arc around the angler
         {
@@ -509,6 +565,13 @@ public class HotRodsGame : Game
             if (kb.IsKeyDown(Keys.Up)) _pitch = MathF.Min(0.9f, _pitch + 0.6f * dt);
             if (kb.IsKeyDown(Keys.Down)) _pitch = MathF.Max(-0.2f, _pitch - 0.6f * dt);
             _dist = Math.Clamp(_dist, 2f, 30f);
+        }
+
+        // a proper high wobbles the camera
+        if (_mode != 1)
+        {
+            _yaw += _state.High * 0.05f * MathF.Sin(_t * 1.15f) * dt;
+            _pitch += _state.High * 0.04f * MathF.Cos(_t * 0.9f) * dt;
         }
 
         if (_mode == 1)                    // first person: at the head, toward water
@@ -580,6 +643,12 @@ public class HotRodsGame : Game
 
     protected override void Draw(GameTime gameTime)
     {
+        if (_atTitle)
+        {
+            DrawTitleScreen();
+            base.Draw(gameTime);
+            return;
+        }
         GraphicsDevice.Clear(_skyClear);
         DrawSky();
         GraphicsDevice.RasterizerState = RasterizerState.CullNone;
@@ -626,6 +695,12 @@ public class HotRodsGame : Game
             DrawZaa();
         if (_paused)
             DrawPause();
+        if (_dealerOpen)
+            DrawDealer();
+        if (_stokeOpen)
+            DrawStoke();
+        if (_helpOpen)
+            DrawHelp();
         if (_consoleOpen)
             DrawConsole();
         base.Draw(gameTime);
@@ -861,7 +936,7 @@ public class HotRodsGame : Game
                    new Color(246, 170, 120));
         if (_sellFlash > 0f)
             _font.Draw(_batch, "SOLD!", new Vector2(w - 100, 62), 2, new Color(240, 214, 120));
-        _font.Draw(_batch, "SPACE CAST  E SMOKE  B SHOP  J LOG  Z JARS  ESC MENU",
+        _font.Draw(_batch, "SPACE CAST  E SMOKE  B SHOP  D SAL  J LOG  Z JARS  K STOKE",
                    new Vector2(14, h - 24), 2, new Color(150, 160, 190));
         _batch.End();
         _sellFlash -= 0.016f;
@@ -894,7 +969,14 @@ public class HotRodsGame : Game
             Edge(ref _enterHeld, Keys.Enter, PickStrain);
         if (_paused)
         {
-            Edge(ref _enterHeld, Keys.Enter, () => Exit());
+            void ToTitle()
+            {
+                _state.Save();
+                _atTitle = true;
+                _paused = false;
+            }
+            Edge(ref _enterHeld, Keys.Enter, ToTitle);
+            Edge(ref _tKeyHeld, Keys.T, ToTitle);
             if (kb.IsKeyDown(Keys.S) && !_leftHeld)
             {
                 _state.Save();
@@ -908,7 +990,7 @@ public class HotRodsGame : Game
         void PickStrain()
         {
             var st = GameData.Strains[_zaaSel];
-            if (_state.JarOpen(st))
+            if (_state.WeedCount(st.Id) > 0)
             {
                 _state.Strain = st.Id;
                 _state.StrainIndex = _zaaSel;
@@ -918,7 +1000,7 @@ public class HotRodsGame : Game
             }
             else
             {
-                _uiMsg = "jar locked - sell a tier " + st.Tier + " fish";
+                _uiMsg = "jar empty - buy a gram from Sal (D)";
                 _uiMsgT = 2f;
             }
         }
@@ -970,13 +1052,13 @@ public class HotRodsGame : Game
         int h = GraphicsDevice.Viewport.Height;
         _batch.Begin(samplerState: SamplerState.PointClamp);
         _batch.Draw(_pixel, new Rectangle(0, 0, w, h), new Color(12, 18, 22, 235));
-        _font.Draw(_batch, "SAL'S JARS  -  pick your smoke", new Vector2(40, 30), 3,
+        _font.Draw(_batch, "SALS JARS  -  pick your smoke", new Vector2(40, 30), 3,
                    new Color(150, 216, 160));
         int y = 80;
         for (int i = 0; i < GameData.Strains.Length; i++)
         {
             var st = GameData.Strains[i];
-            bool open = _state.JarOpen(st);
+            bool open = _state.JarAvailable(st);
             bool current = _state.Strain == st.Id;
             var col = current ? new Color(255, 240, 140)
                     : open ? new Color(150, 216, 160) : new Color(96, 102, 124);
@@ -1002,17 +1084,33 @@ public class HotRodsGame : Game
         int w = GraphicsDevice.Viewport.Width;
         int h = GraphicsDevice.Viewport.Height;
         _batch.Begin(samplerState: SamplerState.PointClamp);
-        _batch.Draw(_pixel, new Rectangle(0, 0, w, h), new Color(6, 8, 16, 210));
-        _font.Draw(_batch, "PAUSED", new Vector2(w / 2f - 40, h / 2f - 70), 4,
+        _batch.Draw(_pixel, new Rectangle(0, 0, w, h), new Color(6, 8, 16, 220));
+        _font.Draw(_batch, "PAUSED", new Vector2(w / 2f - 40, 40), 4,
                    new Color(238, 232, 212));
-        _font.Draw(_batch, "S  SAVE", new Vector2(w / 2f - 70, h / 2f - 10), 2,
+        string[] stats =
+        {
+            "TIME AFLOAT  " + (int)_state.Played + " MIN",
+            "CASTS  " + _state.Casts,
+            "FISH LANDED  " + _state.Catches,
+            "SPECIES  " + _state.Species.Count + "/40",
+            "COOLER  " + _state.Bag.Count + "/" + _state.BagSize(),
+            "STOKE POINTS  " + _state.StokePts,
+        };
+        int y = 90;
+        foreach (var s in stats)
+        {
+            _font.Draw(_batch, s, new Vector2(w / 2f - 120, y), 2,
+                       new Color(170, 180, 210));
+            y += 26;
+        }
+        _font.Draw(_batch, "S  SAVE", new Vector2(w / 2f - 120, y + 6), 2,
                    new Color(170, 180, 210));
-        _font.Draw(_batch, "ENTER  QUIT", new Vector2(w / 2f - 70, h / 2f + 16), 2,
+        _font.Draw(_batch, "T OR ENTER  SAVE + TITLE", new Vector2(w / 2f - 120, y + 32), 2,
                    new Color(170, 180, 210));
-        _font.Draw(_batch, "ESC  RESUME", new Vector2(w / 2f - 70, h / 2f + 42), 2,
+        _font.Draw(_batch, "ESC  RESUME", new Vector2(w / 2f - 120, y + 58), 2,
                    new Color(170, 180, 210));
         if (_uiMsgT > 0f)
-            _font.Draw(_batch, _uiMsg, new Vector2(w / 2f - 60, h / 2f + 80), 2,
+            _font.Draw(_batch, _uiMsg, new Vector2(w / 2f - 120, y + 94), 2,
                        new Color(150, 216, 160));
         _batch.End();
     }
@@ -1092,7 +1190,7 @@ public class HotRodsGame : Game
             for (int i = 0; i < GameData.Strains.Length; i++)
             {
                 var st = GameData.Strains[i];
-                bool open = _state.JarOpen(st);
+                bool open = _state.JarAvailable(st);
                 bool current = _state.Strain == st.Id;
                 var col = i == _shopSel ? new Color(255, 255, 200)
                           : open ? new Color(150, 216, 160)

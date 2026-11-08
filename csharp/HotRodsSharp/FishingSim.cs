@@ -23,7 +23,7 @@ public sealed class FishingSim
     public float GreenPos => _greenPos;
     public bool Reeling => Current == Phase.Reeling;
 
-    private readonly GameState _state;
+    private GameState _state;
     private Vector3 _start, _target;
     private float _flyT, _waitT;
     private FishSpec? _pending;
@@ -35,6 +35,9 @@ public sealed class FishingSim
     private static float _time;
 
     public FishingSim(GameState state) => _state = state;
+
+    /// <summary>Rebind after boarding a save slot from the title screen.</summary>
+    public void SetState(GameState s) => _state = s;
 
     /// <summary>Sound cues: "whoosh", "splash", "click".</summary>
     public Action<string> Sfx = _ => { };
@@ -106,8 +109,9 @@ public sealed class FishingSim
                     l => l.Id == _state.EquippedId("line"))?.Grace ?? 0f;
                 float speed = (2.2f + GameData.RarityIndex(_pending!.Rarity) * 0.45f)
                               / reelF;
-                float blue = BlueHalf * (1f + grace);
-                float green = GreenHalf * (1f + grace);
+                float arcMul = 1f + 0.012f * _state.StokeRank("fish");  // stoke lane
+                float blue = BlueHalf * (1f + grace) * arcMul;
+                float green = GreenHalf * (1f + grace) * arcMul;
                 _angle = Wrap(_angle + speed * dt);      // the dial spins 360
                 _strikeCd -= dt;
                 if (kb.IsKeyDown(Keys.Space) && _strikeCd <= 0f)
@@ -134,20 +138,11 @@ public sealed class FishingSim
                     {
                         Caught = _pending;
                         _state.Catches++;
-                        int slots = GameData.Coolers.FirstOrDefault(
-                            c => c.Id == _state.EquippedId("cooler"))?.Slots ?? 4;
-                        if (_state.Bag.Count >= slots)
-                        {
-                            Kept = false;
-                            _state.Cash += (int)MathF.Round(CaughtValue);
-                        }
-                        else
-                        {
-                            Kept = true;
-                            _state.Bag.Add(_pending.Id);
-                        }
-                        _state.Species[_pending.Id] =
-                            _state.Species.GetValueOrDefault(_pending.Id) + 1;
+                        int slots = _state.BagSize();
+                        Kept = _state.Bag.Count < slots;
+                        if (!Kept)
+                            _state.Cash += (int)MathF.Round(CaughtValue); // sold on spot
+                        _state.OnCatch(_pending.Id, CaughtKg, Kept);
                         _state.Cash += (int)MathF.Round(CaughtValue);
                         _state.Save();
                         CardT = 0f;
