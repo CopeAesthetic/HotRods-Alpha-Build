@@ -925,7 +925,7 @@ public partial class HotRodsGame : Game
     {
         int w = GraphicsDevice.Viewport.Width;
         int h = GraphicsDevice.Viewport.Height;
-        var bar = new Rectangle(w / 2 - 170, h - 96, 340, 24);
+        var bar = new Rectangle(w / 2 - 170, h - 122, 340, 24);
         // the rope heats up as the fight builds
         DrawRope(bar, Color.Lerp(new Color(176, 148, 96), new Color(206, 84, 52),
                                  _fishing.Progress));
@@ -1234,9 +1234,9 @@ public partial class HotRodsGame : Game
                    new Color(170, 190, 220));
         _font.Draw(_batch, "LV " + _state.Level + "  XP " + _state.Xp,
                    new Vector2(14, 76), 2, new Color(200, 190, 240));
-        // chill/sober meter, above the icon bar
-        int py = h - 92;
-        _batch.Draw(_pixel, new Rectangle(12, py, 288, 44), new Color(16, 20, 32, 205));
+        // chill/sober meter + munchie meter, above the icon bar
+        int py = h - 108;
+        _batch.Draw(_pixel, new Rectangle(12, py, 288, 60), new Color(16, 20, 32, 205));
         string state = _state.Couch > 0f ? "COUCH LOCKED"
             : _state.Chill <= 1f ? "SOBER"
             : _state.Chill < 10f ? "CHILL"
@@ -1256,6 +1256,16 @@ public partial class HotRodsGame : Game
         if (_state.Chill <= 1f)
             _font.Draw(_batch, "SOBER", new Vector2(22 + 130f - 12f, py + 27), 1,
                        new Color(150, 170, 156));
+        // munchie meter: fills when you smoke, only snacks bring it down
+        bool hungry = _state.Munchie >= 80f;
+        var munCol = hungry
+            ? Color.Lerp(new Color(255, 160, 90), new Color(255, 235, 190),
+                         0.5f + 0.5f * MathF.Sin(_t * 8f))
+            : new Color(240, 150, 80);
+        _font.Draw(_batch, hungry ? "MUNCHIES!" : "MUNCH", new Vector2(22, py + 44), 2, munCol);
+        _batch.Draw(_pixel, new Rectangle(130, py + 47, 140, 9), new Color(10, 12, 18));
+        _batch.Draw(_pixel, new Rectangle(130, py + 47,
+                    (int)(140f * Math.Clamp(_state.Munchie / 100f, 0f, 1f)), 9), munCol);
         _font.Draw(_batch, "$" + _state.Cash, new Vector2(w - 100, 14), 3, new Color(240, 214, 120));
         _font.Draw(_batch, "COOLER " + _state.Bag.Count + "/8", new Vector2(w - 140, 40), 2,
                    new Color(246, 170, 120));

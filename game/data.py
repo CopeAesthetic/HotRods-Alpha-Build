@@ -71,6 +71,20 @@ STRAINS = _load("strains.json")
 STRAINS_BY_ID = {g["id"]: g for g in STRAINS}
 STRAINS_BY_AREA = {i: [s for s in STRAINS if s["area"] == i] for i in range(4)}
 
+# classic stoner snacks for the store's munchies tab - price climbs with
+# how much of the munchie meter each one knocks off
+MUNCHIES = [
+    {"id": "chips", "name": "BAG OF CHIPS", "price": 4, "relief": 15},
+    {"id": "soda", "name": "SODA POP", "price": 6, "relief": 20},
+    {"id": "candy", "name": "CANDY BAR", "price": 8, "relief": 25},
+    {"id": "donuts", "name": "DONUTS", "price": 10, "relief": 30},
+    {"id": "pizza", "name": "PIZZA SLICE", "price": 12, "relief": 40},
+    {"id": "nachos", "name": "NACHOS", "price": 15, "relief": 45},
+    {"id": "burrito", "name": "BURRITO", "price": 20, "relief": 60},
+    {"id": "burger", "name": "CHEESEBURGER", "price": 25, "relief": 75},
+    {"id": "platter", "name": "BBQ PLATTER", "price": 40, "relief": 100},
+]
+
 # --------------------------------------------------------------- economy ----
 SPOT_PAY = tuple(_ECON["spot_pay"])   # later waters pay more, cash and VP
 GEAR_SPOT = _ECON["gear_spot"]        # gear unlock water (0 pond .. 3 trench)

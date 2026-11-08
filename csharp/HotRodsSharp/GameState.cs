@@ -20,6 +20,7 @@ public sealed class GameState
     public string Smoker { get; set; } = "one_hitter";    // equipped piece
     public float Chill { get; set; }                      // 0..100, the meter
     public float Couch { get; set; }                      // couch-lock seconds
+    public float Munchie { get; set; }                    // 0..100, snacks bring it down
 
     /// <summary>Python parity: high is chill/100; legacy saves set High
     /// directly and the setter migrates them onto the chill meter.</summary>
@@ -392,6 +393,18 @@ public sealed class GameState
         return (true, "");
     }
 
+    /// <summary>Eat a snack: cash out, munchie meter down. Pricier snacks
+    /// knock more off.</summary>
+    public (bool ok, string msg) BuySnack(GameData.Munchie m)
+    {
+        if (Cash < m.Price)
+            return (false, "not enough cash for " + m.Name);
+        Cash -= m.Price;
+        Munchie = MathF.Max(0f, Munchie - m.Relief);
+        Save();
+        return (true, m.Name + " - munchie " + m.Relief + " off");
+    }
+
     /// <summary>Burn a gram when the ceremony finishes: chill climbs by the
     /// toke amount (piece fill + smoke stoke lane), and toking past 78 on an
     /// already-high meter drops you into couch lock.</summary>
@@ -401,6 +414,7 @@ public sealed class GameState
                      ?? GameData.Smokers[0];
         bool over = Chill >= 78f;
         WeedCounts[Strain] = Math.Max(0, WeedCount() - 1);
+        Munchie = MathF.Min(100f, Munchie + 10f);   // every toke stirs the munchies
         Chill = MathF.Min(100f, Chill + TokeAmount * smoker.Fill
                             * (1f + 0.06f * StokeRank("smoke")));
         if (over)

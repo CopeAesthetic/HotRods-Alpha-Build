@@ -53,6 +53,7 @@ def main() -> None:
         "concentrate_potency": data.CONCENTRATE_POTENCY,
         "concentrate_mult": data.CONCENTRATE_MULT,
         "rarity_weight": C.RARITY_WEIGHT,
+        "munchies": data.MUNCHIES,
     })
     dump("tips.json", data.TIPS)
 

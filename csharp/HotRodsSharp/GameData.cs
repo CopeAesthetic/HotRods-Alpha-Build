@@ -43,6 +43,10 @@ public static class GameData
     /// <summary>Loaded from economy.json so the roll matches the Python sim.</summary>
     public static float[] RarityWeights { get; private set; } =
         { 62f, 25f, 10f, 2.6f, 0.55f };
+    public static Munchie[] Munchies { get; private set; } = [];
+
+    /// <summary>A store snack: price climbs with the munchie relief.</summary>
+    public sealed record Munchie(string Id, string Name, int Price, int Relief);
 
     // fish: SpeciesList (32) + HiddenFish (4) + ShinyFish (4); Species is the
     // merged view the sim has always rolled from.
@@ -117,6 +121,8 @@ public static class GameData
             RarityWeights = RarityOrder
                 .Select(r => econ.RarityWeight.TryGetValue(r, out var w) ? w : 1f)
                 .ToArray();
+        Munchies = (econ.Munchies ?? [])
+            .Select(m => new Munchie(m.Id, m.Name, m.Price, m.Relief)).ToArray();
     }
 
     private static T LoadJson<T>(string name)
@@ -277,4 +283,13 @@ sealed class EconomyDto
     public int ConcentratePotency { get; set; }
     public float ConcentrateMult { get; set; }
     public Dictionary<string, float>? RarityWeight { get; set; }
+    public List<MunchieDto>? Munchies { get; set; }
+}
+
+internal sealed class MunchieDto
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public int Price { get; set; }
+    public int Relief { get; set; }
 }
