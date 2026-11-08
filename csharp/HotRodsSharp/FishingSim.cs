@@ -57,7 +57,7 @@ public sealed class FishingSim
         switch (Current)
         {
             case Phase.Idle:
-                if (kb.IsKeyDown(Keys.Space))
+                if (kb.IsKeyDown(Keys.Space) && _state.Couch <= 0f)
                 {
                     Current = Phase.Charging;
                     Power = 0f;

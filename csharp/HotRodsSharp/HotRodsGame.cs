@@ -581,13 +581,17 @@ public partial class HotRodsGame : Game
             _rbHeld = true;
         }
         if (kb.IsKeyUp(Keys.OemCloseBrackets)) _rbHeld = false;
-        // the ceremony sets the high when it finishes burning
+        // the ceremony burns a gram when it finishes; chill decays on the
+        // Python curve (strain duration, piece burn, vibes stoke lane)
         if (_wasSmoking && !_smoking.Active)
-            _state.High = 1.0f;
+        {
+            var msg = _state.ApplyToke();
+            _uiMsg = msg;
+            _uiMsgT = 2.5f;
+        }
         _wasSmoking = _smoking.Active;
         _smoking.Speed = 1f + 0.06f * _state.StokeRank("smoke");
-        _state.High = MathF.Max(0f, _state.High
-            - dt / (45f * (1f + 0.05f * _state.StokeRank("vibes"))));
+        _state.TickChill(dt);
         _state.Hour = (_state.Hour + dt / 30f) % 24f;   // 12-minute day, like Python
         _state.Played += dt / 60f;
 
@@ -611,13 +615,24 @@ public partial class HotRodsGame : Game
             MathHelper.ToRadians(62f), GraphicsDevice.Viewport.AspectRatio, 0.1f, 250f);
         if (kb.IsKeyDown(Keys.E) && !_eHeld)
         {
-            _smoking.Start();
+            var (ok, msg) = _state.CanToke();
+            if (!ok)
+            {
+                _uiMsg = msg;
+                _uiMsgT = 2.5f;
+            }
+            else
+            {
+                _state.Smoker = _smoking.CurrentItem;
+                _smoking.Start();
+            }
             _eHeld = true;
         }
         if (kb.IsKeyUp(Keys.E)) _eHeld = false;
         if (kb.IsKeyDown(Keys.Q) && !_qHeld)
         {
             _smoking.CycleItem();
+            _state.Smoker = _smoking.CurrentItem;
             _qHeld = true;
         }
         if (kb.IsKeyUp(Keys.Q)) _qHeld = false;
@@ -1141,12 +1156,30 @@ public partial class HotRodsGame : Game
                    new Color(170, 190, 220));
         _font.Draw(_batch, "CASTS " + _state.Casts, new Vector2(14, 56), 2,
                    new Color(170, 190, 220));
-        string sd = _state.StrainData().Name.ToUpper();
-        _font.Draw(_batch, "WEED  " + sd, new Vector2(14, 76), 2, new Color(150, 216, 160));
-        _font.Draw(_batch, "HIGH  " + (int)(_state.High * 100) + "%",
-                   new Vector2(14, 96), 2, new Color(150, 216, 160));
         _font.Draw(_batch, "LV " + _state.Level + "  XP " + _state.Xp,
-                   new Vector2(14, 116), 2, new Color(200, 190, 240));
+                   new Vector2(14, 76), 2, new Color(200, 190, 240));
+        // chill/sober meter, above the icon bar
+        int py = h - 92;
+        _batch.Draw(_pixel, new Rectangle(12, py, 288, 44), new Color(16, 20, 32, 205));
+        string state = _state.Couch > 0f ? "COUCH LOCKED"
+            : _state.Chill <= 1f ? "SOBER"
+            : _state.Chill < 10f ? "CHILL"
+            : _state.Chill < 30f ? "HIGH"
+            : _state.Chill < 50f ? "BAKED"
+            : _state.Chill < 70f ? "BLAZED"
+            : _state.Chill < 85f ? "STONED" : "ZONKED";
+        _font.Draw(_batch, state, new Vector2(22, py + 8), 2,
+                   _state.Couch > 0f ? new Color(230, 140, 120) : new Color(150, 190, 160));
+        string stash = _state.WeedCount() > 0 ? _state.StrainData().Name.ToUpper() : "DRY";
+        _font.Draw(_batch, stash, new Vector2(288 - 12 - stash.Length * 8f, py + 8), 2,
+                   _state.WeedCount() > 0 ? new Color(160, 220, 160) : new Color(120, 126, 148));
+        _batch.Draw(_pixel, new Rectangle(22, py + 26, 260, 10), new Color(10, 12, 18));
+        _batch.Draw(_pixel, new Rectangle(22, py + 26,
+                    (int)(260f * Math.Clamp(_state.Chill / 100f, 0f, 1f)), 10),
+                    new Color(150, 216, 160));
+        if (_state.Chill <= 1f)
+            _font.Draw(_batch, "SOBER", new Vector2(22 + 130f - 12f, py + 27), 1,
+                       new Color(150, 170, 156));
         _font.Draw(_batch, "$" + _state.Cash, new Vector2(w - 100, 14), 3, new Color(240, 214, 120));
         _font.Draw(_batch, "COOLER " + _state.Bag.Count + "/8", new Vector2(w - 140, 40), 2,
                    new Color(246, 170, 120));
@@ -1246,6 +1279,29 @@ public partial class HotRodsGame : Game
             if (y > h - 80)
                 break;
         }
+        // ---- weed stash column: what you've bought and what's loaded
+        int wx = w - 330;
+        _font.Draw(_batch, "WEED STASH  " + _state.WeedTotal() + " GRAMS",
+                   new Vector2(wx, 30), 3, new Color(150, 216, 160));
+        int wy = 80;
+        foreach (var kv in _state.WeedCounts.Where(kv => kv.Value > 0)
+                     .OrderByDescending(kv => kv.Value))
+        {
+            var st = GameData.Strains.FirstOrDefault(x => x.Id == kv.Key);
+            if (st == null)
+                continue;
+            bool inUse = _state.Strain == st.Id;
+            var col = inUse ? new Color(255, 240, 140) : new Color(150, 216, 160);
+            _font.Draw(_batch, st.Name.ToUpper(), new Vector2(wx + 8, wy), 2, col);
+            _font.Draw(_batch, "X" + kv.Value + (inUse ? "  IN USE" : ""),
+                       new Vector2(wx + 220, wy), 2, col);
+            wy += 26;
+            if (wy > h - 80)
+                break;
+        }
+        if (_state.WeedTotal() == 0)
+            _font.Draw(_batch, "DRY - SEE SAL (COOLER ICON)", new Vector2(wx + 8, wy), 2,
+                       new Color(120, 126, 148));
         if (_uiMsgT > 0f)
             _font.Draw(_batch, _uiMsg, new Vector2(40, h - 60), 2, new Color(150, 216, 160));
         _font.Draw(_batch, "UP/DOWN  ESC BACK", new Vector2(40, h - 30), 2, new Color(130, 140, 170));
@@ -1489,8 +1545,8 @@ public partial class HotRodsGame : Game
         }
         Edge(ref _upHeld, Keys.Up, () => _shopSel = Math.Max(0, _shopSel - 1));
         Edge(ref _downHeld, Keys.Down, () => _shopSel++);
-        Edge(ref _leftHeld, Keys.Left, () => { _shopTab = (_shopTab + 5) % 6; _shopSel = 0; });
-        Edge(ref _rightHeld, Keys.Right, () => { _shopTab = (_shopTab + 1) % 6; _shopSel = 0; });
+        Edge(ref _leftHeld, Keys.Left, () => { _shopTab = (_shopTab + 4) % 5; _shopSel = 0; });
+        Edge(ref _rightHeld, Keys.Right, () => { _shopTab = (_shopTab + 1) % 5; _shopSel = 0; });
         Edge(ref _enterHeld, Keys.Enter, BuyShopItem);
         if (kb.IsKeyDown(Keys.Escape)) { _shopOpen = false; _menuOpen = true; }
     }
@@ -1504,12 +1560,6 @@ public partial class HotRodsGame : Game
             var gear = _state.GearTable(kind);
             if (_shopSel >= gear.Length) return;
             var (ok, msg) = _state.BuyGear(kind, gear[_shopSel]);
-            _shopMsg = msg; _shopMsgT = 2.2f;
-        }
-        else if (_shopTab == 4)
-        {
-            if (_shopSel >= GameData.Strains.Length) return;
-            var (ok, msg) = _state.BuyStrain(GameData.Strains[_shopSel]);
             _shopMsg = msg; _shopMsgT = 2.2f;
         }
         else
@@ -1527,9 +1577,9 @@ public partial class HotRodsGame : Game
     {
         if (pos.Y >= 50 && pos.Y <= 76)
         {
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < 5; i++)
             {
-                if (pos.X >= 40 + i * 118 && pos.X <= 40 + i * 118 + 90)
+                if (pos.X >= 40 + i * 130 && pos.X <= 40 + i * 130 + 100)
                 {
                     _shopTab = i;
                     _shopSel = 0;
@@ -1552,19 +1602,6 @@ public partial class HotRodsGame : Game
                     return;
                 }
                 y += 46;
-            }
-        }
-        else if (_shopTab == 4)
-        {
-            for (int i = 0; i < GameData.Strains.Length; i++)
-            {
-                if (pos.Y >= y - 4 && pos.Y <= y + 22)
-                {
-                    _shopSel = i;
-                    BuyShopItem();
-                    return;
-                }
-                y += 28;
             }
         }
         else
@@ -1590,9 +1627,9 @@ public partial class HotRodsGame : Game
         _batch.Draw(_pixel, new Rectangle(0, 0, w, h), new Color(10, 14, 26, 225));
         _font.Draw(_batch, "STORE  -  $" + _state.Cash, new Vector2(40, 30), 3,
                    new Color(240, 214, 120));
-        string[] tabs = { "RODS", "LINES", "LURES", "COOLERS", "WEED", "WATERS" };
-        for (int i = 0; i < 6; i++)
-            _font.Draw(_batch, tabs[i], new Vector2(40 + i * 118, 60), 2,
+        string[] tabs = { "RODS", "LINES", "LURES", "COOLERS", "WATERS" };
+        for (int i = 0; i < 5; i++)
+            _font.Draw(_batch, tabs[i], new Vector2(40 + i * 130, 60), 2,
                        i == _shopTab ? new Color(255, 255, 255)
                                      : new Color(110, 120, 150));
         int y = 100;
@@ -1616,25 +1653,6 @@ public partial class HotRodsGame : Game
                 _font.Draw(_batch, g.Desc, new Vector2(80, y + 22), 2,
                            new Color(120, 130, 160));
                 y += 46;
-            }
-        }
-        else if (_shopTab == 4)
-        {
-            for (int i = 0; i < GameData.Strains.Length; i++)
-            {
-                var st = GameData.Strains[i];
-                bool open = _state.JarAvailable(st);
-                bool current = _state.Strain == st.Id;
-                var col = i == _shopSel ? new Color(255, 255, 200)
-                          : open ? new Color(150, 216, 160)
-                          : new Color(110, 116, 140);
-                string name = open || current ? st.Name.ToUpper()
-                              : "???  (TIER " + st.Tier + " FISH)";
-                _font.Draw(_batch, (i == _shopSel ? ">" : " ") + " " + name,
-                           new Vector2(60, y), 2, col);
-                _font.Draw(_batch, open ? "$" + st.Price : "LOCKED",
-                           new Vector2(w - 240, y), 2, col);
-                y += 28;
             }
         }
         else

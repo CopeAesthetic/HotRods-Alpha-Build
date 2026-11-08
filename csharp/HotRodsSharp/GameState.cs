@@ -17,7 +17,17 @@ public sealed class GameState
     public Dictionary<string, int> Species { get; set; } = new();  // id -> count
     public int Spot { get; set; }
     public string Strain { get; set; } = "homegrown";
-    public float High { get; set; }                       // 0..1 remaining
+    public string Smoker { get; set; } = "one_hitter";    // equipped piece
+    public float Chill { get; set; }                      // 0..100, the meter
+    public float Couch { get; set; }                      // couch-lock seconds
+
+    /// <summary>Python parity: high is chill/100; legacy saves set High
+    /// directly and the setter migrates them onto the chill meter.</summary>
+    public float High
+    {
+        get => Math.Clamp(Chill / 100f, 0f, 1f);
+        set => Chill = value * 100f;
+    }
     public float Hour { get; set; } = 8f;
     public float Played { get; set; }                     // minutes afloat
     public int Xp { get; set; }
@@ -336,6 +346,73 @@ public sealed class GameState
     }
 
     public int WeedCount(string sid) => WeedCounts.GetValueOrDefault(sid);
+
+    public int WeedCount() => WeedCounts.GetValueOrDefault(Strain);
+
+    public int WeedTotal() => WeedCounts.Values.Sum();
+
+    // ------------------------------------------------------------ chill/smoke --
+    private const float TokeAmount = 42f;      // chill per gram
+    private const float ChillDecay = 2.1f;     // per second
+    private const float CouchLockTime = 2.6f;
+
+    /// <summary>Python tick: decay scales with strain duration, smoker burn
+    /// and the vibes stoke lane; couch lock fades and clears under 50.</summary>
+    public void TickChill(float dt)
+    {
+        if (Couch > 0f)
+        {
+            Couch = MathF.Max(0f, Couch - dt);
+            if (Chill <= 50f)
+                Couch = 0f;
+        }
+        if (Chill <= 0f)
+            return;
+        var sd = StrainData();
+        var smoker = GameData.Smokers.FirstOrDefault(g => g.Id == Smoker)
+                     ?? GameData.Smokers[0];
+        float mult = sd.Duration * smoker.Dur * (1f + 0.05f * StokeRank("vibes"));
+        float decay = ChillDecay / MathF.Max(0.3f, mult);
+        Chill = MathF.Max(0f, Chill - decay * dt);
+    }
+
+    /// <summary>Can the ceremony start? Blocks couch lock and an empty stash
+    /// (auto-switching to the fullest jar when the loaded one is dry).</summary>
+    public (bool ok, string msg) CanToke()
+    {
+        if (Couch > 0f)
+            return (false, "couch locked - give it a second");
+        if (WeedCount() > 0)
+            return (true, "");
+        var best = WeedCounts.OrderByDescending(kv => kv.Value).FirstOrDefault();
+        if (best.Value <= 0)
+            return (false, "stash is dry - see Sal");
+        Strain = best.Key;
+        StrainIndex = Array.IndexOf(GameData.Strains, GameData.Strains.First(x => x.Id == Strain));
+        return (true, "");
+    }
+
+    /// <summary>Burn a gram when the ceremony finishes: chill climbs by the
+    /// toke amount (piece fill + smoke stoke lane), and toking past 78 on an
+    /// already-high meter drops you into couch lock.</summary>
+    public string ApplyToke()
+    {
+        var smoker = GameData.Smokers.FirstOrDefault(g => g.Id == Smoker)
+                     ?? GameData.Smokers[0];
+        bool over = Chill >= 78f;
+        WeedCounts[Strain] = Math.Max(0, WeedCount() - 1);
+        Chill = MathF.Min(100f, Chill + TokeAmount * smoker.Fill
+                            * (1f + 0.06f * StokeRank("smoke")));
+        if (over)
+        {
+            Couch = CouchLockTime;
+            Chill = 100f;
+            Save();
+            return "couch locked - you're zonked";
+        }
+        Save();
+        return "smoking " + StrainData().Name;
+    }
 
     public (bool ok, string msg) BuyWeed(Strain st)
     {
