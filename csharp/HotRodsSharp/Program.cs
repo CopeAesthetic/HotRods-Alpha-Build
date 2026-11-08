@@ -1,5 +1,13 @@
 using HotRodsSharp;
 
-GameData.Load();
-using var game = new HotRodsGame();
-game.Run();
+SteamMan.Init();
+try
+{
+    GameData.Load();
+    using var game = new HotRodsGame();
+    game.Run();
+}
+finally
+{
+    SteamMan.Shutdown();
+}
