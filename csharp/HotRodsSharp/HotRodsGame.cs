@@ -54,6 +54,9 @@ public partial class HotRodsGame : Game
 
     // camera
     private Matrix _view = Matrix.Identity, _proj = Matrix.Identity;
+    private float _lookYaw, _lookPitch;        // click-drag look offsets
+    private bool _mouseDown, _mouseDragged;
+    private Point _mousePrev;
     private bool _tabHeld;                  // dealer: cooler/jars focus toggle
 
     // palette
@@ -358,8 +361,27 @@ public partial class HotRodsGame : Game
                     Lilies[i].scale, 0.02f);
         BuildDock(s, Docks[_spot]);
         BuildShore(s, Banks[_spot]);
-        BuildAngler(s);
+        BuildCooler(s);
         _staticTriCount = s.Count / 3;
+    }
+
+    /// <summary>The cooler sits at your left with the phone on its lid;
+    /// the screen glows from the dynamic pass so it reads at night too.</summary>
+    private void BuildCooler(List<VertexPositionNormalColor> s)
+    {
+        var c = new Vector3(-3.55f, 0.80f, 1.02f);
+        PrimsLit.AddBox(s, c, 0.55f, 0.45f, 0.75f, new Color(200, 60, 48));
+        PrimsLit.AddBox(s, new Vector3(c.X, c.Y + 0.26f, c.Z), 0.57f, 0.06f, 0.77f,
+                        new Color(232, 236, 240));
+        PrimsLit.AddBox(s, new Vector3(c.X - 0.02f, c.Y + 0.32f, c.Z),
+                        0.16f, 0.035f, 0.26f, new Color(28, 32, 40));
+    }
+
+    /// <summary>Unlit phone-screen glow so it stays bright after dark.</summary>
+    private void EmitPhoneGlow(List<VertexPositionColor> v)
+    {
+        Prims.AddBox(v, new Vector3(-3.57f, 1.155f, 1.01f), 0.11f, 0.012f, 0.20f,
+                     new Color(90, 232, 205));
     }
 
     private void BuildDock(List<VertexPositionNormalColor> s,
@@ -403,29 +425,32 @@ public partial class HotRodsGame : Game
         }
     }
 
-    private void BuildAngler(List<VertexPositionNormalColor> s)
-    {
-        // the stoner fisherman: rebuilt from primitives (Character.Build),
-        // smooth-lit like the rest of the static world. Arms and rod stay
-        // procedural: they swap between fishing and smoking poses each frame.
-        Character.Build(s);
-    }
-
     private void EmitFishingPose(List<VertexPositionColor> v)
     {
-        var hand = new Vector3(-3.03f, 1.00f, 1.57f);
-        var tip = hand + new Vector3(1.15f, 0.75f, 0.10f);   // along the face
-        Prims.AddSegment(v, new Vector3(-3.23f, 1.19f, 1.56f),
-                         new Vector3(-3.12f, 1.06f, 1.62f), 0.065f, Vest);
-        Prims.AddSegment(v, new Vector3(-3.12f, 1.06f, 1.62f), hand, 0.055f, Skin);
-        var lhand = hand + (tip - hand) * 0.35f;
-        var lsh = new Vector3(-3.43f, 1.19f, 1.46f);
-        Prims.AddSegment(v, lsh, (lsh + lhand) * 0.5f, 0.065f, Vest);
-        Prims.AddSegment(v, (lsh + lhand) * 0.5f, lhand, 0.055f, Skin);
-        var mid = hand + (tip - hand) * 0.55f;
-        Prims.AddSegment(v, hand, mid, 0.030f, RodDark, 4);
-        Prims.AddSegment(v, mid, tip, 0.021f, RodLight, 4);
+        // first-person viewmodel: hands on the rod, angled out toward the
+        // cast area. The sim's rod tip lives at the same place the line
+        // draws from.
+        var grip = new Vector3(-3.02f, 1.18f, 1.40f);
+        var mid = new Vector3(-2.76f, 1.40f, 0.60f);
+        var tip = new Vector3(-2.55f, 1.60f, -1.60f);
+        var jacket = new Color(226, 178, 66);
+        // sleeves then hands
+        Prims.AddSegment(v, grip - (mid - grip) * 0.35f, grip, 0.082f, jacket);
+        Prims.AddBox(v, grip + new Vector3(-0.012f, 0.015f, 0.02f),
+                     0.085f, 0.095f, 0.10f, Skin);
+        Prims.AddSegment(v, mid - (tip - mid) * 0.25f, mid, 0.070f, jacket);
+        Prims.AddBox(v, mid + new Vector3(0.008f, -0.01f, -0.015f),
+                     0.075f, 0.08f, 0.09f, Skin);
+        // the rod
+        Prims.AddSegment(v, grip, mid, 0.034f, RodDark, 5);
+        Prims.AddSegment(v, mid, tip, 0.026f, RodLight, 5);
+        Prims.AddBox(v, grip + new Vector3(0f, -0.10f, 0.06f),
+                     0.055f, 0.085f, 0.075f, new Color(70, 74, 82));
     }
+
+    /// <summary>FP rod tip and cast direction (the bobber flies out over
+    /// the lake ahead of the view).</summary>
+    private static readonly Vector3 FpRodTip = new(-2.55f, 1.60f, -1.60f);
 
     protected override void Update(GameTime gameTime)
     {
@@ -433,6 +458,31 @@ public partial class HotRodsGame : Game
         _t += dt;
         SteamMan.RunCallbacks();
         var kb = Keyboard.GetState();
+        var ms = Mouse.GetState();
+        if (ms.LeftButton == ButtonState.Pressed && !_mouseDown)
+        {
+            _mouseDown = true;
+            _mouseDragged = false;
+            _mousePrev = ms.Position;
+        }
+        if (_mouseDown)
+        {
+            var delta = ms.Position - _mousePrev;
+            if (MathF.Abs(delta.X) + MathF.Abs(delta.Y) > 4)
+                _mouseDragged = true;
+            if (_mouseDragged)
+            {
+                _lookYaw = Math.Clamp(_lookYaw - delta.X * 0.0035f, -0.85f, 0.85f);
+                _lookPitch = Math.Clamp(_lookPitch + delta.Y * 0.0035f, -0.45f, 0.50f);
+            }
+            _mousePrev = ms.Position;
+            if (ms.LeftButton == ButtonState.Released)
+            {
+                if (!_mouseDragged)
+                    HandleClick(ms.Position);
+                _mouseDown = false;
+            }
+        }
         if (kb.IsKeyDown(Keys.OemTilde) && !_tickHeld)
         {
             _consoleOpen = !_consoleOpen;
@@ -541,17 +591,21 @@ public partial class HotRodsGame : Game
         _state.Hour = (_state.Hour + dt / 30f) % 24f;   // 12-minute day, like Python
         _state.Played += dt / 60f;
 
-        // over-the-right-shoulder view: the camera sits just off the
-        // angler's right shoulder and looks out across the lake.
-        // A proper high wobbles it and landing a fish shakes it.
-        var eye = new Vector3(-2.75f, 1.45f, 2.20f);
-        var target = new Vector3(-1.0f, 0.55f, -24.0f);
+        // first person: head height at the dock, facing the cast area out
+        // over the water. Click-drag looks around (clamped); a proper high
+        // wobbles the view and landing a fish shakes it.
+        var eye = new Vector3(-3.22f, 1.42f, 1.44f);
+        var fwd = Vector3.Normalize(new Vector3(-2.4f, 0.7f, -24.0f) - eye);
+        var right = Vector3.Normalize(Vector3.Cross(fwd, Vector3.Up));
+        fwd = Vector3.Normalize(Vector3.Transform(fwd, Matrix.CreateRotationY(_lookYaw)));
+        fwd = Vector3.Normalize(Vector3.Transform(
+            fwd, Matrix.CreateFromAxisAngle(right, _lookPitch)));
         float wobble = _state.High * 0.09f;
         eye.Y += MathF.Sin(_t * 1.15f) * wobble;
         eye.X += MathF.Cos(_t * 0.9f) * wobble * 0.5f;
         eye.X += _fishing.ShakeT * 0.12f * MathF.Sin(_t * 43f);
         eye.Y += _fishing.ShakeT * 0.10f * MathF.Cos(_t * 37f);
-        _view = Matrix.CreateLookAt(eye, target, Vector3.Up);
+        _view = Matrix.CreateLookAt(eye, eye + fwd, Vector3.Up);
         _proj = Matrix.CreatePerspectiveFieldOfView(
             MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 0.1f, 250f);
         if (kb.IsKeyDown(Keys.E) && !_eHeld)
@@ -579,8 +633,8 @@ public partial class HotRodsGame : Game
                 _ripples[i] = (pos, age);
         }
         if (!_smoking.Active)
-            _fishing.Update(dt, kb, new Vector3(-1.88f, 1.75f, 1.67f),
-                            Vector3.Normalize(new Vector3(1.0f, -0.1f, 0.05f)));
+            _fishing.Update(dt, kb, FpRodTip,
+                            Vector3.Normalize(new Vector3(0.15f, -0.15f, -1.0f)));
         base.Update(gameTime);
     }
 
@@ -668,12 +722,13 @@ public partial class HotRodsGame : Game
         else
         {
             EmitFishingPose(dyn);
-            _fishing.EmitLine(dyn, new Vector3(-1.88f, 1.75f, 1.67f));
+            _fishing.EmitLine(dyn, FpRodTip);
             _fishing.EmitBobber(dyn);
             EmitFightingFish(dyn);
         }
         EmitShimmer(dyn);
         EmitRipples(dyn);
+        EmitPhoneGlow(dyn);
 
         // water first, then the lit static world, then the dynamic pieces
         DrawVerts(water, _effect);
@@ -1183,45 +1238,115 @@ public partial class HotRodsGame : Game
         Edge(ref _upHeld, Keys.Up, () => _menuSel = Math.Max(0, _menuSel - 1));
         Edge(ref _downHeld, Keys.Down,
              () => _menuSel = Math.Min(MenuItems.Length - 1, _menuSel + 1));
-        Edge(ref _enterHeld, Keys.Enter, Act);
+        Edge(ref _enterHeld, Keys.Enter, ActMenuItem);
         Edge(ref _escHeld, Keys.Escape, () => _menuOpen = false);
+    }
 
-        void Act()
+    private void ActMenuItem()
+    {
+        _menuOpen = false;
+        switch (MenuItems[_menuSel])
         {
-            _menuOpen = false;
-            switch (MenuItems[_menuSel])
+            case "FISHING GEAR":
+                _shopOpen = true; _shopSel = 0;
+                break;
+            case "SALS SHACK":
+                _dealerOpen = true; _dealerSel = 0; _dealerArea = _state.Spot;
+                break;
+            case "JARS":
+                _zaaOpen = true; _zaaSel = 0;
+                break;
+            case "JOURNAL":
+                _journalOpen = true; _journalSel = 0;
+                break;
+            case "STOKE":
+                _stokeOpen = true; _stokeSel = 0;
+                break;
+            case "MAP AND TRAVEL":
+                _mapOpen = true; _mapSel = _spot;
+                break;
+            case "HOW TO PLAY":
+                _helpOpen = true;
+                break;
+            case "SAVE":
+                _state.Save();
+                _uiMsg = "saved";
+                _uiMsgT = 2f;
+                break;
+            case "SAVE AND TITLE":
+                _state.Save();
+                _atTitle = true;
+                SteamMan.SetPresence("menu");
+                break;
+        }
+    }
+
+    // ----------------------------------------------------------------- mouse --
+    /// <summary>World-item hit rectangles: project a box through the camera
+    /// and return its screen bounds (null when off screen).</summary>
+    private Rectangle? HitRect(Vector3 center, float hw, float hh, float hd)
+    {
+        int w = GraphicsDevice.Viewport.Width;
+        int h = GraphicsDevice.Viewport.Height;
+        float minX = 1e9f, minY = 1e9f, maxX = -1e9f, maxY = -1e9f;
+        for (int i = 0; i < 8; i++)
+        {
+            var p = center + new Vector3(
+                (i & 1) == 1 ? hw : -hw,
+                (i & 2) == 2 ? hh : -hh,
+                (i & 4) == 4 ? hd : -hd);
+            if (SkyPoint(p, w, h) is not { } q)
+                return null;
+            minX = MathF.Min(minX, q.X); maxX = MathF.Max(maxX, q.X);
+            minY = MathF.Min(minY, q.Y); maxY = MathF.Max(maxY, q.Y);
+        }
+        return new Rectangle((int)minX, (int)minY,
+                             Math.Max(1, (int)(maxX - minX)), Math.Max(1, (int)(maxY - minY)));
+    }
+
+    /// <summary>Click routing: menu first, sub-screens, then world items.</summary>
+    private void HandleClick(Point mouse)
+    {
+        if (_atTitle)
+            return;   // the title screen stays keyboard-driven for now
+        var pos = new Vector2(mouse.X, mouse.Y);
+        if (_menuOpen) { MenuClick(pos); return; }
+        if (_shopOpen) { ShopClick(pos); return; }
+        if (_dealerOpen) { DealerClick(pos); return; }
+        if (_mapOpen) { MapClick(pos); return; }
+
+        // the glowing phone on the cooler opens the menu
+        if (HitRect(new Vector3(-3.57f, 1.16f, 1.02f), 0.10f, 0.05f, 0.15f)
+            is { } pr && pr.Contains(mouse))
+        {
+            _menuOpen = true;
+            _menuSel = 0;
+            PlaySfx("click");
+            return;
+        }
+        // the cooler itself opens Sal's shack
+        if (HitRect(new Vector3(-3.55f, 0.95f, 1.02f), 0.32f, 0.34f, 0.42f)
+            is { } cr && cr.Contains(mouse))
+        {
+            _dealerOpen = true;
+            _dealerSel = 0;
+            _dealerArea = _state.Spot;
+            PlaySfx("click");
+        }
+    }
+
+    private void MenuClick(Vector2 pos)
+    {
+        int y0 = 62 + 3 * 22 + 8;
+        for (int i = 0; i < MenuItems.Length; i++)
+        {
+            int y = y0 + i * 32;
+            if (pos.X >= 40 && pos.X <= 430 && pos.Y >= y - 4 && pos.Y <= y + 26)
             {
-                case "FISHING GEAR":
-                    _shopOpen = true; _shopSel = 0;
-                    break;
-                case "SALS SHACK":
-                    _dealerOpen = true; _dealerSel = 0; _dealerArea = _state.Spot;
-                    break;
-                case "JARS":
-                    _zaaOpen = true; _zaaSel = 0;
-                    break;
-                case "JOURNAL":
-                    _journalOpen = true; _journalSel = 0;
-                    break;
-                case "STOKE":
-                    _stokeOpen = true; _stokeSel = 0;
-                    break;
-                case "MAP AND TRAVEL":
-                    _mapOpen = true; _mapSel = _spot;
-                    break;
-                case "HOW TO PLAY":
-                    _helpOpen = true;
-                    break;
-                case "SAVE":
-                    _state.Save();
-                    _uiMsg = "saved";
-                    _uiMsgT = 2f;
-                    break;
-                case "SAVE AND TITLE":
-                    _state.Save();
-                    _atTitle = true;
-                    SteamMan.SetPresence("menu");
-                    break;
+                _menuSel = i;
+                ActMenuItem();
+                PlaySfx("click");
+                return;
             }
         }
     }
@@ -1248,9 +1373,13 @@ public partial class HotRodsGame : Game
             y += 22;
         }
         y += 8;
+        var hover = Mouse.GetState().Position.ToVector2();
         for (int i = 0; i < MenuItems.Length; i++)
         {
-            var col = i == _menuSel ? new Color(255, 255, 200) : new Color(170, 180, 210);
+            bool over = hover.X >= 40 && hover.X <= 430
+                        && hover.Y >= y - 4 && hover.Y <= y + 26;
+            var col = over || i == _menuSel
+                ? new Color(255, 255, 200) : new Color(170, 180, 210);
             _font.Draw(_batch, (i == _menuSel ? "> " : "  ") + MenuItems[i],
                        new Vector2(40, y), 3, col);
             y += 32;
@@ -1274,32 +1403,93 @@ public partial class HotRodsGame : Game
         Edge(ref _downHeld, Keys.Down, () => _shopSel++);
         Edge(ref _leftHeld, Keys.Left, () => { _shopTab = (_shopTab + 5) % 6; _shopSel = 0; });
         Edge(ref _rightHeld, Keys.Right, () => { _shopTab = (_shopTab + 1) % 6; _shopSel = 0; });
-        Edge(ref _enterHeld, Keys.Enter, Buy);
+        Edge(ref _enterHeld, Keys.Enter, BuyShopItem);
         if (kb.IsKeyDown(Keys.Escape)) { _shopOpen = false; _menuOpen = true; }
+    }
 
-        void Buy()
+    /// <summary>Buy/act on the currently selected shop row.</summary>
+    private void BuyShopItem()
+    {
+        if (_shopTab < 4)
         {
-            if (_shopTab < 4)
+            string kind = new[] { "rod", "line", "lure", "cooler" }[_shopTab];
+            var gear = _state.GearTable(kind);
+            if (_shopSel >= gear.Length) return;
+            var (ok, msg) = _state.BuyGear(kind, gear[_shopSel]);
+            _shopMsg = msg; _shopMsgT = 2.2f;
+        }
+        else if (_shopTab == 4)
+        {
+            if (_shopSel >= GameData.Strains.Length) return;
+            var (ok, msg) = _state.BuyStrain(GameData.Strains[_shopSel]);
+            _shopMsg = msg; _shopMsgT = 2.2f;
+        }
+        else
+        {
+            if (_shopSel >= 4) return;
+            var (ok, msg) = _state.TryTravel(_shopSel);
+            _shopMsg = ok ? "water unlocked - press T for the map" : msg;
+            _shopMsgT = 2.6f;
+            PlaySfx("click");
+        }
+    }
+
+    /// <summary>Mouse: click a tab or a row to buy.</summary>
+    private void ShopClick(Vector2 pos)
+    {
+        if (pos.Y >= 50 && pos.Y <= 76)
+        {
+            for (int i = 0; i < 6; i++)
             {
-                string kind = new[] { "rod", "line", "lure", "cooler" }[_shopTab];
-                var gear = _state.GearTable(kind);
-                if (_shopSel >= gear.Length) return;
-                var (ok, msg) = _state.BuyGear(kind, gear[_shopSel]);
-                _shopMsg = msg; _shopMsgT = 2.2f;
+                if (pos.X >= 40 + i * 118 && pos.X <= 40 + i * 118 + 90)
+                {
+                    _shopTab = i;
+                    _shopSel = 0;
+                    return;
+                }
             }
-            else if (_shopTab == 4)
+            return;
+        }
+        int y = 100;
+        if (_shopTab < 4)
+        {
+            string kind = new[] { "rod", "line", "lure", "cooler" }[_shopTab];
+            var gear = _state.GearTable(kind);
+            for (int i = 0; i < gear.Length; i++)
             {
-                if (_shopSel >= GameData.Strains.Length) return;
-                var (ok, msg) = _state.BuyStrain(GameData.Strains[_shopSel]);
-                _shopMsg = msg; _shopMsgT = 2.2f;
+                if (pos.Y >= y - 4 && pos.Y <= y + 40)
+                {
+                    _shopSel = i;
+                    BuyShopItem();
+                    return;
+                }
+                y += 46;
             }
-            else
+        }
+        else if (_shopTab == 4)
+        {
+            for (int i = 0; i < GameData.Strains.Length; i++)
             {
-                if (_shopSel >= 4) return;
-                var (ok, msg) = _state.TryTravel(_shopSel);
-                _shopMsg = ok ? "water unlocked - press T for the map" : msg;
-                _shopMsgT = 2.6f;
-                PlaySfx("click");
+                if (pos.Y >= y - 4 && pos.Y <= y + 22)
+                {
+                    _shopSel = i;
+                    BuyShopItem();
+                    return;
+                }
+                y += 28;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                if (pos.Y >= y - 4 && pos.Y <= y + 40)
+                {
+                    _shopSel = i;
+                    BuyShopItem();
+                    return;
+                }
+                y += 46;
             }
         }
     }

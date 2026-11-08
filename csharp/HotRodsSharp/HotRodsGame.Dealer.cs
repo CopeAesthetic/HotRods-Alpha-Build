@@ -39,7 +39,7 @@ public partial class HotRodsGame
         Edge(ref _rightHeld, Keys.Right, () => { _dealerArea = (_dealerArea + 1) % 4; _dealerSel = 0; });
         Edge(ref _upHeld, Keys.Up, () => _dealerSel = Math.Max(0, _dealerSel - 1));
         Edge(ref _downHeld, Keys.Down, () => _dealerSel++);
-        Edge(ref _enterHeld, Keys.Enter, Act);
+        Edge(ref _enterHeld, Keys.Enter, ActDealer);
         Edge(ref _uHeld, Keys.U, UseJar);
         Edge(ref _fHeld, Keys.F, SellAll);
         if (kb.IsKeyDown(Keys.Escape))
@@ -47,62 +47,109 @@ public partial class HotRodsGame
             _dealerOpen = false;
             _menuOpen = true;
         }
+    }
 
-        void Act()
+    /// <summary>Primary action on the selected dealer row (sell / buy).</summary>
+    private void ActDealer()
+    {
+        if (_dealerFocus == 0)
         {
-            if (_dealerFocus == 0)
-            {
-                if (_dealerSel >= _state.Bag.Count)
-                {
-                    _menuMsg = "cooler is empty";
-                    _menuMsgT = 2f;
-                    return;
-                }
-                int v = _state.SellFish(_dealerSel);
-                _menuMsg = "$" + v + ". Don't spend it all on lures.";
-                _menuMsgT = 3f;
-                PlaySfx("click");
-                _dealerSel = Math.Min(_dealerSel, Math.Max(0, _state.Bag.Count - 1));
-                return;
-            }
-            var rows = JarRows();
-            if (_dealerSel >= rows.Length)
-                return;
-            var (ok, msg) = _state.BuyWeed(rows[_dealerSel]);
-            _menuMsg = msg;
-            _menuMsgT = 3f;
-            PlaySfx("click");
-        }
-
-        void UseJar()
-        {
-            if (_dealerFocus != 1)
-                return;
-            var rows = JarRows();
-            if (_dealerSel >= rows.Length)
-                return;
-            var (ok, msg) = _state.UseWeed(rows[_dealerSel]);
-            _menuMsg = ok ? "Loaded you up with " + rows[_dealerSel].Name + "." : msg;
-            _menuMsgT = 3f;
-        }
-
-        void SellAll()
-        {
-            int n = _state.Bag.Count;
-            if (n == 0)
+            if (_dealerSel >= _state.Bag.Count)
             {
                 _menuMsg = "cooler is empty";
                 _menuMsgT = 2f;
                 return;
             }
-            int total = (int)MathF.Round(_state.BagValue());
-            _state.SellBag();
-            _menuMsg = n + " fish, $" + total + ". Pleasure.";
-            _menuMsgT = 3.5f;
+            int v = _state.SellFish(_dealerSel);
+            _menuMsg = "$" + v + ". Don't spend it all on lures.";
+            _menuMsgT = 3f;
             PlaySfx("click");
+            _dealerSel = Math.Min(_dealerSel, Math.Max(0, _state.Bag.Count - 1));
+            return;
+        }
+        var rows = JarRows();
+        if (_dealerSel >= rows.Length)
+            return;
+        var (ok, msg) = _state.BuyWeed(rows[_dealerSel]);
+        _menuMsg = msg;
+        _menuMsgT = 3f;
+        PlaySfx("click");
+    }
+
+    /// <summary>Mouse: area tabs, cooler rows (sell), jar rows (buy).</summary>
+    private void DealerClick(Vector2 pos)
+    {
+        if (pos.Y >= 78 && pos.Y <= 102)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                if (pos.X >= 440 + i * 82 && pos.X <= 440 + i * 82 + 70)
+                {
+                    _dealerArea = i;
+                    _dealerSel = 0;
+                    return;
+                }
+            }
+            return;
+        }
+        if (pos.X <= 410)
+        {
+            int y = 92;
+            for (int i = 0; i < _state.Bag.Count; i++)
+            {
+                if (pos.Y >= y - 4 && pos.Y <= y + 22)
+                {
+                    _dealerFocus = 0;
+                    _dealerSel = i;
+                    ActDealer();
+                    return;
+                }
+                y += 26;
+            }
+            return;
+        }
+        int y2 = 118;
+        var rows = JarRows();
+        for (int i = 0; i < rows.Length; i++)
+        {
+            if (pos.Y >= y2 - 4 && pos.Y <= y2 + 34)
+            {
+                _dealerFocus = 1;
+                _dealerSel = i;
+                ActDealer();
+                return;
+            }
+            y2 += 42;
         }
     }
 
+    private void UseJar()
+    {
+    if (_dealerFocus != 1)
+            return;
+        var rows = JarRows();
+        if (_dealerSel >= rows.Length)
+            return;
+        var (ok, msg) = _state.UseWeed(rows[_dealerSel]);
+        _menuMsg = ok ? "Loaded you up with " + rows[_dealerSel].Name + "." : msg;
+        _menuMsgT = 3f;
+    }
+
+    private void SellAll()
+    {
+        int n = _state.Bag.Count;
+        if (n == 0)
+        {
+            _menuMsg = "cooler is empty";
+            _menuMsgT = 2f;
+            return;
+        }
+        int total = (int)MathF.Round(_state.BagValue());
+        _state.SellBag();
+        _menuMsg = n + " fish, $" + total + ". Pleasure.";
+        _menuMsgT = 3.5f;
+        PlaySfx("click");
+    }
     private void DrawDealer()
     {
         int w = GraphicsDevice.Viewport.Width;

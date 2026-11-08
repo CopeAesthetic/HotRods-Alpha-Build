@@ -27,37 +27,53 @@ public partial class HotRodsGame
 
         Edge(ref _leftHeld, Keys.Left, () => _mapSel = (_mapSel + 3) % 4);
         Edge(ref _rightHeld, Keys.Right, () => _mapSel = (_mapSel + 1) % 4);
-        Edge(ref _enterHeld, Keys.Enter, Go);
+        Edge(ref _enterHeld, Keys.Enter, GoMap);
         if (kb.IsKeyDown(Keys.Escape))
         {
             _mapOpen = false;
             _menuOpen = true;
         }
+    }
 
-        void Go()
+    /// <summary>Travel to the selected water (paying the unlock when ready).</summary>
+    private void GoMap()
+    {
+        if (_state.SpotUnlocked(_mapSel))
         {
-            if (_state.SpotUnlocked(_mapSel))
+            if (_mapSel != _spot)
             {
-                if (_mapSel != _spot)
-                {
-                    _spot = _mapSel;
-                    _state.Spot = _mapSel;
-                    _state.Save();
-                    BuildWorld();
-                    SteamMan.SetPresence("fishing at " + GameData.SpotNames[_spot]);
-                }
-                _mapOpen = false;
+                _spot = _mapSel;
+                _state.Spot = _mapSel;
+                _state.Save();
+                BuildWorld();
+                SteamMan.SetPresence("fishing at " + GameData.SpotNames[_spot]);
+            }
+            _mapOpen = false;
+            return;
+        }
+        if (_state.TryTravel(_mapSel) is var (ok, msg) && ok)
+        {
+            GoMap();   // unlock paid - travel
+        }
+        else
+        {
+            _menuMsg = msg;
+            _menuMsgT = 3f;
+            PlaySfx("click");
+        }
+    }
+
+    /// <summary>Mouse: click a map node to travel there.</summary>
+    private void MapClick(Vector2 pos)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            var (nx, ny) = MapNodes[i];
+            if (MathF.Abs(pos.X - nx) <= 22 && MathF.Abs(pos.Y - ny) <= 22)
+            {
+                _mapSel = i;
+                GoMap();
                 return;
-            }
-            if (_state.TryTravel(_mapSel) is var (ok, msg) && ok)
-            {
-                Go();   // unlock paid - travel
-            }
-            else
-            {
-                _menuMsg = msg;
-                _menuMsgT = 3f;
-                PlaySfx("click");
             }
         }
     }
