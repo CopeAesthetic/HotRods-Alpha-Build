@@ -441,9 +441,12 @@ public partial class HotRodsGame : Game
         Prims.AddSegment(v, mid - (tip - mid) * 0.25f, mid, 0.070f, jacket);
         Prims.AddBox(v, mid + new Vector3(0.008f, -0.01f, -0.015f),
                      0.075f, 0.08f, 0.09f, Skin);
-        // the rod
+        // the rod (the tip dips under load while you fight the fish)
+        float bend = _fishing.Current == FishingSim.Phase.Reeling
+            ? 0.10f * _fishing.Progress : _fishing.Current == FishingSim.Phase.Hook ? 0.16f : 0f;
+        var tipBent = tip - new Vector3(0f, bend, 0f);
         Prims.AddSegment(v, grip, mid, 0.034f, RodDark, 5);
-        Prims.AddSegment(v, mid, tip, 0.026f, RodLight, 5);
+        Prims.AddSegment(v, mid, tipBent, 0.026f, RodLight, 5);
         Prims.AddBox(v, grip + new Vector3(0f, -0.10f, 0.06f),
                      0.055f, 0.085f, 0.075f, new Color(70, 74, 82));
     }
@@ -874,50 +877,52 @@ public partial class HotRodsGame : Game
         _batch.End();
     }
 
+    /// <summary>Python-style reel: a sweep marker runs back and forth while
+    /// the zone window wanders. Time the pull - green core +3, zone +1, a
+    /// miss costs 2 and too many misses lose the fish.</summary>
     private void DrawReel()
     {
         int w = GraphicsDevice.Viewport.Width;
         int h = GraphicsDevice.Viewport.Height;
-        var c = new Vector2(w / 2f, h / 2f - 40f);
-        float R = 90f;
-        float blue = _fishing.BluePos, green = _fishing.GreenPos;
-        for (int i = 0; i < 48; i++)
+        var bar = new Rectangle(w / 2 - 170, h / 2 - 10, 340, 28);
+        // zone window
+        int zx = bar.X + (int)(bar.Width * Math.Clamp(
+                    _fishing.Zone - _fishing.ZoneW * 0.5f, 0f, 1f));
+        int zw = (int)(bar.Width * _fishing.ZoneW);
+        _batch.Draw(_pixel, new Rectangle(zx, bar.Y, zw, bar.Height),
+                    new Color(96, 150, 220, 170));
+        // perfect core
+        int px = bar.X + (int)(bar.Width * Math.Clamp(
+                    _fishing.Zone - _fishing.ZoneW * 0.09f * 0.5f, 0f, 1f));
+        int pw = (int)(bar.Width * _fishing.ZoneW * 0.09f);
+        _batch.Draw(_pixel, new Rectangle(px, bar.Y + 8, pw, bar.Height - 16),
+                    new Color(120, 240, 130, 200));
+        // sweep marker
+        int sx = bar.X + (int)(bar.Width * _fishing.Sweep);
+        _batch.Draw(_pixel, new Rectangle(sx - 2, bar.Y - 5, 4, bar.Height + 10),
+                    new Color(255, 240, 140));
+        // progress
+        var pb = new Rectangle(w / 2 - 170, h / 2 + 30, 340, 12);
+        _batch.Draw(_pixel, pb, new Color(40, 46, 66, 220));
+        _batch.Draw(_pixel, new Rectangle(pb.X + 1, pb.Y + 1,
+                    (int)(338 * _fishing.Progress), 10), new Color(120, 210, 250));
+        _font.Draw(_batch, "SPACE - TIME THE PULL", new Vector2(w / 2f - 66, h / 2 + 48),
+                   2, new Color(200, 208, 230));
+        switch (_fishing.LastPull)
         {
-            float a0 = -MathF.PI + MathF.Tau * i / 48;
-            float a1 = a0 + MathF.Tau / 48;
-            float mid = MathF.Abs(Wrap((a0 + a1) / 2 - blue));
-            float midg = MathF.Abs(Wrap((a0 + a1) / 2 - green));
-            Color col = mid < 0.10f ? new Color(90, 180, 250)
-                      : midg < 0.28f ? new Color(110, 210, 120)
-                      : new Color(190, 70, 70);
-            var p0 = c + new Vector2(MathF.Cos(a0), MathF.Sin(a0)) * R;
-            var p1 = c + new Vector2(MathF.Cos(a1), MathF.Sin(a1)) * R;
-            var p2 = c + new Vector2(MathF.Cos(a1), MathF.Sin(a1)) * (R - 10);
-            var p3 = c + new Vector2(MathF.Cos(a0), MathF.Sin(a0)) * (R - 10);
-            FillTri(_batch, _pixel, p0, p1, p2, col);
-            FillTri(_batch, _pixel, p0, p2, p3, col);
+            case FishingSim.PullGrade.Perfect:
+                _font.Draw(_batch, "PERFECT +3", new Vector2(w / 2f - 36, h / 2 - 44),
+                           3, new Color(255, 220, 90));
+                break;
+            case FishingSim.PullGrade.Good:
+                _font.Draw(_batch, "GOOD +1", new Vector2(w / 2f - 28, h / 2 - 44),
+                           3, new Color(150, 220, 130));
+                break;
+            case FishingSim.PullGrade.Miss:
+                _font.Draw(_batch, "MISS -2", new Vector2(w / 2f - 28, h / 2 - 44),
+                           3, new Color(240, 120, 100));
+                break;
         }
-        // needle: full 360 sweep
-        var end = c + new Vector2(MathF.Cos(_fishing.NeedleAngle),
-                                  MathF.Sin(_fishing.NeedleAngle)) * (R - 14);
-        for (int i = 0; i <= 16; i++)
-        {
-            var pt = Vector2.Lerp(c, end, i / 16f);
-            _batch.Draw(_pixel, new Rectangle((int)pt.X - 3, (int)pt.Y - 3, 6, 6),
-                        new Color(245, 245, 235));
-        }
-        // progress bar
-        var bar = new Rectangle((int)c.X - 90, (int)c.Y + (int)R + 24, 180, 12);
-        _batch.Draw(_pixel, bar, new Color(40, 46, 66, 220));
-        _batch.Draw(_pixel, new Rectangle(bar.X + 1, bar.Y + 1,
-                    (int)(178 * _fishing.Progress), 10), new Color(120, 210, 250));
-    }
-
-    private static float Wrap(float a)
-    {
-        while (a > MathF.PI) a -= MathF.Tau;
-        while (a < -MathF.PI) a += MathF.Tau;
-        return a;
     }
 
     private static void FillTri(SpriteBatch batch, Texture2D px, Vector2 a,

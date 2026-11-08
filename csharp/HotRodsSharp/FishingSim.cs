@@ -1,14 +1,18 @@
 namespace HotRodsSharp;
 
 /// <summary>
-/// Phase-3 fishing loop: charge a cast, the bobber flies, waits, bites, and
-/// the sweep minigame lands a fish. The catch roll follows the Python rules:
-/// sober water gives commons only, smoking opens the strain's rarity band,
-/// and foreign weed caps at uncommon.
+/// Fishing loop, ported from the Python angler: charge, fly, wait (with
+/// nibbles), a bite window, a hook yank, and the reel - a sweep marker that
+/// oscillates while a zone window wanders; time your pulls (perfect +3,
+/// good +1, miss -2, too many misses and the fish escapes). The catch roll
+/// follows the Python rules (hidden 1-in-4, shiny 2%, rarity bands and
+/// time/high conditions).
 /// </summary>
 public sealed class FishingSim
 {
-    public enum Phase { Idle, Charging, Flying, Waiting, Bite, Reeling, Card }
+    public enum Phase { Idle, Charging, Flying, Waiting, Bite, Hook, Reeling, Card }
+
+    public enum PullGrade { None, Perfect, Good, Miss }
 
     public Phase Current;
     public Vector3 Bobber = new(-3.0f, 0.06f, -4.0f);
@@ -21,21 +25,29 @@ public sealed class FishingSim
     public float CardT;
     public float ShakeT;         // camera shake on landing a fish
     public float Progress => _progress;
-    public float BluePos => _bluePos;
-    public float GreenPos => _greenPos;
     public bool Reeling => Current == Phase.Reeling;
 
-    /// <summary>Fired when the bobber lands or a fish bites (ripple rings).</summary>
+    // the reel: a sweep marker chasing a wandering zone
+    public float Sweep;
+    public float Zone;
+    public float ZoneW;
+    public int Hits;
+    public int Needed;
+    public float IdleT;
+    public PullGrade LastPull;
+
+    /// <summary>Fired when the bobber lands, nibbles or a fish bites.</summary>
     public event Action<Vector3>? Ripple;
 
     private GameState _state;
     private Vector3 _start, _target;
-    private float _flyT, _waitT;
+    private float _flyT, _waitT, _waitDur;
+    private float _biteT, _hookT;
+    private float _nibbleT, _nextNibble;
+    private int _nibbleCount;
     private FishSpec? _pending;
     public FishSpec? Pending => _pending;
-    private float _angle, _progress, _strikeCd;
-    private float _bluePos, _greenPos;
-    private const float BlueHalf = 0.10f, GreenHalf = 0.28f;
+    private float _progress, _strikeCd, _zonePhase;
     private static readonly Random Rng = new();
     private static float _time;
 
@@ -47,7 +59,6 @@ public sealed class FishingSim
     /// <summary>Sound cues: "whoosh", "splash", "click".</summary>
     public Action<string> Sfx = _ => { };
 
-    public float NeedleAngle => _angle;
     public static float Clock => _time;
     public static void TickTime(float dt) => _time += dt;
 
@@ -86,86 +97,67 @@ public sealed class FishingSim
                     Bobber = _target;
                     Sfx("splash");
                     Ripple?.Invoke(Bobber);
-                    _waitT = 2f + (float)Rng.NextDouble() * 4f;
+                    // Python wait: 1.9-4.6s, shorter when you're high
+                    _waitDur = _waitT = (1.9f + (float)Rng.NextDouble() * 2.7f)
+                                       * (1f - 0.16f * _state.High);
+                    _nibbleCount = 0;
+                    _nextNibble = 0.5f + (float)Rng.NextDouble()
+                                       * MathF.Max(0.1f, _waitT - 0.9f);
+                    if (Rng.NextDouble() < 0.45f)
+                        _nextNibble = -1f;
                     Current = Phase.Waiting;
                 }
                 break;
             case Phase.Waiting:
                 _waitT -= dt;
+                // nibbles: the bobber twitches once or twice before the bite
+                if (_nibbleT > 0f)
+                    _nibbleT -= dt;
+                if (_nextNibble > 0f && _waitDur - _waitT >= _nextNibble
+                    && _waitT > 0.25f && _nibbleCount < 2)
+                {
+                    _nibbleCount++;
+                    _nextNibble = _waitDur - _waitT
+                                  + 0.45f + (float)Rng.NextDouble() * 0.75f;
+                    _nibbleT = 0.22f;
+                    Ripple?.Invoke(Bobber);
+                }
                 if (_waitT <= 0f)
                 {
                     Current = Phase.Bite;
+                    _biteT = 0f;
                     Ripple?.Invoke(Bobber);
                 }
                 break;
             case Phase.Bite:
+                _biteT += dt;
+                // the hook window: longer while you're high
+                if (_biteT >= 0.9f + 0.42f * _state.High)
+                {
+                    Current = Phase.Idle;
+                    _pending = null;
+                    Ripple?.Invoke(Bobber);
+                    break;
+                }
                 if (kb.IsKeyDown(Keys.Space))
                 {
                     _pending = Roll();
                     CaughtKg = RollKg(_pending);
                     CaughtValue = CaughtKg * _pending.UsdKg;
-                    _progress = 0.30f;
-                    _angle = (float)(Rng.NextDouble() * MathF.Tau);
-                    _bluePos = (float)(Rng.NextDouble() * MathF.Tau);
-                    _greenPos = Wrap(_bluePos + 2.4f);
-                    _strikeCd = 0f;
+                    _hookT = 0f;
+                    Current = Phase.Hook;
+                }
+                break;
+            case Phase.Hook:
+                _hookT += dt;
+                if (_hookT >= 0.34f)
+                {
+                    SetupReel();
                     Current = Phase.Reeling;
                 }
                 break;
             case Phase.Reeling:
-                float reelF = GameData.Rods.FirstOrDefault(
-                    r => r.Id == _state.EquippedId("rod"))?.Reel ?? 1f;
-                float grace = GameData.Lines.FirstOrDefault(
-                    l => l.Id == _state.EquippedId("line"))?.Grace ?? 0f;
-                float speed = (2.2f + GameData.RarityIndex(_pending!.Rarity) * 0.45f)
-                              / reelF;
-                float arcMul = 1f + 0.012f * _state.StokeRank("fish");  // stoke lane
-                float blue = BlueHalf * (1f + grace) * arcMul;
-                float green = GreenHalf * (1f + grace) * arcMul;
-                _angle = Wrap(_angle + speed * dt);      // the dial spins 360
-                _strikeCd -= dt;
-                if (kb.IsKeyDown(Keys.Space) && _strikeCd <= 0f)
-                {
-                    _strikeCd = 0.14f;
-                    Sfx("click");
-                    float db = MathF.Abs(Wrap(_angle - _bluePos));
-                    float dg = MathF.Abs(Wrap(_angle - _greenPos));
-                    if (db < blue)
-                    {
-                        _progress += 0.09f;
-                        (_bluePos, _greenPos) = (_greenPos, _bluePos);
-                    }
-                    else if (dg < green)
-                    {
-                        _progress += 0.03f;
-                        (_bluePos, _greenPos) = (_greenPos, _bluePos);
-                    }
-                    else
-                    {
-                        _progress -= 0.08f;
-                    }
-                    if (_progress >= 1f)
-                    {
-                        Caught = _pending;
-                        _state.Catches++;
-                        int slots = _state.BagSize();
-                        Kept = _state.Bag.Count < slots;
-                        if (!Kept)
-                            _state.Cash += (int)MathF.Round(CaughtValue); // sold on spot
-                        FirstCatch = _state.OnCatch(_pending.Id, CaughtKg, Kept);
-                        _state.Cash += (int)MathF.Round(CaughtValue);
-                        _state.Save();
-                        CardT = 0f;
-                        ShakeT = 0.45f;
-                        Current = Phase.Card;
-                    }
-                    else if (_progress <= 0f)
-                    {
-                        Caught = null;
-                        _pending = null;
-                        Current = Phase.Idle;
-                    }
-                }
+                UpdateReel(dt, kb);
                 break;
             case Phase.Card:
                 CardT += dt;
@@ -176,6 +168,104 @@ public sealed class FishingSim
                 }
                 break;
         }
+    }
+
+    /// <summary>Python reel: the sweep runs, the zone wanders, and timed
+    /// pulls land perfect/good/miss. Too many misses or eight idle seconds
+    /// and the fish escapes.</summary>
+    private void UpdateReel(float dt, KeyboardState kb)
+    {
+        float diff = _pending!.Diff;
+        int rk = GameData.RarityIndex(_pending.Rarity);
+        float reel = GameData.Rods.FirstOrDefault(
+            r => r.Id == _state.EquippedId("rod"))?.Reel ?? 1f;
+        float speed = 0.95f + 0.55f * diff + 0.35f * (1f - MathF.Min(1f, reel));
+        Sweep = (Sweep + speed * dt) % 1f;
+        _zonePhase += dt * (0.60f + 0.10f * rk + 0.30f * diff);
+        Zone = 0.5f + 0.34f * MathF.Sin(_zonePhase);
+        _strikeCd -= dt;
+
+        if (kb.IsKeyDown(Keys.Space) && _strikeCd <= 0f)
+        {
+            _strikeCd = 0.14f;
+            Sfx("click");
+            float d = MathF.Abs(Sweep - Zone);
+            float half = ZoneW * 0.5f;
+            float blue = ZoneW * 0.09f;
+            if (d <= blue)
+            {
+                Hits += 3;
+                LastPull = PullGrade.Perfect;
+            }
+            else if (d <= half)
+            {
+                Hits += 1;
+                LastPull = PullGrade.Good;
+            }
+            else
+            {
+                Hits -= 2;
+                LastPull = PullGrade.Miss;
+                if (Hits < 0)
+                {
+                    Current = Phase.Idle;
+                    _pending = null;
+                    Caught = null;
+                    Ripple?.Invoke(Bobber);
+                    return;
+                }
+            }
+            _progress = Math.Clamp(Hits / (float)Needed, 0f, 1f);
+            IdleT = 0f;
+            if (Hits >= Needed)
+            {
+                Caught = _pending;
+                _state.Catches++;
+                int slots = _state.BagSize();
+                Kept = _state.Bag.Count < slots;
+                if (!Kept)
+                    _state.Cash += (int)MathF.Round(CaughtValue); // sold on spot
+                FirstCatch = _state.OnCatch(_pending.Id, CaughtKg, Kept);
+                _state.Cash += (int)MathF.Round(CaughtValue);
+                _state.Save();
+                CardT = 0f;
+                ShakeT = 0.45f;
+                Current = Phase.Card;
+            }
+        }
+        if (_progress <= 0.001f)
+        {
+            IdleT += dt;
+            if (IdleT > 8f)
+            {
+                Current = Phase.Idle;
+                _pending = null;
+                Caught = null;
+                Ripple?.Invoke(Bobber);
+            }
+        }
+        else
+        {
+            IdleT = 0f;
+        }
+    }
+
+    /// <summary>Python hook setup: hits needed, zone width, fresh sweep.</summary>
+    private void SetupReel()
+    {
+        int rk = GameData.RarityIndex(_pending!.Rarity);
+        Needed = Math.Max(2, (int)MathF.Round(5 + rk * 1.3f + _pending.Diff * 2f));
+        float tol = GameData.Rods.FirstOrDefault(
+            r => r.Id == _state.EquippedId("rod"))?.Tol ?? 0f;
+        ZoneW = Math.Clamp(0.22f - 0.030f * rk - 0.055f * _pending.Diff
+                           + tol * 0.20f + 0.010f * _state.StokeRank("fish"),
+                           0.04f, 0.26f);
+        Sweep = 0f;
+        _zonePhase = 0f;
+        Hits = 0;
+        IdleT = 0f;
+        _progress = 0f;
+        LastPull = PullGrade.None;
     }
 
     /// <summary>
@@ -283,13 +373,6 @@ public sealed class FishingSim
         return weights[^1].sp;
     }
 
-    private static float Wrap(float a)
-    {
-        while (a > MathF.PI) a -= MathF.Tau;
-        while (a < -MathF.PI) a += MathF.Tau;
-        return a;
-    }
-
     private static float RollKg(FishSpec sp) =>
         sp.KgMin + (float)Rng.NextDouble() * (sp.KgMax - sp.KgMin);
 
@@ -302,20 +385,25 @@ public sealed class FishingSim
                          new Color(220, 230, 240), 3);
     }
 
-    /// <summary>Red/white bobber, gently riding the swell while waiting.</summary>
+    /// <summary>Red/white bobber: rides the swell, dips on nibbles and
+    /// bites, jitters while the fish fights.</summary>
     public void EmitBobber(List<VertexPositionColor> v)
     {
         if (Current == Phase.Idle || Current == Phase.Card)
             return;
-        float idle = Current == Phase.Waiting
+        float idle = Current == Phase.Waiting && _nibbleT <= 0f
             ? 0.045f * MathF.Sin(_time * 2.6f) : 0f;
-        float y = 0.06f + idle + (Current == Phase.Bite
-            ? 0.12f * MathF.Sin(_time * 18f) : 0f);
-        Prims.AddSegment(v, new Vector3(Bobber.X, y - 0.08f, Bobber.Z),
-                         new Vector3(Bobber.X, y, Bobber.Z), 0.05f,
+        float nibble = _nibbleT > 0f ? 0.09f * MathF.Sin(_time * 24f) : 0f;
+        float bite = Current == Phase.Bite ? 0.12f * MathF.Sin(_time * 18f) : 0f;
+        float hook = Current == Phase.Hook ? -0.10f : 0f;
+        float jitter = Current == Phase.Reeling ? 0.06f * MathF.Sin(_time * 22f) : 0f;
+        float y = 0.06f + idle - nibble + bite + hook;
+        float x = Bobber.X + jitter;
+        Prims.AddSegment(v, new Vector3(x, y - 0.08f, Bobber.Z),
+                         new Vector3(x, y, Bobber.Z), 0.05f,
                          new Color(210, 60, 50), 5);
-        Prims.AddSegment(v, new Vector3(Bobber.X, y, Bobber.Z),
-                         new Vector3(Bobber.X, y + 0.06f, Bobber.Z), 0.03f,
+        Prims.AddSegment(v, new Vector3(x, y, Bobber.Z),
+                         new Vector3(x, y + 0.06f, Bobber.Z), 0.03f,
                          new Color(240, 240, 240), 5);
     }
 }
