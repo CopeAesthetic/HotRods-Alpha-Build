@@ -613,6 +613,11 @@ public partial class HotRodsGame : Game
         eye.X += MathF.Cos(_t * 0.9f) * wobble * 0.5f;
         eye.X += _fishing.ShakeT * 0.12f * MathF.Sin(_t * 43f);
         eye.Y += _fishing.ShakeT * 0.10f * MathF.Cos(_t * 37f);
+        // the fish pulls the camera as the fight builds
+        float fight = _fishing.Current == FishingSim.Phase.Reeling
+            ? _fishing.Progress : 0f;
+        eye.X += MathF.Sin(_t * 31f) * 0.012f * fight;
+        eye.Y += MathF.Cos(_t * 27f) * 0.010f * fight;
         _view = Matrix.CreateLookAt(eye, eye + fwd, Vector3.Up);
         _proj = Matrix.CreatePerspectiveFieldOfView(
             MathHelper.ToRadians(62f), GraphicsDevice.Viewport.AspectRatio, 0.1f, 250f);
@@ -760,20 +765,10 @@ public partial class HotRodsGame : Game
         _batch.End();
         bool fighting = _fishing.Current is FishingSim.Phase.Bite
                         or FishingSim.Phase.Hook or FishingSim.Phase.Reeling;
-        if (fighting)
-        {
-            // fish on the line: drop every HUD element and dim the world so
-            // the reel bar is the only thing in focus
-            _batch.Begin();
-            _batch.Draw(_pixel, new Rectangle(0, 0,
-                        GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height),
-                        new Color(4, 6, 12, 96));
-            _batch.End();
-        }
-        else
-        {
+        if (!fighting)
             DrawHud();
-        }
+        // fish on the line: the HUD drops entirely so the rope bar is the
+        // only focus - the world stays bright, the fight itself escalates
         if (_shopOpen)
             DrawShop();
         if (_journalOpen)
@@ -892,10 +887,10 @@ public partial class HotRodsGame : Game
         _batch.End();
     }
 
-    /// <summary>Braided rope: tan body, diagonal hatch, knotted ends.</summary>
-    private void DrawRope(Rectangle r)
+    /// <summary>Braided rope: body colour, diagonal hatch, knotted ends.</summary>
+    private void DrawRope(Rectangle r, Color body)
     {
-        _batch.Draw(_pixel, r, new Color(176, 148, 96));
+        _batch.Draw(_pixel, r, body);
         for (int x = r.X + 4; x < r.Right - 4; x += 8)
         {
             _batch.Draw(_pixel, new Rectangle(x, r.Y + r.Height - 9, 2, 4),
@@ -924,11 +919,15 @@ public partial class HotRodsGame : Game
         int w = GraphicsDevice.Viewport.Width;
         int h = GraphicsDevice.Viewport.Height;
         var bar = new Rectangle(16, h - 48, w - 32, 24);
-        DrawRope(bar);
+        // the rope heats up as the fight builds
+        DrawRope(bar, Color.Lerp(new Color(176, 148, 96), new Color(206, 84, 52),
+                                 _fishing.Progress));
         // miss sections: everything outside the zone window goes red
+        float pulse = 1f + 0.05f * MathF.Sin(_t * 9f) + 0.10f * _fishing.Progress;
+        float zwEff = _fishing.ZoneW * pulse;
         int zx = bar.X + (int)(bar.Width * Math.Clamp(
-                    _fishing.Zone - _fishing.ZoneW * 0.5f, 0f, 1f));
-        int zw = (int)(bar.Width * _fishing.ZoneW);
+                    _fishing.Zone - zwEff * 0.5f, 0f, 1f));
+        int zw = (int)(bar.Width * zwEff);
         _batch.Draw(_pixel, new Rectangle(bar.X + 3, bar.Y + 2,
                     Math.Max(0, zx - bar.X - 3), bar.Height - 4),
                     new Color(190, 60, 50, 165));
@@ -944,17 +943,32 @@ public partial class HotRodsGame : Game
         int pw = (int)(bar.Width * _fishing.ZoneW * 0.09f);
         _batch.Draw(_pixel, new Rectangle(px, bar.Y + 5, pw, bar.Height - 17),
                     new Color(120, 240, 130, 220));
-        // sweep marker
+        // sweep marker: grows with progress and signals when to press
         int sx = bar.X + (int)(bar.Width * _fishing.Sweep);
-        _batch.Draw(_pixel, new Rectangle(sx - 2, bar.Y - 4, 4, bar.Height + 2),
-                    new Color(255, 240, 140));
+        float d = MathF.Abs(_fishing.Sweep - _fishing.Zone);
+        float half = _fishing.ZoneW * 0.5f;
+        float core = _fishing.ZoneW * 0.09f;
+        var markerCol = d <= core ? new Color(150, 255, 150)
+                      : d <= half ? new Color(205, 255, 170)
+                      : d <= half + 0.12f ? new Color(255, 235, 120)
+                      : new Color(255, 240, 140);
+        int mw = 4 + (int)(2f * _fishing.Progress);
+        _batch.Draw(_pixel, new Rectangle(sx - mw / 2, bar.Y - 4, mw, bar.Height + 2),
+                    markerCol);
+        if (d <= core)
+            _font.Draw(_batch, "NOW!", new Vector2(w / 2f - 14, bar.Y - 30), 3,
+                       new Color(150, 255, 150));
         // progress: thin fill along the bar's bottom edge
         _batch.Draw(_pixel, new Rectangle(bar.X + 3, bar.Bottom - 4, bar.Width - 6, 3),
                     new Color(10, 12, 20, 200));
         _batch.Draw(_pixel, new Rectangle(bar.X + 4, bar.Bottom - 3,
                     (int)((bar.Width - 8) * _fishing.Progress), 2),
                     new Color(120, 210, 250));
-        // hints and pull feedback above the bar
+        // escalating mood label + hint above the bar
+        string mood = _fishing.Progress > 0.75f ? "ALMOST THERE!"
+                    : _fishing.Progress > 0.34f ? "KEEP GOING!" : "PULL ON THE BLUE";
+        _font.Draw(_batch, mood, new Vector2(24, bar.Y - 26), 2,
+                   new Color(220, 226, 240));
         _font.Draw(_batch, "SPACE - TIME THE PULL", new Vector2(w - 330, bar.Y - 26),
                    2, new Color(200, 208, 230));
         switch (_fishing.LastPull)
