@@ -1070,8 +1070,8 @@ public partial class HotRodsGame : Game
     private static Rectangle[] IconRects()
     {
         int h = 480;   // window is fixed 800x480; icons anchor bottom-left
-        var rects = new Rectangle[6];
-        for (int i = 0; i < 6; i++)
+        var rects = new Rectangle[7];
+        for (int i = 0; i < 7; i++)
             rects[i] = new Rectangle(12 + i * 44, h - 44, 40, 36);
         return rects;
     }
@@ -1095,29 +1095,34 @@ public partial class HotRodsGame : Game
                     _batch.Draw(_pixel, new Rectangle(cx + 4, cy + 1, 16, 22), new Color(28, 32, 40));
                     _batch.Draw(_pixel, new Rectangle(cx + 7, cy + 5, 10, 14), new Color(90, 232, 205));
                     break;
-                case 1: // cooler -> sal's shack
+                case 1: // store -> price tag with a $
+                    _batch.Draw(_pixel, new Rectangle(cx + 1, cy + 2, 20, 20), new Color(226, 178, 66));
+                    _batch.Draw(_pixel, new Rectangle(cx + 3, cy + 4, 4, 4), new Color(28, 24, 18));
+                    _font.Draw(_batch, "$", new Vector2(cx + 10, cy + 8), 2, new Color(60, 42, 12));
+                    break;
+                case 2: // cooler -> sal's shack
                     _batch.Draw(_pixel, new Rectangle(cx + 2, cy + 4, 20, 18), new Color(200, 60, 48));
                     _batch.Draw(_pixel, new Rectangle(cx + 1, cy + 2, 22, 3), new Color(232, 236, 240));
                     _batch.Draw(_pixel, new Rectangle(cx + 2, cy + 10, 20, 2), new Color(150, 40, 32));
                     break;
-                case 2: // map
+                case 3: // map
                     _batch.Draw(_pixel, new Rectangle(cx + 2, cy + 2, 20, 20), new Color(196, 168, 118));
                     _batch.Draw(_pixel, new Rectangle(cx + 6, cy + 16, 2, 2), new Color(84, 140, 84));
                     _batch.Draw(_pixel, new Rectangle(cx + 12, cy + 12, 2, 2), new Color(84, 140, 84));
                     _batch.Draw(_pixel, new Rectangle(cx + 16, cy + 5, 2, 2), new Color(120, 190, 130));
                     break;
-                case 3: // jars
+                case 4: // jars
                     _batch.Draw(_pixel, new Rectangle(cx + 5, cy + 1, 14, 4), new Color(120, 128, 148));
                     _batch.Draw(_pixel, new Rectangle(cx + 5, cy + 5, 14, 16), new Color(120, 216, 160));
                     _batch.Draw(_pixel, new Rectangle(cx + 8, cy + 8, 8, 8), new Color(60, 150, 100));
                     break;
-                case 4: // journal
+                case 5: // journal
                     _batch.Draw(_pixel, new Rectangle(cx + 3, cy + 1, 18, 21), new Color(238, 232, 212));
                     _batch.Draw(_pixel, new Rectangle(cx + 12, cy + 1, 2, 21), new Color(160, 150, 120));
                     _batch.Draw(_pixel, new Rectangle(cx + 6, cy + 6, 4, 1), new Color(120, 110, 90));
                     _batch.Draw(_pixel, new Rectangle(cx + 6, cy + 10, 4, 1), new Color(120, 110, 90));
                     break;
-                case 5: // stoke lanes
+                case 6: // stoke lanes
                     _batch.Draw(_pixel, new Rectangle(cx + 3, cy + 6, 5, 12), new Color(120, 190, 130));
                     _batch.Draw(_pixel, new Rectangle(cx + 10, cy + 3, 5, 15), new Color(150, 210, 236));
                     _batch.Draw(_pixel, new Rectangle(cx + 17, cy + 8, 5, 10), new Color(214, 150, 236));
@@ -1148,7 +1153,7 @@ public partial class HotRodsGame : Game
         if (_sellFlash > 0f)
             _font.Draw(_batch, "SOLD!", new Vector2(w - 100, 62), 2, new Color(240, 214, 120));
         _font.Draw(_batch, "SPACE CAST  E SMOKE  Q PIECE  X SELL  ESC MENU",
-                   new Vector2(292, h - 24), 2, new Color(150, 160, 190));
+                   new Vector2(336, h - 24), 2, new Color(150, 160, 190));
         DrawIcons();
         _batch.End();
         _sellFlash -= 0.016f;
@@ -1282,7 +1287,7 @@ public partial class HotRodsGame : Game
 
     private static readonly string[] MenuItems =
     {
-        "FISHING GEAR", "SALS SHACK", "JARS", "JOURNAL", "STOKE",
+        "STORE", "SALS SHACK", "JARS", "JOURNAL", "STOKE",
         "MAP AND TRAVEL", "HOW TO PLAY", "SAVE", "SAVE AND TITLE",
     };
 
@@ -1308,7 +1313,7 @@ public partial class HotRodsGame : Game
         _menuOpen = false;
         switch (MenuItems[_menuSel])
         {
-            case "FISHING GEAR":
+            case "STORE":
                 _shopOpen = true; _shopSel = 0;
                 break;
             case "SALS SHACK":
@@ -1387,11 +1392,12 @@ public partial class HotRodsGame : Game
             switch (i)
             {
                 case 0: _menuOpen = true; _menuSel = 0; break;
-                case 1: _dealerOpen = true; _dealerSel = 0; _dealerArea = _state.Spot; break;
-                case 2: _mapOpen = true; _mapSel = _spot; break;
-                case 3: _zaaOpen = true; _zaaSel = 0; break;
-                case 4: _journalOpen = true; _journalSel = 0; break;
-                case 5: _stokeOpen = true; _stokeSel = 0; break;
+                case 1: _shopOpen = true; _shopSel = 0; break;
+                case 2: _dealerOpen = true; _dealerSel = 0; _dealerArea = _state.Spot; break;
+                case 3: _mapOpen = true; _mapSel = _spot; break;
+                case 4: _zaaOpen = true; _zaaSel = 0; break;
+                case 5: _journalOpen = true; _journalSel = 0; break;
+                case 6: _stokeOpen = true; _stokeSel = 0; break;
             }
             PlaySfx("click");
             return;
@@ -1582,7 +1588,7 @@ public partial class HotRodsGame : Game
         int h = GraphicsDevice.Viewport.Height;
         _batch.Begin(samplerState: SamplerState.PointClamp);
         _batch.Draw(_pixel, new Rectangle(0, 0, w, h), new Color(10, 14, 26, 225));
-        _font.Draw(_batch, "TRADING POST  -  $" + _state.Cash, new Vector2(40, 30), 3,
+        _font.Draw(_batch, "STORE  -  $" + _state.Cash, new Vector2(40, 30), 3,
                    new Color(240, 214, 120));
         string[] tabs = { "RODS", "LINES", "LURES", "COOLERS", "WEED", "WATERS" };
         for (int i = 0; i < 6; i++)

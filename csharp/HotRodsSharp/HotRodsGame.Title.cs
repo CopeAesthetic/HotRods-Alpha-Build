@@ -249,9 +249,8 @@ public partial class HotRodsGame
             "SPACE  CAST - HOLD TO CHARGE, TAP AT THE BITE",
             "REEL  - KEEP THE NEEDLE IN THE BLUE, THEN GREEN",
             "E  SMOKE    Q  SWITCH PIECE    X  SELL THE COOLER",
-            "ESC  MENU - FISHING GEAR, SALS SHACK, JARS,",
-            "JOURNAL, STOKE, MAP AND TRAVEL, HOW TO PLAY,",
-            "SAVE AND SAVE + TITLE",
+            "ESC  MENU - STORE, SALS SHACK, JARS, JOURNAL, STOKE,",
+            "MAP AND TRAVEL, HOW TO PLAY, SAVE AND SAVE + TITLE",
         };
         int y = 80;
         foreach (var s in lines)
