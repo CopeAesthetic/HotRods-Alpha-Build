@@ -43,7 +43,10 @@ public partial class HotRodsGame
         Edge(ref _uHeld, Keys.U, UseJar);
         Edge(ref _fHeld, Keys.F, SellAll);
         if (kb.IsKeyDown(Keys.Escape))
+        {
             _dealerOpen = false;
+            _menuOpen = true;
+        }
 
         void Act()
         {
@@ -182,7 +185,7 @@ public partial class HotRodsGame
             _font.Draw(_batch, _menuMsg, new Vector2(30, h - 52), 2,
                        new Color(240, 214, 120));
         _font.Draw(_batch,
-                   "TAB COOLER/JARS  ENTER ACT  U USE  F SELL ALL  LEFT/RIGHT AREA  D CLOSE",
+                   "TAB COOLER/JARS  ENTER ACT  U USE  F SELL ALL  LEFT/RIGHT AREA  ESC BACK",
                    new Vector2(30, h - 28), 2, new Color(130, 140, 170));
         _batch.End();
     }

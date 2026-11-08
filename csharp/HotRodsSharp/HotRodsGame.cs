@@ -20,12 +20,12 @@ public partial class HotRodsGame : Game
     private readonly SmokingSim _smoking = new();
     private readonly FishRender _fish = new();
     private bool _eHeld, _qHeld, _xHeld, _lbHeld, _rbHeld;
-    private bool _shopOpen, _bHeld, _enterHeld, _upHeld, _downHeld, _leftHeld, _rightHeld;
-    private bool _journalOpen, _zaaOpen, _paused, _jHeld, _zHeld, _escHeld;
-    private bool _atTitle = true, _tripsOpen, _dealerOpen, _stokeOpen, _helpOpen, _mapOpen;
+    private bool _shopOpen, _enterHeld, _upHeld, _downHeld, _leftHeld, _rightHeld;
+    private bool _journalOpen, _zaaOpen, _escHeld;
+    private bool _atTitle = true, _tripsOpen, _dealerOpen, _stokeOpen, _helpOpen, _mapOpen, _menuOpen;
     private GameState? _boundState;          // level-up toast subscription
-    private bool _dHeld, _kHeld, _hHeld, _tKeyHeld, _fHeld, _uHeld;
-    private int _titleSel, _tripsSel = 1, _dealerSel, _dealerArea, _stokeSel, _mapSel;
+    private bool _hHeld, _tKeyHeld, _fHeld, _uHeld;
+    private int _titleSel, _tripsSel = 1, _dealerSel, _dealerArea, _stokeSel, _mapSel, _menuSel;
     private int _dealerFocus;                 // 0 cooler, 1 jars
     private int _scrapConfirm;                // trips: slot awaiting confirm
     private float _newConfirm, _scrapConfirmT;
@@ -455,98 +455,61 @@ public partial class HotRodsGame : Game
             base.Update(gameTime);
             return;
         }
-        if (kb.IsKeyDown(Keys.D) && !_dHeld)
-        {
-            _dealerOpen = !_dealerOpen;
-            _dealerSel = 0;
-            _dealerArea = _state.Spot;
-            _dHeld = true;
-        }
-        if (kb.IsKeyUp(Keys.D)) _dHeld = false;
         if (_dealerOpen)
         {
             UpdateDealer(dt, kb);
             base.Update(gameTime);
             return;
         }
-        if (kb.IsKeyDown(Keys.K) && !_kHeld)
-        {
-            _stokeOpen = !_stokeOpen;
-            _stokeSel = 0;
-            _kHeld = true;
-        }
-        if (kb.IsKeyUp(Keys.K)) _kHeld = false;
         if (_stokeOpen)
         {
             UpdateStoke(dt, kb);
             base.Update(gameTime);
             return;
         }
-        if (kb.IsKeyDown(Keys.T) && !_tKeyHeld)
-        {
-            _mapOpen = !_mapOpen;
-            _mapSel = _spot;
-            _tKeyHeld = true;
-        }
-        if (kb.IsKeyUp(Keys.T)) _tKeyHeld = false;
         if (_mapOpen)
         {
             UpdateMap(dt, kb);
             base.Update(gameTime);
             return;
         }
-        if (kb.IsKeyDown(Keys.H) && !_hHeld)
-        {
-            _helpOpen = !_helpOpen;
-            _hHeld = true;
-        }
-        if (kb.IsKeyUp(Keys.H)) _hHeld = false;
         if (_helpOpen)
         {
-            if (kb.IsKeyDown(Keys.Escape))
+            if (kb.IsKeyDown(Keys.Escape) && !_escHeld)
+            {
                 _helpOpen = false;
+                _menuOpen = true;
+                _escHeld = true;
+            }
+            if (kb.IsKeyUp(Keys.Escape)) _escHeld = false;
             base.Update(gameTime);
             return;
         }
-        if (kb.IsKeyDown(Keys.B) && !_bHeld)
-        {
-            _shopOpen = !_shopOpen;
-            _shopSel = 0;
-            _bHeld = true;
-        }
-        if (kb.IsKeyUp(Keys.B)) _bHeld = false;
         if (_shopOpen)
         {
             UpdateShop(dt, kb);
             base.Update(gameTime);
             return;
         }
-        if (kb.IsKeyDown(Keys.J) && !_jHeld)
-        {
-            _journalOpen = !_journalOpen;
-            _journalSel = 0;
-            _jHeld = true;
-        }
-        if (kb.IsKeyUp(Keys.J)) _jHeld = false;
-        if (kb.IsKeyDown(Keys.Z) && !_zHeld)
-        {
-            _zaaOpen = !_zaaOpen;
-            _zaaSel = 0;
-            _zHeld = true;
-        }
-        if (kb.IsKeyUp(Keys.Z)) _zHeld = false;
-        if (kb.IsKeyDown(Keys.Escape) && !_escHeld)
-        {
-            _paused = !_paused;
-            _escHeld = true;
-        }
-        if (kb.IsKeyUp(Keys.Escape)) _escHeld = false;
-        if (_journalOpen || _zaaOpen || _paused)
+        if (_journalOpen || _zaaOpen)
         {
             UpdateOverlays(dt, kb);
             base.Update(gameTime);
             return;
         }
+        if (_menuOpen)
+        {
+            UpdateMenu(dt, kb);
+            base.Update(gameTime);
+            return;
+        }
+        if (kb.IsKeyDown(Keys.Escape) && !_escHeld)
+        {
+            _menuOpen = true;
+            _menuSel = 0;
+            _escHeld = true;
+        }
+        if (kb.IsKeyUp(Keys.Escape)) _escHeld = false;
         // economy keys: sell the cooler, cycle strains
         if (kb.IsKeyDown(Keys.X) && !_xHeld)
         {
@@ -585,7 +548,7 @@ public partial class HotRodsGame : Game
         // so the dock, the angler and the fishing water share the shot.
         // A proper high wobbles it and landing a fish shakes it.
         var eye = new Vector3(-6.9f, 2.7f, 3.8f);
-        var target = new Vector3(-1.6f, 0.7f, -7.0f);
+        var target = new Vector3(-0.6f, 0.8f, -6.0f);
         float wobble = _state.High * 0.09f;
         eye.Y += MathF.Sin(_t * 1.15f) * wobble;
         eye.X += MathF.Cos(_t * 0.9f) * wobble * 0.5f;
@@ -728,8 +691,8 @@ public partial class HotRodsGame : Game
             DrawJournal();
         if (_zaaOpen)
             DrawZaa();
-        if (_paused)
-            DrawPause();
+        if (_menuOpen)
+            DrawMenu();
         if (_dealerOpen)
             DrawDealer();
         if (_stokeOpen)
@@ -1056,7 +1019,7 @@ public partial class HotRodsGame : Game
                    new Color(246, 170, 120));
         if (_sellFlash > 0f)
             _font.Draw(_batch, "SOLD!", new Vector2(w - 100, 62), 2, new Color(240, 214, 120));
-        _font.Draw(_batch, "SPACE CAST  E SMOKE  B SHOP  D SAL  J LOG  Z JARS  K STOKE  T MAP",
+        _font.Draw(_batch, "SPACE CAST  E SMOKE  Q PIECE  X SELL  ESC MENU",
                    new Vector2(14, h - 24), 2, new Color(150, 160, 190));
         _batch.End();
         _sellFlash -= 0.016f;
@@ -1087,26 +1050,14 @@ public partial class HotRodsGame : Game
         }
         if (_zaaOpen)
             Edge(ref _enterHeld, Keys.Enter, PickStrain);
-        if (_paused)
+        if (kb.IsKeyDown(Keys.Escape) && !_escHeld)
         {
-            void ToTitle()
-            {
-                _state.Save();
-                _atTitle = true;
-                _paused = false;
-                SteamMan.SetPresence("menu");
-            }
-            Edge(ref _enterHeld, Keys.Enter, ToTitle);
-            Edge(ref _tKeyHeld, Keys.T, ToTitle);
-            if (kb.IsKeyDown(Keys.S) && !_leftHeld)
-            {
-                _state.Save();
-                _uiMsg = "saved";
-                _uiMsgT = 2f;
-                _leftHeld = true;
-            }
-            if (kb.IsKeyUp(Keys.S)) _leftHeld = false;
+            _journalOpen = false;
+            _zaaOpen = false;
+            _menuOpen = true;
+            _escHeld = true;
         }
+        if (kb.IsKeyUp(Keys.Escape)) _escHeld = false;
 
         void PickStrain()
         {
@@ -1163,7 +1114,7 @@ public partial class HotRodsGame : Game
         }
         if (_uiMsgT > 0f)
             _font.Draw(_batch, _uiMsg, new Vector2(40, h - 60), 2, new Color(150, 216, 160));
-        _font.Draw(_batch, "J CLOSE", new Vector2(40, h - 30), 2, new Color(130, 140, 170));
+        _font.Draw(_batch, "UP/DOWN  ESC BACK", new Vector2(40, h - 30), 2, new Color(130, 140, 170));
         _batch.End();
     }
 
@@ -1195,44 +1146,106 @@ public partial class HotRodsGame : Game
         }
         if (_uiMsgT > 0f)
             _font.Draw(_batch, _uiMsg, new Vector2(40, h - 60), 2, new Color(150, 216, 160));
-        _font.Draw(_batch, "UP/DOWN PICK  ENTER LIGHT UP  Z CLOSE", new Vector2(40, h - 30),
+        _font.Draw(_batch, "UP/DOWN PICK  ENTER LIGHT UP  ESC BACK", new Vector2(40, h - 30),
                    2, new Color(130, 140, 170));
         _batch.End();
     }
 
-    private void DrawPause()
+    private static readonly string[] MenuItems =
+    {
+        "FISHING GEAR", "SALS SHACK", "JARS", "JOURNAL", "STOKE",
+        "MAP AND TRAVEL", "HOW TO PLAY", "SAVE", "SAVE AND TITLE",
+    };
+
+    /// <summary>The one dropdown menu: arrows navigate, Enter selects,
+    /// Esc backs out. Every old key-bound screen opens from here.</summary>
+    private void UpdateMenu(float dt, KeyboardState kb)
+    {
+        _menuMsgT -= dt;
+        void Edge(ref bool held, Keys k, Action a)
+        {
+            if (kb.IsKeyDown(k) && !held) { a(); held = true; }
+            if (kb.IsKeyUp(k)) held = false;
+        }
+        Edge(ref _upHeld, Keys.Up, () => _menuSel = Math.Max(0, _menuSel - 1));
+        Edge(ref _downHeld, Keys.Down,
+             () => _menuSel = Math.Min(MenuItems.Length - 1, _menuSel + 1));
+        Edge(ref _enterHeld, Keys.Enter, Act);
+        Edge(ref _escHeld, Keys.Escape, () => _menuOpen = false);
+
+        void Act()
+        {
+            _menuOpen = false;
+            switch (MenuItems[_menuSel])
+            {
+                case "FISHING GEAR":
+                    _shopOpen = true; _shopSel = 0;
+                    break;
+                case "SALS SHACK":
+                    _dealerOpen = true; _dealerSel = 0; _dealerArea = _state.Spot;
+                    break;
+                case "JARS":
+                    _zaaOpen = true; _zaaSel = 0;
+                    break;
+                case "JOURNAL":
+                    _journalOpen = true; _journalSel = 0;
+                    break;
+                case "STOKE":
+                    _stokeOpen = true; _stokeSel = 0;
+                    break;
+                case "MAP AND TRAVEL":
+                    _mapOpen = true; _mapSel = _spot;
+                    break;
+                case "HOW TO PLAY":
+                    _helpOpen = true;
+                    break;
+                case "SAVE":
+                    _state.Save();
+                    _uiMsg = "saved";
+                    _uiMsgT = 2f;
+                    break;
+                case "SAVE AND TITLE":
+                    _state.Save();
+                    _atTitle = true;
+                    SteamMan.SetPresence("menu");
+                    break;
+            }
+        }
+    }
+
+    private void DrawMenu()
     {
         int w = GraphicsDevice.Viewport.Width;
         int h = GraphicsDevice.Viewport.Height;
         _batch.Begin(samplerState: SamplerState.PointClamp);
-        _batch.Draw(_pixel, new Rectangle(0, 0, w, h), new Color(6, 8, 16, 220));
-        _font.Draw(_batch, "PAUSED", new Vector2(w / 2f - 40, 40), 4,
-                   new Color(238, 232, 212));
+        _batch.Draw(_pixel, new Rectangle(0, 0, w, h), new Color(6, 8, 16, 236));
+        _font.Draw(_batch, "MENU", new Vector2(40, 26), 4, new Color(238, 232, 212));
         string[] stats =
         {
-            "TIME AFLOAT  " + (int)_state.Played + " MIN",
-            "CASTS  " + _state.Casts,
-            "FISH LANDED  " + _state.Catches,
-            "SPECIES  " + _state.Species.Count + "/40",
-            "COOLER  " + _state.Bag.Count + "/" + _state.BagSize(),
-            "STOKE POINTS  " + _state.StokePts,
+            "TIME AFLOAT " + (int)_state.Played + " MIN   CASTS " + _state.Casts
+            + "   FISH " + _state.Catches,
+            "SPECIES " + _state.Species.Count + "/40   COOLER " + _state.Bag.Count
+            + "/" + _state.BagSize() + "   LV " + _state.Level + "   XP " + _state.Xp,
+            "STOKE POINTS " + _state.StokePts + "   CASH $" + _state.Cash,
         };
-        int y = 90;
-        foreach (var s in stats)
+        int y = 62;
+        foreach (var line in stats)
         {
-            _font.Draw(_batch, s, new Vector2(w / 2f - 120, y), 2,
-                       new Color(170, 180, 210));
-            y += 26;
+            _font.Draw(_batch, line, new Vector2(40, y), 2, new Color(150, 160, 200));
+            y += 22;
         }
-        _font.Draw(_batch, "S  SAVE", new Vector2(w / 2f - 120, y + 6), 2,
-                   new Color(170, 180, 210));
-        _font.Draw(_batch, "T OR ENTER  SAVE + TITLE", new Vector2(w / 2f - 120, y + 32), 2,
-                   new Color(170, 180, 210));
-        _font.Draw(_batch, "ESC  RESUME", new Vector2(w / 2f - 120, y + 58), 2,
-                   new Color(170, 180, 210));
+        y += 8;
+        for (int i = 0; i < MenuItems.Length; i++)
+        {
+            var col = i == _menuSel ? new Color(255, 255, 200) : new Color(170, 180, 210);
+            _font.Draw(_batch, (i == _menuSel ? "> " : "  ") + MenuItems[i],
+                       new Vector2(40, y), 3, col);
+            y += 32;
+        }
         if (_uiMsgT > 0f)
-            _font.Draw(_batch, _uiMsg, new Vector2(w / 2f - 120, y + 94), 2,
-                       new Color(150, 216, 160));
+            _font.Draw(_batch, _uiMsg, new Vector2(40, y + 4), 2, new Color(150, 216, 160));
+        _font.Draw(_batch, "UP/DOWN  ENTER  ESC BACK", new Vector2(40, h - 28), 2,
+                   new Color(130, 140, 170));
         _batch.End();
     }
 
@@ -1249,7 +1262,7 @@ public partial class HotRodsGame : Game
         Edge(ref _leftHeld, Keys.Left, () => { _shopTab = (_shopTab + 5) % 6; _shopSel = 0; });
         Edge(ref _rightHeld, Keys.Right, () => { _shopTab = (_shopTab + 1) % 6; _shopSel = 0; });
         Edge(ref _enterHeld, Keys.Enter, Buy);
-        if (kb.IsKeyDown(Keys.Escape)) { _shopOpen = false; }
+        if (kb.IsKeyDown(Keys.Escape)) { _shopOpen = false; _menuOpen = true; }
 
         void Buy()
         {
@@ -1359,7 +1372,7 @@ public partial class HotRodsGame : Game
         if (_shopMsgT > 0f)
             _font.Draw(_batch, _shopMsg, new Vector2(w / 2f - 120, h - 60), 2,
                        new Color(240, 214, 120));
-        _font.Draw(_batch, "UP/DOWN SELECT  ENTER BUY  LEFT/RIGHT TAB  B CLOSE",
+        _font.Draw(_batch, "UP/DOWN SELECT  ENTER BUY  LEFT/RIGHT TAB  ESC BACK",
                    new Vector2(40, h - 30), 2, new Color(130, 140, 170));
         _batch.End();
     }

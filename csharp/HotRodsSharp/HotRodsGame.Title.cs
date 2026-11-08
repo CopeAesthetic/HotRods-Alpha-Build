@@ -17,7 +17,7 @@ public partial class HotRodsGame
         _state.MaxWater = Math.Max(_state.MaxWater, _spot);
         _atTitle = false;
         _tripsOpen = false;
-        _paused = false;
+        _menuOpen = false;
         _helpOpen = false;
         _boundState = _state;
         _state.LeveledUp += OnLevelUp;
@@ -249,10 +249,10 @@ public partial class HotRodsGame
         {
             "SPACE  CAST - HOLD TO CHARGE, TAP AT THE BITE",
             "REEL  - KEEP THE NEEDLE IN THE BLUE, THEN GREEN",
-            "E  SMOKE    Q  SWITCH PIECE    Z  PICK YOUR JAR",
-            "B  TRADING POST - BUY WATERS IN THE WATERS TAB",
-            "D  SALS SHACK    J  JOURNAL    K  STOKE TREE",
-            "T  MAP TO TRAVEL    X  SELL THE COOLER    ESC  PAUSE",
+            "E  SMOKE    Q  SWITCH PIECE    X  SELL THE COOLER",
+            "ESC  MENU - FISHING GEAR, SALS SHACK, JARS,",
+            "JOURNAL, STOKE, MAP AND TRAVEL, HOW TO PLAY,",
+            "SAVE AND SAVE + TITLE",
         };
         int y = 80;
         foreach (var s in lines)
@@ -266,7 +266,7 @@ public partial class HotRodsGame
             _font.Draw(_batch, tip, new Vector2(40, y), 2, new Color(150, 216, 160));
             y += 28;
         }
-        _font.Draw(_batch, "H OR ESC CLOSES", new Vector2(40, h - 40), 2,
+        _font.Draw(_batch, "ESC BACK", new Vector2(40, h - 40), 2,
                    new Color(130, 140, 170));
     }
 }

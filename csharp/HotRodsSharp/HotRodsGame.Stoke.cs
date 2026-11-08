@@ -38,7 +38,10 @@ public partial class HotRodsGame
             PlaySfx(ok ? "click" : "click");
         });
         if (kb.IsKeyDown(Keys.Escape))
+        {
             _stokeOpen = false;
+            _menuOpen = true;
+        }
     }
 
     private void DrawStoke()
@@ -82,7 +85,7 @@ public partial class HotRodsGame
             _font.Draw(_batch, _menuMsg, new Vector2(40, h - 76), 2,
                        new Color(240, 214, 120));
         _font.Draw(_batch,
-                   "ONE STOKE POINT PER LEVEL  -  LEFT/RIGHT LANE  ENTER SPEND  K OR ESC CLOSE",
+                   "ONE STOKE POINT PER LEVEL  -  LEFT/RIGHT LANE  ENTER SPEND  ESC BACK",
                    new Vector2(40, h - 40), 2, new Color(130, 140, 170));
         _batch.End();
     }

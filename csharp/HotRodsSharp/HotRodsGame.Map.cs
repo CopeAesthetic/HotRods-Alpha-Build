@@ -29,7 +29,10 @@ public partial class HotRodsGame
         Edge(ref _rightHeld, Keys.Right, () => _mapSel = (_mapSel + 1) % 4);
         Edge(ref _enterHeld, Keys.Enter, Go);
         if (kb.IsKeyDown(Keys.Escape))
+        {
             _mapOpen = false;
+            _menuOpen = true;
+        }
 
         void Go()
         {
@@ -140,7 +143,7 @@ public partial class HotRodsGame
         if (_menuMsgT > 0f)
             _font.Draw(_batch, _menuMsg, new Vector2(ix + 16, iy + 104), 2,
                        new Color(240, 214, 120));
-        _font.Draw(_batch, "LEFT/RIGHT PICK  ENTER TRAVEL  T CLOSE",
+        _font.Draw(_batch, "LEFT/RIGHT PICK  ENTER TRAVEL  ESC BACK",
                    new Vector2(40, h - 28), 2, new Color(130, 140, 170));
         _batch.End();
     }
