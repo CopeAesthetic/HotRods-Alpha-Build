@@ -8,11 +8,12 @@ namespace HotRodsSharp;
 public partial class HotRodsGame : Game
 {
     private readonly GraphicsDeviceManager _graphics;
-    private BasicEffect _effect = null!;
+    private BasicEffect _effect = null!;          // unlit: water, dynamic pieces
     private BasicEffect _effectCullNone = null!;
+    private BasicEffect _effectLit = null!;       // lit: static world, sun-shaded
 
     // static world
-    private readonly List<VertexPositionColor> _staticVerts = new();
+    private readonly List<VertexPositionNormalColor> _staticVerts = new();
     private int _staticTriCount;
     private int _spot;
     private GameState _state = GameState.Load();
@@ -48,7 +49,6 @@ public partial class HotRodsGame : Game
     private BitmapFont _font = null!;
     private SpriteBatch _batch = null!;
     private Texture2D _pixel = null!;
-    private RenderTarget2D _lowRes = null!;   // PS1-style half-res 3D target
     // water, rebuilt per frame
     private float _t;
 
@@ -266,6 +266,18 @@ public partial class HotRodsGame : Game
             FogEnd = 42f,
         };
         GraphicsDevice.RasterizerState = RasterizerState.CullNone;
+        _effectLit = new BasicEffect(GraphicsDevice)
+        {
+            VertexColorEnabled = true,
+            LightingEnabled = true,
+            PreferPerPixelLighting = false,     // per-vertex Gouraud: Xbox-era
+            FogEnabled = true,
+            FogColor = new Vector3(0.55f, 0.62f, 0.72f),
+            FogStart = 14f,
+            FogEnd = 42f,
+        };
+        _effectLit.DirectionalLight0.Enabled = true;
+        _effectLit.DirectionalLight0.SpecularColor = new Vector3(0.15f, 0.15f, 0.15f);
 
         BuildWorld();
         _batch = new SpriteBatch(GraphicsDevice);
@@ -275,11 +287,9 @@ public partial class HotRodsGame : Game
         _fishing.Ripple += p => _ripples.Add((p, 0f));
         _pixel = new Texture2D(GraphicsDevice, 1, 1);
         _pixel.SetData(new[] { Color.White });
-        _lowRes = new RenderTarget2D(GraphicsDevice,
-            GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height / 2);
     }
 
-    private void AddProp(List<VertexPositionColor> s, string name, float x,
+    private void AddProp(List<VertexPositionNormalColor> s, string name, float x,
                          float z, float rot, float scale, float yBias = 0f)
     {
         var entry = Manifest.FirstOrDefault(m => m.name == name);
@@ -304,8 +314,33 @@ public partial class HotRodsGame : Game
             return;
         }
         mesh.Transform(rot, new Vector3(x, Ground[ground] + yBias, z));
-        foreach (var (a, b, c) in mesh.Tris)
-            Prims.AddTri(s, mesh.Verts[a], mesh.Verts[b], mesh.Verts[c], col);
+        EmitSmooth(s, mesh, col);
+    }
+
+    /// <summary>Emit an OBJ mesh with per-vertex normals (averaged face
+    /// normals) so the lit effect shades it smoothly, Xbox-style.</summary>
+    private static void EmitSmooth(List<VertexPositionNormalColor> s, ObjMesh m,
+                                   Color col)
+    {
+        var normals = new Vector3[m.Verts.Count];
+        foreach (var (a, b, c) in m.Tris)
+        {
+            var n = Vector3.Cross(m.Verts[b] - m.Verts[a], m.Verts[c] - m.Verts[a]);
+            if (n.LengthSquared() > 0.000001f)
+            {
+                n = Vector3.Normalize(n);
+                normals[a] += n; normals[b] += n; normals[c] += n;
+            }
+        }
+        for (int i = 0; i < normals.Length; i++)
+            normals[i] = normals[i].LengthSquared() > 0.0001f
+                ? Vector3.Normalize(normals[i]) : Vector3.Up;
+        for (int i = 0; i < m.Tris.Count; i++)
+        {
+            var (a, b, c) = m.Tris[i];
+            PrimsLit.AddTriS(s, m.Verts[a], m.Verts[b], m.Verts[c],
+                             normals[a], normals[b], normals[c], col);
+        }
     }
 
     private void BuildWorld()
@@ -324,67 +359,47 @@ public partial class HotRodsGame : Game
         BuildDock(s, Docks[_spot]);
         BuildShore(s, Banks[_spot]);
         BuildAngler(s);
-        SnapVerts(s);
         _staticTriCount = s.Count / 3;
     }
 
-    /// <summary>
-    /// PS1-style vertex snapping: quantise static geometry to a coarse grid so
-    /// triangles jitter and wobble as the camera moves, like early-2000s
-    /// hardware. Dynamic pieces (water, arms, fish) stay smooth.
-    /// </summary>
-    private static void SnapVerts(List<VertexPositionColor> verts)
-    {
-        const float grid = 40f;
-        for (int i = 0; i < verts.Count; i++)
-        {
-            var p = verts[i].Position;
-            verts[i] = new VertexPositionColor(
-                new Vector3(MathF.Round(p.X * grid) / grid,
-                            MathF.Round(p.Y * grid) / grid,
-                            MathF.Round(p.Z * grid) / grid),
-                verts[i].Color);
-        }
-    }
-
-    private void BuildDock(List<VertexPositionColor> s,
+    private void BuildDock(List<VertexPositionNormalColor> s,
                            (int n, float x0, float z, float dz, int arm, float armX) dk)
     {
         for (int i = 0; i < dk.n; i++)
-            Prims.AddBox(s, new Vector3(dk.x0 + i * 1.42f, 0.62f, dk.z),
-                         1.24f, 0.13f, dk.dz, Wood);
+            PrimsLit.AddBox(s, new Vector3(dk.x0 + i * 1.42f, 0.62f, dk.z),
+                            1.24f, 0.13f, dk.dz, Wood);
         for (int i = 0; i < dk.arm; i++)
-            Prims.AddBox(s, new Vector3(dk.armX, 0.62f, -0.55f - i * 1.42f),
-                         2.5f, 0.13f, 1.24f, Wood);
+            PrimsLit.AddBox(s, new Vector3(dk.armX, 0.62f, -0.55f - i * 1.42f),
+                            2.5f, 0.13f, 1.24f, Wood);
     }
 
-    private void BuildShore(List<VertexPositionColor> s,
+    private void BuildShore(List<VertexPositionNormalColor> s,
                             (float x0, int n, float z, float spacing, float w) bk)
     {
         for (int i = 0; i < bk.n; i++)
         {
             float bx = bk.x0 + i * bk.spacing;
-            Prims.AddBox(s, new Vector3(bx, 0.34f + 0.004f * (i % 3), bk.z),
-                         bk.w + 0.6f, 0.42f, 5.6f, i % 2 == 0 ? Sand : SandD);
+            PrimsLit.AddBox(s, new Vector3(bx, 0.34f + 0.004f * (i % 3), bk.z),
+                            bk.w + 0.6f, 0.42f, 5.6f, i % 2 == 0 ? Sand : SandD);
         }
         for (int i = 0; i < bk.n; i++)
         {
             float bx = bk.x0 + i * bk.spacing;
-            Prims.AddBox(s, new Vector3(bx, 0.72f, bk.z - 3.1f),
-                         bk.w + 0.2f, 0.7f, 4.2f, i % 2 == 0 ? Grass : GrassD);
+            PrimsLit.AddBox(s, new Vector3(bx, 0.72f, bk.z - 3.1f),
+                            bk.w + 0.2f, 0.7f, 4.2f, i % 2 == 0 ? Grass : GrassD);
         }
         // north shore behind the angler closes the pond
         for (int i = 0; i < 10; i++)
         {
             float bx = -36f + i * 8.0f;
-            Prims.AddBox(s, new Vector3(bx, 0.34f + 0.004f * (i % 3), 15.4f),
-                         8.6f, 0.46f, 6.4f, i % 2 == 0 ? Sand : SandD);
+            PrimsLit.AddBox(s, new Vector3(bx, 0.34f + 0.004f * (i % 3), 15.4f),
+                            8.6f, 0.46f, 6.4f, i % 2 == 0 ? Sand : SandD);
         }
         for (int i = 0; i < 8; i++)
         {
             float bx = -32f + i * 9.0f;
-            Prims.AddBox(s, new Vector3(bx, 0.78f, 19.2f), 9.2f, 0.7f, 5.2f,
-                         i % 2 == 0 ? Grass : GrassD);
+            PrimsLit.AddBox(s, new Vector3(bx, 0.78f, 19.2f), 9.2f, 0.7f, 5.2f,
+                            i % 2 == 0 ? Grass : GrassD);
         }
     }
 
@@ -398,17 +413,32 @@ public partial class HotRodsGame : Game
         ["fisher_mouth"] = Mouth,
     };
 
-    private void BuildAngler(List<VertexPositionColor> s)
+    private void BuildAngler(List<VertexPositionNormalColor> s)
     {
-        // the fisherman is a single Blender asset, material-painted
+        // the fisherman is a single Blender asset, material-painted;
+        // smooth-shaded with one light pass per material group
         var m = ObjMesh.Load(
             Path.Combine(AppContext.BaseDirectory, "Assets", "fisherman.obj"), 1f);
+        var normals = new Vector3[m.Verts.Count];
+        foreach (var (a, b, c) in m.Tris)
+        {
+            var n = Vector3.Cross(m.Verts[b] - m.Verts[a], m.Verts[c] - m.Verts[a]);
+            if (n.LengthSquared() > 0.000001f)
+            {
+                n = Vector3.Normalize(n);
+                normals[a] += n; normals[b] += n; normals[c] += n;
+            }
+        }
+        for (int i = 0; i < normals.Length; i++)
+            normals[i] = normals[i].LengthSquared() > 0.0001f
+                ? Vector3.Normalize(normals[i]) : Vector3.Up;
         for (int i = 0; i < m.Tris.Count; i++)
         {
             var (a, b, c) = m.Tris[i];
             Color col = i < m.TriMats.Count && FisherMats.TryGetValue(m.TriMats[i], out var mc)
                 ? mc : Skin;
-            Prims.AddTri(s, m.Verts[a], m.Verts[b], m.Verts[c], col);
+            PrimsLit.AddTriS(s, m.Verts[a], m.Verts[b], m.Verts[c],
+                             normals[a], normals[b], normals[c], col);
         }
         // arms and rod stay procedural: they swap between the fishing and
         // smoking poses every frame
@@ -597,6 +627,8 @@ public partial class HotRodsGame : Game
         var shallow = Color.Lerp(new Color(92, 150, 148), spotTint, 0.35f);
         var deep = Color.Lerp(new Color(34, 82, 104), spotTint, murk);
         var foam = new Color(226, 240, 240);
+        float day = 1f - Nightness(_state.Hour);
+        float glintX = SunDirection(_state.Hour).X;
         float WaveY(float x, float z) =>
             0.05f * MathF.Sin(_t * 1.3f + x * 0.28f + z * 0.21f)
           + 0.026f * MathF.Sin(_t * 2.1f + x * 0.55f - z * 0.42f)
@@ -620,6 +652,15 @@ public partial class HotRodsGame : Game
                 var col = Color.Lerp(shallow, deep, depth);
                 float foamF = MathHelper.SmoothStep(11.0f, 12.8f, a.Z);
                 col = Color.Lerp(col, foam, foamF * 0.5f);
+                // daylight brightens the sheet; a soft streak follows the sun
+                col = new Color(
+                    (byte)(col.R * (0.55f + 0.45f * day)),
+                    (byte)(col.G * (0.55f + 0.45f * day)),
+                    (byte)(col.B * (0.55f + 0.45f * day)));
+                float streak = MathF.Max(0f,
+                    1f - MathF.Abs(a.X - glintX * 22f) / 16f);
+                col = Color.Lerp(col, new Color(240, 246, 250),
+                                 streak * 0.16f * day);
                 var colD = new Color((byte)(col.R * 0.94f), (byte)(col.G * 0.94f),
                                      (byte)(col.B * 0.94f));
                 Prims.AddTri(v, a, b, c, col);
@@ -636,19 +677,18 @@ public partial class HotRodsGame : Game
             base.Draw(gameTime);
             return;
         }
-        // ---- low-res 3D pass: the world renders at half window res and
-        // ---- point-upscales, like the Python 480x270 software renderer
-        GraphicsDevice.SetRenderTarget(_lowRes);
+        // native-resolution Xbox look: clear, sky, then the world
         GraphicsDevice.Clear(_skyClear);
         DrawSky();
         GraphicsDevice.RasterizerState = RasterizerState.CullNone;
         var water = WaterVerts();
-        foreach (var effect in new[] { _effect, _effectCullNone })
+        foreach (var effect in new[] { _effect, _effectCullNone, _effectLit })
         {
             effect.View = _view;
             effect.Projection = _proj;
             effect.World = Matrix.Identity;
         }
+        SetLighting();
 
         var dyn = new List<VertexPositionColor>();
         if (_smoking.Active)
@@ -668,21 +708,14 @@ public partial class HotRodsGame : Game
         EmitShimmer(dyn);
         EmitRipples(dyn);
 
-        // water first, then the static world over it
+        // water first, then the lit static world, then the dynamic pieces
         DrawVerts(water, _effect);
-        DrawVerts(_staticVerts.GetRange(0, _staticTriCount * 3), _effectCullNone);
+        DrawVertsLit(_staticVerts.GetRange(0, _staticTriCount * 3), _effectLit);
         DrawVerts(dyn, _effectCullNone);
         DrawCatchCard();
         _batch.Begin();
         _batch.Draw(_pixel, new Rectangle(0, 0, GraphicsDevice.Viewport.Width,
                     GraphicsDevice.Viewport.Height), _tint.col * _tint.a);
-        _batch.End();
-        GraphicsDevice.SetRenderTarget(null);
-
-        // ---- present: point-upscale the low-res frame, then full-res UI
-        _batch.Begin(samplerState: SamplerState.PointClamp);
-        _batch.Draw(_lowRes, new Rectangle(0, 0, GraphicsDevice.Viewport.Width,
-                    GraphicsDevice.Viewport.Height), Color.White);
         _batch.End();
         DrawHud();
         if (_shopOpen)
@@ -703,19 +736,7 @@ public partial class HotRodsGame : Game
             DrawHelp();
         if (_consoleOpen)
             DrawConsole();
-        DrawScanlines();
         base.Draw(gameTime);
-    }
-
-    /// <summary>Subtle CRT scanlines over the finished frame.</summary>
-    private void DrawScanlines()
-    {
-        int w = GraphicsDevice.Viewport.Width;
-        int h = GraphicsDevice.Viewport.Height;
-        _batch.Begin(samplerState: SamplerState.PointClamp);
-        for (int y = 0; y < h; y += 2)
-            _batch.Draw(_pixel, new Rectangle(0, y, w, 1), new Color(0, 0, 0, 20));
-        _batch.End();
     }
 
     private void EmitShimmer(List<VertexPositionColor> dyn)
@@ -988,6 +1009,31 @@ public partial class HotRodsGame : Game
         }
         _effect.FogColor = _skyFog.ToVector3();
         _effectCullNone.FogColor = _skyFog.ToVector3();
+    }
+
+    /// <summary>The sun's world position on its arc across the water.</summary>
+    private static Vector3 SunWorld(float hour)
+    {
+        float p = Math.Clamp((hour - 5f) / 15f, 0f, 1f);
+        return new Vector3(MathF.Sin(p * MathF.PI) * 46f,
+                           24f + MathF.Sin(p * MathF.PI) * 26f,
+                           -16f - p * 36f);
+    }
+
+    private static Vector3 SunDirection(float hour) =>
+        Vector3.Normalize(SunWorld(hour));
+
+    /// <summary>Point the lit effect's sun at the world per the clock:
+    /// warm daylight, cool moonlight, with the ambient ramping alongside.</summary>
+    private void SetLighting()
+    {
+        float day = 1f - Nightness(_state.Hour);
+        _effectLit.AmbientLightColor = Vector3.Lerp(
+            new Vector3(0.16f, 0.18f, 0.24f), new Vector3(0.44f, 0.46f, 0.48f), day);
+        _effectLit.DirectionalLight0.DiffuseColor = Vector3.Lerp(
+            new Vector3(0.20f, 0.24f, 0.34f), new Vector3(1.00f, 0.93f, 0.80f), day);
+        _effectLit.DirectionalLight0.Direction = -SunDirection(_state.Hour);
+        _effectLit.DirectionalLight0.SpecularColor = new Vector3(0.15f, 0.15f, 0.15f) * day;
     }
 
     /// <summary>0 by day, 1 in deep night; ramps through dawn and dusk.</summary>
@@ -1512,11 +1558,11 @@ public partial class HotRodsGame : Game
             (byte)(_skyClear.G + 50 > 255 ? 255 : _skyClear.G + 50),
             (byte)(_skyClear.B + 40 > 255 ? 255 : _skyClear.B + 40));
         _batch.Begin();
-        for (int i = 0; i < 12; i++)
+        for (int i = 0; i < 24; i++)
         {
-            float t = i / 11f;
+            float t = i / 23f;
             var col = Color.Lerp(_skyClear, horizon, t * t);
-            _batch.Draw(_pixel, new Rectangle(0, h * i / 12, w, h / 12 + 1), col);
+            _batch.Draw(_pixel, new Rectangle(0, h * i / 24, w, h / 24 + 1), col);
         }
 
         float hour = _state.Hour;
@@ -1525,10 +1571,7 @@ public partial class HotRodsGame : Game
         if (sunA > 0.04f)
         {
             // the sun crosses the world sky, east to west over the water
-            float p = Math.Clamp((hour - 5f) / 15f, 0f, 1f);
-            var sunWorld = new Vector3(MathF.Sin(p * MathF.PI) * 46f,
-                                       24f + MathF.Sin(p * MathF.PI) * 26f,
-                                       -16f - p * 36f);
+            var sunWorld = SunWorld(hour);
             if (SkyPoint(sunWorld, w, h) is { } sp)
             {
                 _batch.Draw(_pixel, new Rectangle((int)sp.X - 16, (int)sp.Y - 16, 32, 32),
@@ -1567,6 +1610,18 @@ public partial class HotRodsGame : Game
     }
 
     private void DrawVerts(List<VertexPositionColor> verts, BasicEffect effect)
+    {
+        if (verts.Count == 0)
+            return;
+        foreach (var pass in effect.CurrentTechnique.Passes)
+        {
+            pass.Apply();
+            GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList,
+                                              verts.ToArray(), 0, verts.Count / 3);
+        }
+    }
+
+    private void DrawVertsLit(List<VertexPositionNormalColor> verts, BasicEffect effect)
     {
         if (verts.Count == 0)
             return;

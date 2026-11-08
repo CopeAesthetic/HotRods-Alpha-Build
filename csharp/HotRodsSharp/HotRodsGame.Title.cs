@@ -235,7 +235,6 @@ public partial class HotRodsGame
         if (_helpOpen)
             DrawHelp();
         _batch.End();
-        DrawScanlines();
     }
 
     // ------------------------------------------------------------------ help --

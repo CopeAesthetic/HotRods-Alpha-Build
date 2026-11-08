@@ -100,3 +100,84 @@ public static class Prims
             AddTri(v, a, ring[i], ring[(i + 1) % sides], col);
     }
 }
+
+// ------------------------------------------------------------- lit variants --
+// Xbox-style smooth shading: the static world carries per-vertex normals and
+// lets BasicEffect's directional light do Gouraud shading on the GPU.
+
+public static class PrimsLit
+{
+    public static void AddTriS(List<VertexPositionNormalColor> v,
+        Vector3 a, Vector3 b, Vector3 c,
+        Vector3 na, Vector3 nb, Vector3 nc, Color col)
+    {
+        v.Add(new VertexPositionNormalColor(a, na, col));
+        v.Add(new VertexPositionNormalColor(b, nb, col));
+        v.Add(new VertexPositionNormalColor(c, nc, col));
+    }
+
+    public static void AddTriFlat(List<VertexPositionNormalColor> v,
+        Vector3 a, Vector3 b, Vector3 c, Color col)
+    {
+        var n = Vector3.Normalize(Vector3.Cross(b - a, c - a));
+        v.Add(new VertexPositionNormalColor(a, n, col));
+        v.Add(new VertexPositionNormalColor(b, n, col));
+        v.Add(new VertexPositionNormalColor(c, n, col));
+    }
+
+    public static void AddBox(List<VertexPositionNormalColor> v, Vector3 c, float w,
+                              float h, float d, Color col)
+    {
+        var x0 = c.X - w / 2; var x1 = c.X + w / 2;
+        var y0 = c.Y - h / 2; var y1 = c.Y + h / 2;
+        var z0 = c.Z - d / 2; var z1 = c.Z + d / 2;
+        var p = new[]
+        {
+            new Vector3(x0, y0, z0), new Vector3(x1, y0, z0),
+            new Vector3(x1, y1, z0), new Vector3(x0, y1, z0),
+            new Vector3(x0, y0, z1), new Vector3(x1, y0, z1),
+            new Vector3(x1, y1, z1), new Vector3(x0, y1, z1),
+        };
+        AddTriFlat(v, p[0], p[1], p[2], col);
+        AddTriFlat(v, p[0], p[2], p[3], col);
+        AddTriFlat(v, p[5], p[4], p[7], col);
+        AddTriFlat(v, p[5], p[7], p[6], col);
+        AddTriFlat(v, p[1], p[5], p[6], col);
+        AddTriFlat(v, p[1], p[6], p[2], col);
+        AddTriFlat(v, p[4], p[0], p[3], col);
+        AddTriFlat(v, p[4], p[3], p[7], col);
+        AddTriFlat(v, p[3], p[2], p[6], col);
+        AddTriFlat(v, p[3], p[6], p[7], col);
+        AddTriFlat(v, p[4], p[5], p[1], col);
+        AddTriFlat(v, p[4], p[1], p[0], col);
+    }
+
+    /// <summary>Capped tube with smooth radial normals.</summary>
+    public static void AddSegment(List<VertexPositionNormalColor> v, Vector3 a, Vector3 b,
+                                  float r, Color col, int sides = 6)
+    {
+        var axis = Vector3.Normalize(b - a);
+        var up = MathF.Abs(axis.Y) < 0.9f ? Vector3.Up : Vector3.Forward;
+        var t1 = Vector3.Normalize(Vector3.Cross(up, axis));
+        var t2 = Vector3.Cross(axis, t1);
+        var ringA = new Vector3[sides];
+        var ringB = new Vector3[sides];
+        var nrA = new Vector3[sides];
+        for (int i = 0; i < sides; i++)
+        {
+            float ang = MathF.Tau * i / sides;
+            var off = (t1 * MathF.Cos(ang) + t2 * MathF.Sin(ang)) * r;
+            ringA[i] = a + off;
+            ringB[i] = b + off;
+            nrA[i] = Vector3.Normalize(off);
+        }
+        for (int i = 0; i < sides; i++)
+        {
+            int j = (i + 1) % sides;
+            AddTriS(v, ringA[i], ringA[j], ringB[j], nrA[i], nrA[j], nrA[j], col);
+            AddTriS(v, ringA[i], ringB[j], ringB[i], nrA[i], nrA[j], nrA[i], col);
+            AddTriFlat(v, a, ringA[i], ringA[j], col);
+            AddTriFlat(v, b, ringB[j], ringB[i], col);
+        }
+    }
+}
