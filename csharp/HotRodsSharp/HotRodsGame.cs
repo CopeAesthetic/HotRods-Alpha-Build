@@ -369,7 +369,9 @@ public partial class HotRodsGame : Game
     /// the screen glows from the dynamic pass so it reads at night too.</summary>
     private void BuildCooler(List<VertexPositionNormalColor> s)
     {
-        var c = new Vector3(-2.25f, 0.80f, 0.72f);
+        // a small pier section bridges the planks out to the cooler
+        PrimsLit.AddBox(s, new Vector3(-3.30f, 0.72f, 1.15f), 2.0f, 0.13f, 1.1f, Wood);
+        var c = new Vector3(-3.20f, 0.80f, 0.95f);
         PrimsLit.AddBox(s, c, 0.55f, 0.45f, 0.75f, new Color(200, 60, 48));
         PrimsLit.AddBox(s, new Vector3(c.X, c.Y + 0.26f, c.Z), 0.57f, 0.06f, 0.77f,
                         new Color(232, 236, 240));
@@ -380,7 +382,7 @@ public partial class HotRodsGame : Game
     /// <summary>Unlit phone-screen glow so it stays bright after dark.</summary>
     private void EmitPhoneGlow(List<VertexPositionColor> v)
     {
-        Prims.AddBox(v, new Vector3(-2.25f, 1.155f, 0.71f), 0.11f, 0.012f, 0.20f,
+        Prims.AddBox(v, new Vector3(-3.20f, 1.155f, 0.93f), 0.11f, 0.012f, 0.20f,
                      new Color(90, 232, 205));
     }
 
@@ -430,9 +432,9 @@ public partial class HotRodsGame : Game
         // first-person viewmodel: hands on the rod, angled out toward the
         // cast area. The sim's rod tip lives at the same place the line
         // draws from.
-        var grip = new Vector3(-3.16f, 1.20f, 1.62f);
-        var mid = new Vector3(-2.45f, 1.42f, 1.55f);
-        var tip = new Vector3(-0.85f, 1.60f, 1.45f);
+        var grip = new Vector3(-4.14f, 1.20f, 1.62f);
+        var mid = new Vector3(-3.43f, 1.42f, 1.55f);
+        var tip = new Vector3(-1.83f, 1.60f, 1.45f);
         // no arms in view - just the rod (the tip dips under load while
         // you fight the fish)
         float bend = _fishing.Current == FishingSim.Phase.Reeling
@@ -446,7 +448,7 @@ public partial class HotRodsGame : Game
 
     /// <summary>FP rod tip and cast direction (the bobber flies out over
     /// the lake ahead of the view).</summary>
-    private static readonly Vector3 FpRodTip = new(-0.85f, 1.60f, 1.45f);
+    private static readonly Vector3 FpRodTip = new(-1.83f, 1.60f, 1.45f);
 
     protected override void Update(GameTime gameTime)
     {
@@ -595,7 +597,7 @@ public partial class HotRodsGame : Game
         // view runs down the length of the open water instead of across it.
         // Click-drag looks around (clamped); a proper high wobbles the view
         // and landing a fish shakes it.
-        var eye = new Vector3(-3.22f, 1.42f, 1.44f);
+        var eye = new Vector3(-4.20f, 1.42f, 1.44f);   // standing on the dock
         var fwd = Vector3.Normalize(new Vector3(24.8f, 0.82f, -1.06f) - eye);
         var right = Vector3.Normalize(Vector3.Cross(fwd, Vector3.Up));
         fwd = Vector3.Normalize(Vector3.Transform(fwd, Matrix.CreateRotationY(_lookYaw)));
@@ -1558,7 +1560,7 @@ public partial class HotRodsGame : Game
         }
 
         // the glowing phone on the cooler opens the menu
-        if (HitRect(new Vector3(-2.25f, 1.16f, 0.72f), 0.10f, 0.05f, 0.15f)
+        if (HitRect(new Vector3(-3.20f, 1.16f, 0.95f), 0.10f, 0.05f, 0.15f)
             is { } pr && pr.Contains(mouse))
         {
             _menuOpen = true;
@@ -1567,7 +1569,7 @@ public partial class HotRodsGame : Game
             return;
         }
         // the cooler itself opens Sal's shack
-        if (HitRect(new Vector3(-2.25f, 0.80f, 0.72f), 0.32f, 0.30f, 0.42f)
+        if (HitRect(new Vector3(-3.20f, 0.80f, 0.95f), 0.32f, 0.30f, 0.42f)
             is { } cr && cr.Contains(mouse))
         {
             _dealerOpen = true;

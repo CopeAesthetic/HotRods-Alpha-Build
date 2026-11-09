@@ -28,9 +28,9 @@ public sealed class SmokingSim
     /// <summary>Ceremony speed multiplier (stoke smoke lane: +6% per rank).</summary>
     public float Speed = 1f;
 
-    private static readonly Vector3 Waist = new(-3.00f, 1.10f, 1.40f);
-    private static readonly Vector3 Mouth = new(-2.96f, 1.38f, 1.34f);
-    private static readonly Vector3 Face = new(-2.92f, 1.42f, 1.30f);
+    private static readonly Vector3 Waist = new(-3.98f, 1.10f, 1.40f);
+    private static readonly Vector3 Mouth = new(-3.94f, 1.38f, 1.34f);
+    private static readonly Vector3 Face = new(-3.90f, 1.42f, 1.30f);
 
     private static readonly (string id, Color col, float lay, float yaw)[] Items =
     {
