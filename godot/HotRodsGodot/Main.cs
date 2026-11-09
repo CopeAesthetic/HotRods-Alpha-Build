@@ -20,6 +20,10 @@ public partial class Main : Node3D
     private MeshInstance3D _bobber = null!, _line = null!;
     private AudioStreamPlayer _sfx = null!;
     private readonly List<(MeshInstance3D node, float age, StandardMaterial3D mat)> _ripples = new();
+    private World _world = null!;
+    private Godot.Environment _env = null!;
+    private MeshInstance3D _armUpper = null!, _armLower = null!, _hand = null!, _piece = null!;
+    private readonly List<(MeshInstance3D node, StandardMaterial3D mat, float offset)> _plume = new();
 
     private bool _wasSmoking, _eHeld, _qHeld, _xHeld, _dragging;
     private float _yawDeg, _pitchDeg, _uiMsgT;
@@ -43,12 +47,16 @@ public partial class Main : Node3D
 
         _cam = GetNode<Camera3D>("Camera3D");
         _sun = GetNode<DirectionalLight3D>("Sun");
+        _world = GetNode<World>("World");
+        _env = GetNode<WorldEnvironment>("WorldEnvironment").Environment;
+        ApplyWaterTint();
         _hud = GetNode<Hud>("Hud");
         _hud.Bind(_state, _fishing);
         _screens = GetNode<Screens>("Screens");
         _screens.Bind(_state, _fishing, _smoking);
         _screens.Sfx = PlaySfx;
         _screens.Flash = Flash;
+        _screens.Traveled += ApplyWaterTint;
         _hud.IconClicked += i => _screens.Open(i switch
         {
             0 => "menu", 1 => "shop", 2 => "sal", 3 => "map",
@@ -58,6 +66,7 @@ public partial class Main : Node3D
         AddChild(_sfx);
 
         BuildFishingVisuals();
+        BuildCeremonyVisuals();
 
         if (OS.GetCmdlineUserArgs().Contains("--shot"))
             CallDeferred(nameof(TakeShot));
@@ -168,7 +177,9 @@ public partial class Main : Node3D
 
         SunTick();
         UpdateFishingVisuals();
+        UpdateCeremonyVisuals();
         UpdateRipples(dt);
+        ApplyVibrance();
         _hud.Tick(dt, FishingSim.Clock);
     }
 
@@ -273,6 +284,134 @@ public partial class Main : Node3D
             mat.AlbedoColor = new Color(0.92f, 0.96f, 0.98f, 0.8f * (1f - t));
             _ripples[i] = (node, age + dt, mat);
         }
+    }
+
+    // --------------------------------------------------------------- ceremony --
+    private void BuildCeremonyVisuals()
+    {
+        CylinderFor(out _armUpper, new Color(0.89f, 0.70f, 0.26f), 0.06f);
+        CylinderFor(out _armLower, new Color(0.84f, 0.65f, 0.49f), 0.05f);
+        var handMesh = new BoxMesh { Size = new Vector3(0.08f, 0.08f, 0.09f) };
+        _hand = new MeshInstance3D { Mesh = handMesh };
+        _hand.MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0.84f, 0.65f, 0.49f) };
+        AddChild(_hand);
+        _piece = new MeshInstance3D();
+        AddChild(_piece);
+        for (int k = 0; k < 5; k++)
+        {
+            var m = new MeshInstance3D { Mesh = new SphereMesh { Radius = 0.04f, Height = 0.08f } };
+            var mat = new StandardMaterial3D
+            {
+                AlbedoColor = new Color(0.7f, 0.7f, 0.72f, 0.5f),
+                Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+                ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+            };
+            m.MaterialOverride = mat;
+            AddChild(m);
+            _plume.Add((m, mat, k * 0.2f));
+        }
+    }
+
+    private void CylinderFor(out MeshInstance3D node, Color col, float radius)
+    {
+        node = new MeshInstance3D
+        {
+            Mesh = new CylinderMesh { TopRadius = radius, BottomRadius = radius, Height = 1f },
+            MaterialOverride = new StandardMaterial3D { AlbedoColor = col, Roughness = 0.8f },
+        };
+        AddChild(node);
+    }
+
+    private static void StickBetween(MeshInstance3D node, Vector3 a, Vector3 b)
+    {
+        float len = a.DistanceTo(b);
+        node.Visible = len > 0.01f;
+        if (!node.Visible) return;
+        node.Position = (a + b) * 0.5f;
+        node.Scale = new Vector3(1f, len, 1f);
+        node.LookAt(b, Vector3.Up);
+        node.RotationDegrees = new Vector3(node.RotationDegrees.X + 90f,
+                                           node.RotationDegrees.Y, node.RotationDegrees.Z);
+    }
+
+    private static readonly Vector3 WaistP = new(-3.98f, 1.10f, 1.40f);
+    private static readonly Vector3 MouthP = new(-3.94f, 1.26f, 1.34f);
+    private static readonly Vector3 FaceP = new(-3.90f, 1.30f, 1.30f);
+
+    private void UpdateCeremonyVisuals()
+    {
+        bool on = _smoking.Active;
+        _armUpper.Visible = on;
+        _armLower.Visible = on;
+        _hand.Visible = on;
+        _piece.Visible = on;
+        foreach (var (m, _, _) in _plume)
+            m.Visible = on;
+        // the rod hides while you smoke
+        if (on)
+        {
+            _rod.Visible = false;
+            _line.Visible = false;
+            _bobber.Visible = false;
+        }
+        if (!on)
+        {
+            _rod.Visible = true;
+            return;
+        }
+
+        float r = _smoking.Raise;
+        var hold = WaistP.Lerp(FaceP, r);
+        var off = new Vector3(0.02f, 0.10f, 0.04f);
+        var shR = new Vector3(-4.10f, 1.05f, 1.78f);
+        var elR = (shR + hold) * 0.5f + new Vector3(0.03f, -0.05f, 0.02f);
+        StickBetween(_armUpper, shR, elR);
+        StickBetween(_armLower, elR, hold);
+        _hand.Position = hold + off + new Vector3(0f, -0.02f, 0.02f);
+        _hand.Visible = true;
+
+        // the piece mesh, raised and tilted like the Python ceremony
+        var pieceId = _smoking.CurrentItem;
+        var mesh = GD.Load<Mesh>($"res://assets/{pieceId}.obj");
+        if (mesh != null)
+        {
+            _piece.Mesh = mesh;
+            _piece.Position = hold + off;
+            _piece.Rotation = new Vector3(
+                Mathf.DegToRad(-90f) * r * 0.9f, Mathf.DegToRad(-63f) * r, 0f);
+            _piece.Scale = Vector3.One * 0.55f;
+        }
+
+        // five puffs rising from the mouth
+        float t = FishingSim.Clock;
+        foreach (var (m, mat, offset) in _plume)
+        {
+            float pt = (t * 0.55f + offset) % 1.0f;
+            m.Position = MouthP + new Vector3(Mathf.Sin(pt * 7f + offset * 5f) * 0.03f,
+                                              0.10f + pt * 0.55f, 0.04f);
+            float rad = 0.03f + pt * 0.09f;
+            m.Scale = Vector3.One * (rad / 0.04f);
+            mat.AlbedoColor = new Color(0.7f, 0.7f, 0.72f, 0.5f * (1f - pt));
+        }
+    }
+
+    // -------------------------------------------------------------- vibrance --
+    private void ApplyVibrance()
+    {
+        float vib = _state.High;
+        _env.AmbientLightColor = new Color(0.55f, 0.6f, 0.66f) * (1f + 0.4f * vib);
+        _env.AdjustmentSaturation = 1f + 0.5f * vib;
+        _env.AdjustmentBrightness = 1f + 0.08f * vib;
+    }
+
+    private void ApplyWaterTint()
+    {
+        var spot = GameData.Spots[_state.Spot];
+        var tint = spot.Tint;
+        var shallow = new Color(0.30f, 0.56f, 0.56f).Lerp(tint, 0.35f);
+        var deep = new Color(0.05f, 0.20f, 0.30f).Lerp(tint, spot.Murk);
+        _world.WaterMat.SetShaderParameter("shallow", shallow);
+        _world.WaterMat.SetShaderParameter("deep", deep);
     }
 
     // ------------------------------------------------------------------- sun --

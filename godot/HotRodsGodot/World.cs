@@ -8,6 +8,8 @@ using System;
 /// </summary>
 public partial class World : Node3D
 {
+    public ShaderMaterial WaterMat = null!;
+
     private static readonly Color Sand = new(0.76f, 0.66f, 0.47f);
     private static readonly Color SandD = new(0.70f, 0.60f, 0.42f);
     private static readonly Color Grass = new(0.42f, 0.55f, 0.30f);
@@ -25,7 +27,8 @@ public partial class World : Node3D
     private void BuildWater()
     {
         var shader = GD.Load<Shader>("res://water.gdshader");
-        var mat = new ShaderMaterial { Shader = shader };
+        WaterMat = new ShaderMaterial { Shader = shader };
+        var mat = WaterMat;
         mat.SetShaderParameter("shallow", new Color(0.30f, 0.56f, 0.56f));
         mat.SetShaderParameter("deep", new Color(0.05f, 0.20f, 0.30f));
         var pm = new PlaneMesh

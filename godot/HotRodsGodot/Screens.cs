@@ -17,6 +17,7 @@ public partial class Screens : CanvasLayer
     private SmokingSim _smoking = null!;
     public Action<string> Sfx = _ => { };
     public Action<string, float> Flash = (_, _) => { };
+    public Action? Traveled;
 
     private Control _root = null!;
     private ColorRect _dim = null!;
@@ -512,6 +513,7 @@ public partial class Screens : CanvasLayer
                 _state.Save();
                 Flash("travelled to " + GameData.SpotNames[MapSel], 2f);
                 Open_ = "";
+                Traveled?.Invoke();
             }
             else
             {
