@@ -608,9 +608,6 @@ public partial class HotRodsGame : Game
         fwd = Vector3.Normalize(Vector3.Transform(fwd, Matrix.CreateRotationY(_lookYaw)));
         fwd = Vector3.Normalize(Vector3.Transform(
             fwd, Matrix.CreateFromAxisAngle(right, _lookPitch)));
-        float wobble = _state.High * 0.09f;
-        eye.Y += MathF.Sin(_t * 1.15f) * wobble;
-        eye.X += MathF.Cos(_t * 0.9f) * wobble * 0.5f;
         eye.X += _fishing.ShakeT * 0.12f * MathF.Sin(_t * 43f);
         eye.Y += _fishing.ShakeT * 0.10f * MathF.Cos(_t * 37f);
         // the fish pulls the camera as the fight builds
@@ -706,6 +703,8 @@ public partial class HotRodsGame : Game
                     1f - MathF.Abs(a.X - glintX * 22f) / 16f);
                 col = Color.Lerp(col, new Color(240, 246, 250),
                                  streak * 0.16f * day);
+                if (_state.High > 0f)
+                    col = Color.Lerp(col, Vivid(col), _state.High * 0.5f);
                 var colD = new Color((byte)(col.R * 0.94f), (byte)(col.G * 0.94f),
                                      (byte)(col.B * 0.94f));
                 Prims.AddTri(v, a, b, c, col);
@@ -1118,6 +1117,9 @@ public partial class HotRodsGame : Game
                 _skyClear = Color.Lerp(s0, s1, t);
                 _skyFog = Color.Lerp(f0, f1, t);
                 _tint = (Color.Lerp(t0, t1, t), MathHelper.Lerp(a0, a1, t));
+                // smoking saturates the sky
+                _skyClear = Color.Lerp(_skyClear, Vivid(_skyClear), _state.High * 0.65f);
+                _skyFog = Color.Lerp(_skyFog, Vivid(_skyFog), _state.High * 0.4f);
                 break;
             }
         }
@@ -1142,12 +1144,17 @@ public partial class HotRodsGame : Game
     private void SetLighting()
     {
         float day = 1f - Nightness(_state.Hour);
+        // smoking doesn't wobble the view any more - it saturates the world
+        float vib = 1f + 0.45f * _state.High;
         _effectLit.AmbientLightColor = Vector3.Lerp(
-            new Vector3(0.16f, 0.18f, 0.24f), new Vector3(0.44f, 0.46f, 0.48f), day);
+            new Vector3(0.16f, 0.18f, 0.24f), new Vector3(0.44f, 0.46f, 0.48f), day)
+            * new Vector3(vib, vib * 1.03f, vib * 1.06f);
         _effectLit.DirectionalLight0.DiffuseColor = Vector3.Lerp(
-            new Vector3(0.20f, 0.24f, 0.34f), new Vector3(1.00f, 0.93f, 0.80f), day);
+            new Vector3(0.20f, 0.24f, 0.34f), new Vector3(1.00f, 0.93f, 0.80f), day)
+            * vib;
         _effectLit.DirectionalLight0.Direction = -SunDirection(_state.Hour);
-        _effectLit.DirectionalLight0.SpecularColor = new Vector3(0.15f, 0.15f, 0.15f) * day;
+        _effectLit.DirectionalLight0.SpecularColor =
+            new Vector3(0.15f, 0.15f, 0.15f) * day * vib;
     }
 
     /// <summary>0 by day, 1 in deep night; ramps through dawn and dusk.</summary>
@@ -1156,6 +1163,17 @@ public partial class HotRodsGame : Game
         float a = Math.Clamp((h - 5f) / 3f, 0f, 1f);   // dawn ramp 5->8
         float b = Math.Clamp((20f - h) / 3f, 0f, 1f);  // dusk ramp 17->20
         return 1f - a * b;
+    }
+
+    /// <summary>Pushes a colour's dominant channels out - the high tint.</summary>
+    private static Color Vivid(Color c)
+    {
+        int mn = Math.Min(c.R, Math.Min(c.G, c.B));
+        return new Color(
+            (byte)Math.Clamp(c.R + (c.R - mn) * 2, 0, 255),
+            (byte)Math.Clamp(c.G + (c.G - mn) * 2, 0, 255),
+            (byte)Math.Clamp(c.B + (c.B - mn) * 2, 0, 255),
+            c.A);
     }
 
     private static Rectangle[] IconRects()
