@@ -25,7 +25,7 @@ public partial class Main : Node3D
     private MeshInstance3D _armUpper = null!, _armLower = null!, _hand = null!, _piece = null!;
     private readonly List<(MeshInstance3D node, StandardMaterial3D mat, float offset)> _plume = new();
 
-    private bool _wasSmoking, _wasReeling, _eHeld, _qHeld, _xHeld, _dragging, _atTitle = true;
+    private bool _wasSmoking, _wasReeling, _eHeld, _qHeld, _xHeld, _escHeld, _dragging, _atTitle = true;
     private float _yawDeg, _pitchDeg, _uiMsgT;
     private int _munchieLevel;
     private Camera3D _cam = null!;
@@ -111,6 +111,7 @@ public partial class Main : Node3D
 
         // the screen layer ticks every frame so it can hide its dim the
         // moment the last screen closes
+        bool wasOpen = _atTitle || _screens.AnyOpen;
         _screens.Tick(dt, FishingSim.Clock);
         // the title and screens pause the sim, like the MonoGame port
         if (_atTitle || _screens.AnyOpen)
@@ -118,10 +119,17 @@ public partial class Main : Node3D
             _hud.Tick(dt, FishingSim.Clock);
             return;
         }
+        // in-game Esc opens the menu, but a held key that just closed a
+        // screen must not immediately reopen it
         if (Input.IsKeyPressed(Key.Escape))
         {
-            _screens.Open("menu");
-            return;
+            if (!wasOpen && !_escHeld)
+                _screens.Open("menu");
+            _escHeld = true;
+        }
+        else
+        {
+            _escHeld = false;
         }
         if (Input.IsKeyPressed(Key.X) && !_xHeld)
         {
@@ -278,11 +286,14 @@ public partial class Main : Node3D
         GD.Print($"KEYTEST title: atTitle={_atTitle}");
         _screens.Open("menu");
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-        await KeyPress(Key.Down);      // menu -> SALS SHACK
-        await KeyPress(Key.Space);     // space selects
+        await KeyPress(Key.Down);      // menu -> SAVE
+        await KeyPress(Key.Space);     // saves, closes to the game
         GD.Print($"KEYTEST menu: open={_screens.Open_}");
-        _screens.Open_ = "";           // close everything
+        // esc from a sub-screen must land back in the game, not the menu
+        _screens.Open("shop");
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        await KeyPress(Key.Escape);
+        GD.Print($"KEYTEST esc from shop: open={_screens.Open_}");
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         GD.Print("KEYTEST closed: " + _screens.DebugInfo());
         GetTree().Quit();
