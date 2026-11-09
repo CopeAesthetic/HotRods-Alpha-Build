@@ -41,6 +41,9 @@ public sealed class FishingSim
     /// <summary>Fired when the bobber lands, nibbles or a fish bites.</summary>
     public event Action<Vector3>? Ripple;
 
+    /// <summary>Fired when a cast is blocked by a full munchie bar.</summary>
+    public event Action? MunchieBlocked;
+
     private GameState _state;
     private Vector3 _start, _target;
     private float _flyT, _waitT, _waitDur;
@@ -72,6 +75,11 @@ public sealed class FishingSim
             case Phase.Idle:
                 if (kb.IsKeyDown(Keys.Space) && _state.Couch <= 0f)
                 {
+                    if (_state.Munchie >= 100f)
+                    {
+                        MunchieBlocked?.Invoke();
+                        break;
+                    }
                     Current = Phase.Charging;
                     Power = 0f;
                 }

@@ -383,6 +383,8 @@ public sealed class GameState
     /// (auto-switching to the fullest jar when the loaded one is dry).</summary>
     public (bool ok, string msg) CanToke()
     {
+        if (Munchie >= 100f)
+            return (false, "MUNCHIES, go eat food to keep fishing");
         if (Couch > 0f)
             return (false, "couch locked - give it a second");
         if (WeedCount() > 0)

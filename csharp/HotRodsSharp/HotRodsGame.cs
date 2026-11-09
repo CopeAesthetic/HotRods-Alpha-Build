@@ -24,6 +24,7 @@ public partial class HotRodsGame : Game
     private bool _shopOpen, _enterHeld, _upHeld, _downHeld, _leftHeld, _rightHeld;
     private bool _journalOpen, _zaaOpen, _pouchOpen, _escHeld;
     private int _pouchSel;
+    private int _munchieLevel;   // highest munchie prompt band reached
     private bool _atTitle = true, _tripsOpen, _dealerOpen, _stokeOpen, _helpOpen, _mapOpen, _menuOpen;
     private GameState? _boundState;          // level-up toast subscription
     private bool _hHeld, _tKeyHeld, _fHeld, _uHeld;
@@ -288,6 +289,11 @@ public partial class HotRodsGame : Game
         _font = new BitmapFont(GraphicsDevice);
         LoadAudio();
         _fishing.Sfx = PlaySfx;
+        _fishing.MunchieBlocked += () =>
+        {
+            _uiMsg = "MUNCHIES, go eat food to keep fishing";
+            _uiMsgT = 3.5f;
+        };
         _fishing.Ripple += p => _ripples.Add((p, 0f));
         _pixel = new Texture2D(GraphicsDevice, 1, 1);
         _pixel.SetData(new[] { Color.White });
@@ -597,6 +603,22 @@ public partial class HotRodsGame : Game
         _wasSmoking = _smoking.Active;
         _smoking.Speed = 1f + 0.06f * _state.StokeRank("smoke");
         _state.TickChill(dt);
+        // munchie prompts: one shout per band, re-armed once you eat below it
+        float m = _state.Munchie;
+        int band = m >= 100f ? 4 : m >= 75f ? 3 : m >= 50f ? 2 : m >= 25f ? 1 : 0;
+        if (band > _munchieLevel)
+        {
+            _munchieLevel = band;
+            _uiMsg = band == 4 ? "MUNCHIES, go eat food to keep fishing"
+                   : band == 3 ? "Craving some snacks bad"
+                   : band == 2 ? "Getting kinda hungry"
+                   : "getting a little snacky";
+            _uiMsgT = 3.5f;
+        }
+        else if (band < _munchieLevel)
+        {
+            _munchieLevel = band;
+        }
         _state.Hour = (_state.Hour + dt / 30f) % 24f;   // 12-minute day, like Python
         _state.Played += dt / 60f;
 
