@@ -1631,8 +1631,8 @@ public partial class HotRodsGame : Game
         }
         Edge(ref _upHeld, Keys.Up, () => _shopSel = Math.Max(0, _shopSel - 1));
         Edge(ref _downHeld, Keys.Down, () => _shopSel++);
-        Edge(ref _leftHeld, Keys.Left, () => { _shopTab = (_shopTab + 4) % 5; _shopSel = 0; });
-        Edge(ref _rightHeld, Keys.Right, () => { _shopTab = (_shopTab + 1) % 5; _shopSel = 0; });
+        Edge(ref _leftHeld, Keys.Left, () => { _shopTab = (_shopTab + 5) % 6; _shopSel = 0; });
+        Edge(ref _rightHeld, Keys.Right, () => { _shopTab = (_shopTab + 1) % 6; _shopSel = 0; });
         Edge(ref _enterHeld, Keys.Enter, BuyShopItem);
         if (kb.IsKeyDown(Keys.Escape)) { _shopOpen = false; _menuOpen = true; }
     }
@@ -1648,13 +1648,20 @@ public partial class HotRodsGame : Game
             var (ok, msg) = _state.BuyGear(kind, gear[_shopSel]);
             _shopMsg = msg; _shopMsgT = 2.2f;
         }
-        else
+        else if (_shopTab == 4)
         {
             if (_shopSel >= 4) return;
             var (ok, msg) = _state.TryTravel(_shopSel);
             _shopMsg = ok ? "water unlocked - press T for the map" : msg;
             _shopMsgT = 2.6f;
             PlaySfx("click");
+        }
+        else
+        {
+            if (_shopSel >= GameData.Munchies.Length) return;
+            var (ok, msg) = _state.BuySnack(GameData.Munchies[_shopSel]);
+            _shopMsg = msg; _shopMsgT = 2.2f;
+            if (ok) PlaySfx("click");
         }
     }
 
@@ -1663,9 +1670,9 @@ public partial class HotRodsGame : Game
     {
         if (pos.Y >= 50 && pos.Y <= 76)
         {
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 6; i++)
             {
-                if (pos.X >= 40 + i * 130 && pos.X <= 40 + i * 130 + 100)
+                if (pos.X >= 40 + i * 118 && pos.X <= 40 + i * 118 + 90)
                 {
                     _shopTab = i;
                     _shopSel = 0;
@@ -1690,7 +1697,7 @@ public partial class HotRodsGame : Game
                 y += 46;
             }
         }
-        else
+        else if (_shopTab == 4)
         {
             for (int i = 0; i < 4; i++)
             {
@@ -1703,6 +1710,19 @@ public partial class HotRodsGame : Game
                 y += 46;
             }
         }
+        else
+        {
+            for (int i = 0; i < GameData.Munchies.Length; i++)
+            {
+                if (pos.Y >= y - 4 && pos.Y <= y + 22)
+                {
+                    _shopSel = i;
+                    BuyShopItem();
+                    return;
+                }
+                y += 28;
+            }
+        }
     }
 
     private void DrawShop()
@@ -1713,9 +1733,9 @@ public partial class HotRodsGame : Game
         _batch.Draw(_pixel, new Rectangle(0, 0, w, h), new Color(10, 14, 26, 225));
         _font.Draw(_batch, "STORE  -  $" + _state.Cash, new Vector2(40, 30), 3,
                    new Color(240, 214, 120));
-        string[] tabs = { "RODS", "LINES", "LURES", "COOLERS", "WATERS" };
-        for (int i = 0; i < 5; i++)
-            _font.Draw(_batch, tabs[i], new Vector2(40 + i * 130, 60), 2,
+        string[] tabs = { "RODS", "LINES", "LURES", "COOLERS", "WATERS", "MUNCHIES" };
+        for (int i = 0; i < 6; i++)
+            _font.Draw(_batch, tabs[i], new Vector2(40 + i * 118, 60), 2,
                        i == _shopTab ? new Color(255, 255, 255)
                                      : new Color(110, 120, 150));
         int y = 100;
@@ -1743,21 +1763,6 @@ public partial class HotRodsGame : Game
         }
         else if (_shopTab == 4)
         {
-            for (int i = 0; i < GameData.Munchies.Length; i++)
-            {
-                var m = GameData.Munchies[i];
-                var col = i == _shopSel ? new Color(255, 255, 200)
-                                        : new Color(255, 190, 120);
-                _font.Draw(_batch, (i == _shopSel ? ">" : " ") + " " + m.Name,
-                           new Vector2(60, y), 2, col);
-                _font.Draw(_batch, "$" + m.Price, new Vector2(w - 240, y), 2, col);
-                _font.Draw(_batch, "-" + m.Relief + " MUNCH", new Vector2(w - 160, y), 2,
-                           new Color(255, 170, 90));
-                y += 28;
-            }
-        }
-        else
-        {
             for (int i = 0; i < 4; i++)
             {
                 bool unlocked = _state.SpotUnlocked(i);
@@ -1777,6 +1782,21 @@ public partial class HotRodsGame : Game
                 _font.Draw(_batch, sub, new Vector2(80, y + 22), 2,
                            new Color(120, 130, 160));
                 y += 46;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < GameData.Munchies.Length; i++)
+            {
+                var m = GameData.Munchies[i];
+                var col = i == _shopSel ? new Color(255, 255, 200)
+                                        : new Color(255, 190, 120);
+                _font.Draw(_batch, (i == _shopSel ? ">" : " ") + " " + m.Name,
+                           new Vector2(60, y), 2, col);
+                _font.Draw(_batch, "$" + m.Price, new Vector2(w - 240, y), 2, col);
+                _font.Draw(_batch, "-" + m.Relief + " MUNCH", new Vector2(w - 160, y), 2,
+                           new Color(255, 170, 90));
+                y += 28;
             }
         }
         if (_shopMsgT > 0f)
