@@ -38,6 +38,7 @@ public partial class Screens : CanvasLayer
     private string _msg = "";
     private bool _upHeld, _downHeld, _leftHeld, _rightHeld, _enterHeld, _spaceHeld;
     private int _titleSel;
+    private bool _helpFromTitle;
 
     private static readonly Vector2[] MapNodes =
     {
@@ -177,7 +178,11 @@ public partial class Screens : CanvasLayer
         Text((helpSel ? "> " : "  ") + "HOW TO PLAY", 60, y + 10, 20,
              helpSel ? new Color(1f, 1f, 0.78f) : new Color(0.62f, 0.67f, 0.78f));
         int hy = y + 10;
-        _hits.Add((new Rect2(60, hy - 6, 300, 30), () => Open("help")));
+        _hits.Add((new Rect2(60, hy - 6, 300, 30), () =>
+        {
+            _helpFromTitle = true;
+            Open("help");
+        }));
         Text("UP/DOWN SELECT   ENTER OR SPACE PLAY   BACKSPACE DELETE SAVE   ESC IN GAME MENU",
              40, 686, 16, new Color(0.51f, 0.55f, 0.67f));
     }
@@ -215,7 +220,7 @@ public partial class Screens : CanvasLayer
         Sfx("click");
         switch (MenuItems[i])
         {
-            case "HOW TO PLAY": Open("help"); break;
+            case "HOW TO PLAY": _helpFromTitle = false; Open("help"); break;
             case "SAVE": _state.Save(); Flash("saved", 2f); Open_ = ""; break;
             case "SAVE AND TITLE": _state.Save(); ToTitle?.Invoke(); break;
         }
@@ -705,7 +710,10 @@ public partial class Screens : CanvasLayer
     private void TitleAct()
     {
         if (_titleSel == 3)
+        {
+            _helpFromTitle = true;
             Open("help");
+        }
         else
             Board?.Invoke(_titleSel + 1);
     }
@@ -748,11 +756,18 @@ public partial class Screens : CanvasLayer
         }
         else if (Open_ == "help")
         {
-            Edge(Key.Escape, ref _leftHeld, () => Open("title"));
+            // from the title: back to the title; in game: back to the dock
+            Edge(Key.Escape, ref _leftHeld, () =>
+            {
+                if (_helpFromTitle)
+                    Open("title");
+                else
+                    Open_ = "";
+            });
         }
         else
         {
-            Edge(Key.Escape, ref _leftHeld, () => Open("menu"));
+            Edge(Key.Escape, ref _leftHeld, () => Open_ = "");
         }
     }
 
