@@ -603,6 +603,7 @@ public partial class HotRodsGame : Game
         _wasSmoking = _smoking.Active;
         _smoking.Speed = 1f + 0.06f * _state.StokeRank("smoke");
         _state.TickChill(dt);
+        _uiMsgT -= dt;
         // munchie prompts: one shout per band, re-armed once you eat below it
         float m = _state.Munchie;
         int band = m >= 100f ? 4 : m >= 75f ? 3 : m >= 50f ? 2 : m >= 25f ? 1 : 0;
@@ -1314,6 +1315,11 @@ public partial class HotRodsGame : Game
         if (_state.Chill <= 1f)
             _font.Draw(_batch, "SOBER", new Vector2(22 + 130f - 12f, py + 27), 1,
                        new Color(150, 170, 156));
+        // the on-screen message line (prompts, events)
+        if (_uiMsgT > 0f)
+            _font.Draw(_batch, _uiMsg,
+                       new Vector2((w - _uiMsg.Length * 12f) / 2f, h * 0.70f), 3,
+                       new Color(255, 210, 90));
         // munchie meter: fills when you smoke, only snacks bring it down
         bool hungry = _state.Munchie >= 80f;
         var munCol = hungry
