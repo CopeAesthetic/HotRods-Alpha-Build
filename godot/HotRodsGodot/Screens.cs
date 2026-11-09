@@ -540,10 +540,11 @@ public partial class Screens : CanvasLayer
             Text((i == StokeSel ? "> " : "  ") + Lanes[i].ToUpper() + "  "
                  + new string('|', _state.StokeRank(Lanes[i])), 60, y, 20, col);
             int yy = y;
+            int laneIdx = Math.Min(i, Lanes.Length - 1);
             _hits.Add((new Rect2(60, yy - 4, 500, 30), () =>
             {
-                StokeSel = i;
-                var (ok, msg) = _state.SpendStoke(Lanes[i]);
+                StokeSel = laneIdx;
+                var (ok, msg) = _state.SpendStoke(Lanes[laneIdx]);
                 ShopMsg(msg, 2f);
             }));
             y += 40;
