@@ -36,7 +36,8 @@ public partial class Screens : CanvasLayer
                JournalSel, StokeSel, MapSel, PouchSel, DealerFocus;
     private float _msgT;
     private string _msg = "";
-    private bool _upHeld, _downHeld, _leftHeld, _rightHeld, _enterHeld;
+    private bool _upHeld, _downHeld, _leftHeld, _rightHeld, _enterHeld, _spaceHeld;
+    private int _titleSel;
 
     private static readonly Vector2[] MapNodes =
     {
@@ -162,16 +163,23 @@ public partial class Screens : CanvasLayer
             string line = exists
                 ? $"SLOT {slot}  -  LV {lv}   ${cash}   {GameData.SpotNames[Math.Min(spot, 3)]}   {species} SPECIES   {mins} MIN"
                 : $"SLOT {slot}  -  EMPTY  (NEW GAME)";
-            var col = exists ? new Color(0.82f, 0.85f, 0.92f) : new Color(0.55f, 0.58f, 0.68f);
-            Text((exists ? "  " : "> ") + line, 60, y, 20, col);
+            bool sel = _titleSel == slot - 1;
+            var col = sel ? new Color(1f, 1f, 0.78f)
+                      : exists ? new Color(0.82f, 0.85f, 0.92f)
+                      : new Color(0.55f, 0.58f, 0.68f);
+            Text((sel ? "> " : "  ") + line, 60, y, 20, col);
             int yy = y;
             int s2 = slot;
-            _hits.Add((new Rect2(60, yy - 6, 900, 30), () => Board?.Invoke(s2)));
+            _hits.Add((new Rect2(60, yy - 6, 900, 30), () => { _titleSel = slot - 1; Board?.Invoke(s2); }));
             y += 40;
         }
-        Text("> HOW TO PLAY", 60, y + 10, 20, new Color(0.62f, 0.67f, 0.78f));
+        bool helpSel = _titleSel == 3;
+        Text((helpSel ? "> " : "  ") + "HOW TO PLAY", 60, y + 10, 20,
+             helpSel ? new Color(1f, 1f, 0.78f) : new Color(0.62f, 0.67f, 0.78f));
         int hy = y + 10;
         _hits.Add((new Rect2(60, hy - 6, 300, 30), () => Open("help")));
+        Text("UP/DOWN SELECT   ENTER OR SPACE PLAY   BACKSPACE DELETE SAVE   ESC IN GAME MENU",
+             40, 686, 16, new Color(0.51f, 0.55f, 0.67f));
     }
 
     // ------------------------------------------------------------- menu --
@@ -683,6 +691,26 @@ public partial class Screens : CanvasLayer
             Text(_msg, 40, 640, 20, new Color(0.94f, 0.84f, 0.47f));
     }
 
+    private void TitleAct()
+    {
+        if (_titleSel == 3)
+            Open("help");
+        else
+            Board?.Invoke(_titleSel + 1);
+    }
+
+    private void TitleDelete()
+    {
+        if (_titleSel >= 3)
+            return;
+        int slot = _titleSel + 1;
+        var (exists, _, _, _, _, _) = GameState.SlotInfo(slot);
+        if (!exists)
+            return;
+        GameState.DeleteSlot(slot);
+        ShopMsg("slot " + slot + " deleted", 2.5f);
+    }
+
     private void HandleKeys()
     {
         void Edge(Key k, ref bool held, Action a)
@@ -692,13 +720,19 @@ public partial class Screens : CanvasLayer
         }
         if (Open_ == "title")
         {
-            // mouse only; Esc does nothing here
+            Edge(Key.Up, ref _upHeld, () => _titleSel = Math.Max(0, _titleSel - 1));
+            Edge(Key.Down, ref _downHeld, () => _titleSel = Math.Min(3, _titleSel + 1));
+            Edge(Key.Enter, ref _enterHeld, () => TitleAct());
+            Edge(Key.Space, ref _spaceHeld, () => TitleAct());
+            Edge(Key.Backspace, ref _leftHeld, () => TitleDelete());
+            Edge(Key.Delete, ref _rightHeld, () => TitleDelete());
         }
         else if (Open_ == "menu")
         {
             Edge(Key.Up, ref _upHeld, () => MenuSel = Math.Max(0, MenuSel - 1));
             Edge(Key.Down, ref _downHeld, () => MenuSel = Math.Min(MenuItems.Length - 1, MenuSel + 1));
             Edge(Key.Enter, ref _enterHeld, () => ActMenu(MenuSel));
+            Edge(Key.Space, ref _spaceHeld, () => ActMenu(MenuSel));
             Edge(Key.Escape, ref _leftHeld, () => Open_ = "");
         }
         else if (Open_ == "help")

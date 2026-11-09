@@ -84,6 +84,8 @@ public partial class Main : Node3D
             CallDeferred(nameof(RunSimTests));
         if (OS.GetCmdlineUserArgs().Contains("--clicktest"))
             CallDeferred(nameof(ClickTest));
+        if (OS.GetCmdlineUserArgs().Contains("--keytest"))
+            CallDeferred(nameof(KeyTest));
     }
 
     // ---------------------------------------------------------------- input --
@@ -218,6 +220,31 @@ public partial class Main : Node3D
         GD.Print($"CLICKTEST atTitle={_atTitle} open={_screens.Open_} hudVisible={_hud.Visible}");
         GD.Print("Screens: " + _screens.DebugInfo());
         GD.Print("Hovered: " + (GetViewport().GuiGetHoveredControl()?.Name ?? "null"));
+        GetTree().Quit();
+    }
+
+    private async System.Threading.Tasks.Task KeyPress(Key k)
+    {
+        Input.ParseInputEvent(new InputEventKey { Keycode = k, Pressed = true });
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        Input.ParseInputEvent(new InputEventKey { Keycode = k, Pressed = false });
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+    }
+
+    /// <summary>Drives the title and menu with synthesised keys to prove
+    /// keyboard navigation and selection work.</summary>
+    private async void KeyTest()
+    {
+        for (int i = 0; i < 10; i++)
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        await KeyPress(Key.Down);      // select slot 2
+        await KeyPress(Key.Enter);     // board it
+        GD.Print($"KEYTEST title: atTitle={_atTitle}");
+        _screens.Open("menu");
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        await KeyPress(Key.Down);      // menu -> SALS SHACK
+        await KeyPress(Key.Space);     // space selects
+        GD.Print($"KEYTEST menu: open={_screens.Open_}");
         GetTree().Quit();
     }
 

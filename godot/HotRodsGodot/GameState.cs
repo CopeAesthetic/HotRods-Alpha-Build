@@ -58,6 +58,19 @@ public sealed class GameState
     public static bool AnySave() =>
         Enumerable.Range(1, 3).Any(i => File.Exists(SlotPath(i)));
 
+    public static void DeleteSlot(int slot)
+    {
+        try
+        {
+            if (File.Exists(SlotPath(slot)))
+                File.Delete(SlotPath(slot));
+        }
+        catch
+        {
+            // deletion is best-effort
+        }
+    }
+
     public static int FreeSlot() =>
         Enumerable.Range(1, 3).FirstOrDefault(i => !File.Exists(SlotPath(i)));
 
