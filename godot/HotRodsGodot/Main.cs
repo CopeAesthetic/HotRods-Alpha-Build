@@ -585,6 +585,13 @@ public partial class Main : Node3D
         st.Munchie = 100f;
         Check(!st.CanToke().ok, "munchie blocks smoke");
 
+        // the Python value curve: commons land in the dollars, caps hold
+        var bluegill = GameData.Species.First(x => x.Id == "bluegill");
+        int v0 = st.FishValue(bluegill, 0.3f);
+        Check(v0 >= 5 && v0 <= 8, $"bluegill 0.3kg value {v0}");
+        var koi = GameData.Species.First(x => x.Id == "golden_koi");
+        Check(st.FishValue(koi, 100f) <= 1500, "value cap holds");
+
         // drive a full catch through the sim: charge, cast, wait, bite,
         // hook, then time pulls inside the zone until the fish lands
         var st2 = GameState.New(1);

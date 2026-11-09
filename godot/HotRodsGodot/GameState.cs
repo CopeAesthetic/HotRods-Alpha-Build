@@ -234,6 +234,29 @@ public sealed class GameState
     /// 6 + rarity*4 + 12 if new), discovery bonus (1x value on first catch),
     /// cooler. Returns true when the species was new.
     /// </summary>
+    /// <summary>Python market value: kg x usd_kg x trophy mult through the
+    /// value curve, capped per rarity, boosted by the strain's cash while
+    /// high, times the spot pay - always at least $1.</summary>
+    public int FishValue(FishSpec sp, float kg)
+    {
+        float trophy = sp.Rarity switch
+        {
+            "uncommon" => 1.12f, "rare" => 1.30f,
+            "epic" => 1.60f, "legendary" => 2.20f, _ => 1f,
+        };
+        float raw = MathF.Max(0.05f, kg * sp.UsdKg * trophy);
+        int value = (int)MathF.Round(6f * MathF.Pow(raw, 0.72f));
+        int cap = sp.Rarity switch
+        {
+            "common" => 80, "uncommon" => 160, "rare" => 420, "epic" => 750, _ => 1500,
+        };
+        value = Math.Min(value, cap);
+        if (High > 0.10f)
+            value = (int)MathF.Round(value * StrainData().Cash);
+        int spot = Math.Min(sp.Spot, GameData.SpotPay.Length - 1);
+        return Math.Max(1, (int)MathF.Round(value * GameData.SpotPay[spot]));
+    }
+
     public bool OnCatch(string fishId, float kg, bool toBag)
     {
         bool first = !Species.ContainsKey(fishId);
@@ -246,7 +269,7 @@ public sealed class GameState
             int ri = GameData.RarityIndex(sp.Rarity);
             AddXp(6 + ri * 4 + (first ? 12 : 0));
             if (first)
-                Cash += (int)MathF.Round(kg * sp.UsdKg);   // discovery bonus
+                Cash += FishValue(sp, kg);                 // discovery bonus
         }
         if (toBag)
         {

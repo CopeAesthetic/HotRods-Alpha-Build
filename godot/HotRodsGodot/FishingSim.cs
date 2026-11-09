@@ -170,7 +170,7 @@ public sealed class FishingSim
                 {
                     _pending = Roll();
                     CaughtKg = RollKg(_pending);
-                    CaughtValue = CaughtKg * _pending.UsdKg;
+                    CaughtValue = _state.FishValue(_pending, CaughtKg);
                     _hookT = 0f;
                     Current = Phase.Hook;
                 }
