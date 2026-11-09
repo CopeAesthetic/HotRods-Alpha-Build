@@ -103,13 +103,9 @@ public partial class Screens : CanvasLayer
         if (e is InputEventMouseButton mb && mb.Pressed
             && mb.ButtonIndex == MouseButton.Left)
         {
-            // GUI events arrive in window pixels; the screens live in the
-            // 1280x720 design space, so scale the position first
-            var vp = GetViewport();
-            var pos = mb.Position * vp.GetWindow().Size / vp.GetVisibleRect().Size;
             foreach (var (r, act) in _hits)
             {
-                if (r.HasPoint(pos))
+                if (r.HasPoint(mb.Position))
                 {
                     act();
                     return;
@@ -191,7 +187,7 @@ public partial class Screens : CanvasLayer
     // menu only carries what the icons can't reach
     private static readonly string[] MenuItems =
     {
-        "JARS", "HOW TO PLAY", "SAVE", "SAVE AND TITLE",
+        "HOW TO PLAY", "SAVE", "SAVE AND TITLE",
     };
 
     private void DrawMenu()
@@ -219,7 +215,6 @@ public partial class Screens : CanvasLayer
         Sfx("click");
         switch (MenuItems[i])
         {
-            case "JARS": Open("zaa"); break;
             case "HOW TO PLAY": Open("help"); break;
             case "SAVE": _state.Save(); Flash("saved", 2f); Open_ = ""; break;
             case "SAVE AND TITLE": _state.Save(); ToTitle?.Invoke(); break;
@@ -480,22 +475,38 @@ public partial class Screens : CanvasLayer
             y += 24;
             if (y > 640) break;
         }
-        int wx = 950;
-        Text("WEED STASH  " + _state.WeedTotal() + " GRAMS", wx, 80, 18, new Color(0.59f, 0.85f, 0.63f));
-        int wy = 110;
-        foreach (var kv in _state.WeedCounts.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value))
+        // right column: the jars (stats, grams, click to load)
+        int wx = 900;
+        Text("JARS  " + _state.WeedTotal() + " GRAMS", wx, 80, 18, new Color(0.59f, 0.85f, 0.63f));
+        int wy = 108;
+        for (int i = 0; i < GameData.Strains.Length && wy < 680; i++)
         {
-            var st = GameData.Strains.FirstOrDefault(x => x.Id == kv.Key);
-            if (st == null) continue;
-            bool inUse = _state.Strain == st.Id;
-            var col = inUse ? new Color(1f, 0.94f, 0.55f) : new Color(0.59f, 0.85f, 0.63f);
-            Text(st.Name.ToUpper(), wx + 8, wy, 16, col);
-            Text("X" + kv.Value + (inUse ? "  IN USE" : ""), wx + 220, wy, 16, col);
-            wy += 26;
+            var st = GameData.Strains[i];
+            bool open = _state.JarAvailable(st);
+            bool current = _state.Strain == st.Id;
+            int grams = _state.WeedCount(st.Id);
+            var col = current ? new Color(1f, 0.94f, 0.55f)
+                      : open ? new Color(0.59f, 0.85f, 0.63f)
+                      : new Color(0.43f, 0.45f, 0.55f);
+            string name = open || current ? st.Name.ToUpper() : "???";
+            Text((current ? "> " : "  ") + name, wx, wy, 16, col);
+            Text(open || grams > 0 ? "X" + grams : "LOCKED", wx + 300, wy, 16, col);
+            if (open || current)
+                Text($"P{st.Potency}  L+{(int)(st.Luck * 100)}  {(int)(st.Duration * 10)}D  W{(int)(st.Wobble * 100)}",
+                     wx + 8, wy + 20, 14, new Color(0.47f, 0.51f, 0.63f));
+            int yy = wy;
+            var sid = st.Id;
+            if (open || current)
+                _hits.Add((new Rect2(wx, yy - 4, 370, 40), () =>
+                {
+                    var (ok2, msg2) = _state.UseWeed(GameData.Strains.First(x => x.Id == sid));
+                    ShopMsg(msg2, 2.5f);
+                }));
+            wy += open || current ? 40 : 26;
         }
         if (_state.WeedTotal() == 0)
-            Text("DRY - SEE SAL", wx + 8, wy, 16, new Color(0.47f, 0.49f, 0.58f));
-        Footer("ESC BACK");
+            Text("DRY - SEE SAL", wx, wy, 16, new Color(0.47f, 0.49f, 0.58f));
+        Footer("CLICK A JAR TO LOAD IT  ESC BACK");
     }
 
     private Color RarityCol(string r) => r switch

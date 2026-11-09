@@ -294,24 +294,15 @@ public partial class Hud : CanvasLayer
         }
     }
 
-    /// <summary>GUI events arrive in window pixels; the HUD lives in the
-    /// 1280x720 design space, so scale the position before hit-testing.</summary>
-    private Vector2 ToViewportSpace(Vector2 p)
-    {
-        var vp = GetViewport();
-        return p * vp.GetWindow().Size / vp.GetVisibleRect().Size;
-    }
-
     private void OnIconInput(InputEvent e)
     {
         if (e is InputEventMouseButton mb && mb.Pressed
             && mb.ButtonIndex == MouseButton.Left)
         {
-            var pos = ToViewportSpace(mb.Position);
             for (int i = 0; i < 7; i++)
             {
                 var r = new Rect2(_icons[i].Position, _icons[i].Size);
-                if (r.HasPoint(pos))
+                if (r.HasPoint(mb.Position))
                 {
                     IconClicked?.Invoke(i);
                     return;

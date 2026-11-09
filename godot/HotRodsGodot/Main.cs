@@ -216,7 +216,7 @@ public partial class Main : Node3D
         {
             ButtonIndex = MouseButton.Left,
             Pressed = true,
-            Position = new Vector2(100, 200),
+            Position = new Vector2(125, 250),   // slot 1 in window space
         };
         Input.ParseInputEvent(ev);
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
@@ -245,14 +245,14 @@ public partial class Main : Node3D
             await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         await KeyPress(Key.Enter);          // board slot 1
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-        SynthClick(new Vector2(76, 692));   // tile 1 = store
+        SynthClick(new Vector2(95, 865));   // tile 1 = store (window space)
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         GD.Print($"ICONTEST store tile: open={_screens.Open_} hovered={GetViewport().GuiGetHoveredControl()?.Name}");
         _screens.FlushPool();
         _screens.Open_ = "";
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-        SynthClick(new Vector2(120, 692));  // tile 2 = sal
+        SynthClick(new Vector2(150, 865));  // tile 2 = sal (window space)
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
         GD.Print($"ICONTEST sal tile: open={_screens.Open_}");
