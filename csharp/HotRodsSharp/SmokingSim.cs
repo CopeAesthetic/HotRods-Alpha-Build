@@ -136,27 +136,34 @@ public sealed class SmokingSim
         }
     }
 
-    /// <summary>Both arms: one raises the piece, one brings the lighter.</summary>
+    /// <summary>First-person arms: the right arm raises the piece to the
+    /// mouth while the left brings a lit lighter up from the frame's edge.</summary>
     public void EmitArms(List<VertexPositionColor> v, Color vest, Color skin)
     {
         if (!Active)
             return;
         var hold = Hold();
-        var shR = new Vector3(-3.23f, 1.19f, 1.565f);
-        var elR = (shR + hold) * 0.5f;
+        // shoulders sit just off the bottom corners of the FP frame so the
+        // arms read as the player's own
+        var shR = new Vector3(-4.10f, 1.05f, 1.78f);
+        var elR = (shR + hold) * 0.5f + new Vector3(0.03f, -0.05f, 0.02f);
         Prims.AddSegment(v, shR, elR, 0.065f, vest);
-        Prims.AddSegment(v, elR, hold, 0.055f, skin);
+        Prims.AddSegment(v, elR, hold, 0.052f, skin);
+        Prims.AddBox(v, hold + new Vector3(-0.01f, -0.02f, 0.02f),
+                     0.075f, 0.08f, 0.09f, skin);   // hand on the piece
 
-        var lighter = hold + new Vector3(0.10f, -0.01f, 0.04f);
-        var shL = new Vector3(-3.43f, 1.19f, 1.46f);
-        var elL = (shL + lighter) * 0.5f;
+        var lighter = hold + new Vector3(0.09f, 0.00f, 0.06f);
+        var shL = new Vector3(-4.38f, 1.05f, 1.00f);
+        var elL = (shL + lighter) * 0.5f + new Vector3(-0.03f, -0.05f, -0.02f);
         Prims.AddSegment(v, shL, elL, 0.065f, vest);
-        Prims.AddSegment(v, elL, lighter, 0.055f, skin);
-        Prims.AddBox(v, new Vector3(lighter.X, lighter.Y + 0.01f, lighter.Z + 0.005f),
+        Prims.AddSegment(v, elL, lighter, 0.052f, skin);
+        Prims.AddBox(v, lighter + new Vector3(0.00f, -0.02f, 0.01f),
+                     0.07f, 0.075f, 0.08f, skin);   // hand on the lighter
+        Prims.AddBox(v, new Vector3(lighter.X, lighter.Y + 0.015f, lighter.Z + 0.01f),
                      0.02f, 0.06f, 0.02f, new Color(232, 186, 96));
-        float flame = lighter.Y + 0.05f + MathF.Sin(_clock * 30f) * 0.006f;
-        Prims.AddSegment(v, new Vector3(lighter.X, lighter.Y + 0.04f, lighter.Z + 0.01f),
-                         new Vector3(lighter.X, flame, lighter.Z + 0.01f), 0.012f,
+        float flame = lighter.Y + 0.055f + MathF.Sin(_clock * 30f) * 0.006f;
+        Prims.AddSegment(v, new Vector3(lighter.X, lighter.Y + 0.045f, lighter.Z + 0.015f),
+                         new Vector3(lighter.X, flame, lighter.Z + 0.015f), 0.012f,
                          new Color(255, 190, 60), 4);
     }
 
