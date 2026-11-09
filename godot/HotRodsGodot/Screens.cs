@@ -43,6 +43,12 @@ public partial class Screens : CanvasLayer
         new(640, 130), new(240, 420), new(900, 460), new(620, 620),
     };
 
+    public string DebugInfo()
+    {
+        return $"root visible={_root.Visible} size={_root.Size} pos={_root.Position} " +
+               $"filter={_root.MouseFilter} hits={_hits.Count} open={Open_}";
+    }
+
     public override void _ExitTree() => FlushPool();
 
     /// <summary>Frees every detached pooled node - call before quitting so
@@ -62,6 +68,7 @@ public partial class Screens : CanvasLayer
         AddChild(_root);
         // one-time: dim + title stay under the rebuilt content
         _dim = R(0, 0, 1280, 720, new Color(0.04f, 0.05f, 0.10f, 0.92f));
+        _dim.MouseFilter = Control.MouseFilterEnum.Ignore;   // never eat the clicks
         _root.AddChild(_dim);
         _title = new Label();
         _title.AddThemeFontSizeOverride("font_size", 30);

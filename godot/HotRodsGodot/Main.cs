@@ -82,6 +82,8 @@ public partial class Main : Node3D
             CallDeferred(nameof(TakeShot));
         if (OS.GetCmdlineUserArgs().Contains("--simtest"))
             CallDeferred(nameof(RunSimTests));
+        if (OS.GetCmdlineUserArgs().Contains("--clicktest"))
+            CallDeferred(nameof(ClickTest));
     }
 
     // ---------------------------------------------------------------- input --
@@ -197,6 +199,26 @@ public partial class Main : Node3D
         UpdateRipples(dt);
         ApplyVibrance();
         _hud.Tick(dt, FishingSim.Clock);
+    }
+
+    /// <summary>Synthesises a click on save slot 1 to prove the GUI chain.</summary>
+    private async void ClickTest()
+    {
+        for (int i = 0; i < 10; i++)
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        var ev = new InputEventMouseButton
+        {
+            ButtonIndex = MouseButton.Left,
+            Pressed = true,
+            Position = new Vector2(100, 200),
+        };
+        Input.ParseInputEvent(ev);
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        GD.Print($"CLICKTEST atTitle={_atTitle} open={_screens.Open_} hudVisible={_hud.Visible}");
+        GD.Print("Screens: " + _screens.DebugInfo());
+        GD.Print("Hovered: " + (GetViewport().GuiGetHoveredControl()?.Name ?? "null"));
+        GetTree().Quit();
     }
 
     // --------------------------------------------------------------- board --
