@@ -1214,8 +1214,8 @@ public partial class HotRodsGame : Game
     private static Rectangle[] IconRects()
     {
         int h = 480;   // window is fixed 800x480; icons anchor bottom-left
-        var rects = new Rectangle[8];
-        for (int i = 0; i < 8; i++)
+        var rects = new Rectangle[7];
+        for (int i = 0; i < 7; i++)
             rects[i] = new Rectangle(12 + i * 44, h - 44, 40, 36);
         return rects;
     }
@@ -1255,23 +1255,18 @@ public partial class HotRodsGame : Game
                     _batch.Draw(_pixel, new Rectangle(cx + 12, cy + 12, 2, 2), new Color(84, 140, 84));
                     _batch.Draw(_pixel, new Rectangle(cx + 16, cy + 5, 2, 2), new Color(120, 190, 130));
                     break;
-                case 4: // jars
-                    _batch.Draw(_pixel, new Rectangle(cx + 5, cy + 1, 14, 4), new Color(120, 128, 148));
-                    _batch.Draw(_pixel, new Rectangle(cx + 5, cy + 5, 14, 16), new Color(120, 216, 160));
-                    _batch.Draw(_pixel, new Rectangle(cx + 8, cy + 8, 8, 8), new Color(60, 150, 100));
-                    break;
-                case 5: // journal
+                case 4: // journal
                     _batch.Draw(_pixel, new Rectangle(cx + 3, cy + 1, 18, 21), new Color(238, 232, 212));
                     _batch.Draw(_pixel, new Rectangle(cx + 12, cy + 1, 2, 21), new Color(160, 150, 120));
                     _batch.Draw(_pixel, new Rectangle(cx + 6, cy + 6, 4, 1), new Color(120, 110, 90));
                     _batch.Draw(_pixel, new Rectangle(cx + 6, cy + 10, 4, 1), new Color(120, 110, 90));
                     break;
-                case 6: // stoke lanes
+                case 5: // stoke lanes
                     _batch.Draw(_pixel, new Rectangle(cx + 3, cy + 6, 5, 12), new Color(120, 190, 130));
                     _batch.Draw(_pixel, new Rectangle(cx + 10, cy + 3, 5, 15), new Color(150, 210, 236));
                     _batch.Draw(_pixel, new Rectangle(cx + 17, cy + 8, 5, 10), new Color(214, 150, 236));
                     break;
-                case 7: // smoke pouch
+                case 6: // smoke pouch
                     _batch.Draw(_pixel, new Rectangle(cx + 3, cy + 5, 18, 16), new Color(176, 148, 96));
                     _batch.Draw(_pixel, new Rectangle(cx + 10, cy + 3, 4, 4), new Color(120, 94, 56));
                     _batch.Draw(_pixel, new Rectangle(cx + 6, cy + 9, 3, 3), new Color(140, 200, 132));
@@ -1726,10 +1721,9 @@ public partial class HotRodsGame : Game
                 case 1: _shopOpen = true; _shopSel = 0; break;
                 case 2: _dealerOpen = true; _dealerSel = 0; _dealerArea = _state.Spot; break;
                 case 3: _mapOpen = true; _mapSel = _spot; break;
-                case 4: _zaaOpen = true; _zaaSel = 0; break;
-                case 5: _journalOpen = true; _journalSel = 0; break;
-                case 6: _stokeOpen = true; _stokeSel = 0; break;
-                case 7: _pouchOpen = true; _pouchSel = 0; break;
+                case 4: _journalOpen = true; _journalSel = 0; break;
+                case 5: _stokeOpen = true; _stokeSel = 0; break;
+                case 6: _pouchOpen = true; _pouchSel = 0; break;
             }
             PlaySfx("click");
             return;
