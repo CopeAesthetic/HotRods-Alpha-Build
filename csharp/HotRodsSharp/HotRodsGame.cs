@@ -397,6 +397,26 @@ public partial class HotRodsGame : Game
             PrimsLit.AddBox(s, new Vector3(bx, 0.72f, bk.z - 3.1f),
                             bk.w + 0.2f, 0.7f, 4.2f, i % 2 == 0 ? Grass : GrassD);
         }
+        // wet sand where the beach meets the water
+        for (int i = 0; i < bk.n; i++)
+        {
+            float bx = bk.x0 + i * bk.spacing;
+            PrimsLit.AddBox(s, new Vector3(bx, 0.24f, bk.z + 2.2f),
+                            bk.w + 0.4f, 0.14f, 1.6f, new Color(122, 98, 68));
+        }
+        // grass tufts and pebbles scattered along the waterside
+        for (int i = 0; i < bk.n * 3; i++)
+        {
+            float bx = bk.x0 + (i % bk.n) * bk.spacing
+                       + MathF.Sin(i * 12.9898f) * bk.spacing * 0.28f;
+            float bz = bk.z + 1.2f + (i * 7 % 5) * 0.5f;
+            PrimsLit.AddSegment(s, new Vector3(bx, 0.58f, bz),
+                                new Vector3(bx, 0.80f, bz), 0.05f,
+                                i % 2 == 0 ? Grass : GrassD, 4);
+            if (i % 3 == 1)
+                PrimsLit.AddBox(s, new Vector3(bx + 0.55f, 0.58f, bz + 0.7f),
+                                0.26f, 0.17f, 0.24f, new Color(98, 104, 114));
+        }
         // north shore behind the angler closes the pond
         for (int i = 0; i < 10; i++)
         {
@@ -704,15 +724,29 @@ public partial class HotRodsGame : Game
                 var col = Color.Lerp(shallow, deep, depth);
                 float foamF = MathHelper.SmoothStep(11.0f, 12.8f, a.Z);
                 col = Color.Lerp(col, foam, foamF * 0.5f);
-                // daylight brightens the sheet; a soft streak follows the sun
+                // moving light patches: fake wave shading rolling over the sheet
+                float light = 0.80f + 0.22f
+                    * MathF.Sin(_t * 1.7f + a.X * 0.31f + a.Z * 0.27f)
+                    * MathF.Sin(_t * 2.4f + a.X * 0.63f - a.Z * 0.44f);
+                col = new Color((byte)Math.Min(255, col.R * light),
+                                (byte)Math.Min(255, col.G * light),
+                                (byte)Math.Min(255, col.B * light));
+                // the far side of the sheet reflects the sky
+                float skyF = Math.Clamp((-10f - a.Z) / 22f, 0f, 0.6f);
+                col = Color.Lerp(col, _skyClear, skyF);
+                // daylight brightens the sheet; a wide streak follows the sun
                 col = new Color(
                     (byte)(col.R * (0.55f + 0.45f * day)),
                     (byte)(col.G * (0.55f + 0.45f * day)),
                     (byte)(col.B * (0.55f + 0.45f * day)));
                 float streak = MathF.Max(0f,
-                    1f - MathF.Abs(a.X - glintX * 22f) / 16f);
+                    1f - MathF.Abs(a.X - glintX * 22f) / 20f);
                 col = Color.Lerp(col, new Color(240, 246, 250),
-                                 streak * 0.16f * day);
+                                 streak * 0.22f * day);
+                float streak2 = MathF.Max(0f,
+                    1f - MathF.Abs(a.X - glintX * 30f + 6f) / 26f);
+                col = Color.Lerp(col, new Color(235, 242, 250),
+                                 streak2 * 0.10f * day);
                 if (_state.High > 0f)
                     col = Color.Lerp(col, Vivid(col), _state.High * 0.5f);
                 var colD = new Color((byte)(col.R * 0.94f), (byte)(col.G * 0.94f),
@@ -826,6 +860,19 @@ public partial class HotRodsGame : Game
                 var p1 = new Vector3(pos.X + MathF.Cos(a1) * radius, 0.10f,
                                      pos.Z + MathF.Sin(a1) * radius);
                 Prims.AddSegment(dyn, p0, p1, 0.03f, col, 2);
+            }
+            // trailing inner ring
+            float r2 = radius * 0.62f;
+            var col2 = col * 0.6f;
+            for (int k = 0; k < 8; k++)
+            {
+                float a0 = MathF.Tau * k / 8;
+                float a1 = MathF.Tau * (k + 1) / 8;
+                var p0 = new Vector3(pos.X + MathF.Cos(a0) * r2, 0.10f,
+                                     pos.Z + MathF.Sin(a0) * r2);
+                var p1 = new Vector3(pos.X + MathF.Cos(a1) * r2, 0.10f,
+                                     pos.Z + MathF.Sin(a1) * r2);
+                Prims.AddSegment(dyn, p0, p1, 0.022f, col2, 2);
             }
         }
     }
