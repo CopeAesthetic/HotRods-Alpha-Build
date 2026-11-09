@@ -1741,6 +1741,21 @@ public partial class HotRodsGame : Game
                 y += 46;
             }
         }
+        else if (_shopTab == 4)
+        {
+            for (int i = 0; i < GameData.Munchies.Length; i++)
+            {
+                var m = GameData.Munchies[i];
+                var col = i == _shopSel ? new Color(255, 255, 200)
+                                        : new Color(255, 190, 120);
+                _font.Draw(_batch, (i == _shopSel ? ">" : " ") + " " + m.Name,
+                           new Vector2(60, y), 2, col);
+                _font.Draw(_batch, "$" + m.Price, new Vector2(w - 240, y), 2, col);
+                _font.Draw(_batch, "-" + m.Relief + " MUNCH", new Vector2(w - 160, y), 2,
+                           new Color(255, 170, 90));
+                y += 28;
+            }
+        }
         else
         {
             for (int i = 0; i < 4; i++)
