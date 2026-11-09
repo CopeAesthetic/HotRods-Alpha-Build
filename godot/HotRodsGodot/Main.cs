@@ -25,7 +25,7 @@ public partial class Main : Node3D
     private MeshInstance3D _armUpper = null!, _armLower = null!, _hand = null!, _piece = null!;
     private readonly List<(MeshInstance3D node, StandardMaterial3D mat, float offset)> _plume = new();
 
-    private bool _wasSmoking, _eHeld, _qHeld, _xHeld, _dragging;
+    private bool _wasSmoking, _eHeld, _qHeld, _xHeld, _dragging, _atTitle = true;
     private float _yawDeg, _pitchDeg, _uiMsgT;
     private int _munchieLevel;
     private Camera3D _cam = null!;
@@ -56,6 +56,13 @@ public partial class Main : Node3D
         _screens.Bind(_state, _fishing, _smoking);
         _screens.Sfx = PlaySfx;
         _screens.Flash = Flash;
+        _screens.Board = BoardSlot;
+        _screens.ToTitle = () =>
+        {
+            _atTitle = true;
+            _screens.Open("title");
+            _hud.Visible = false;
+        };
         _screens.Traveled += ApplyWaterTint;
         _hud.IconClicked += i => _screens.Open(i switch
         {
@@ -67,6 +74,9 @@ public partial class Main : Node3D
 
         BuildFishingVisuals();
         BuildCeremonyVisuals();
+
+        _hud.Visible = false;
+        _screens.Open("title");
 
         if (OS.GetCmdlineUserArgs().Contains("--shot"))
             CallDeferred(nameof(TakeShot));
@@ -93,8 +103,8 @@ public partial class Main : Node3D
         float dt = (float)delta;
         FishingSim.TickTime(dt);
 
-        // screens pause the sim, like the MonoGame port
-        if (_screens.AnyOpen)
+        // the title and screens pause the sim, like the MonoGame port
+        if (_atTitle || _screens.AnyOpen)
         {
             _screens.Tick(dt, FishingSim.Clock);
             _hud.Tick(dt, FishingSim.Clock);
@@ -181,6 +191,22 @@ public partial class Main : Node3D
         UpdateRipples(dt);
         ApplyVibrance();
         _hud.Tick(dt, FishingSim.Clock);
+    }
+
+    // --------------------------------------------------------------- board --
+    private void BoardSlot(int slot)
+    {
+        var (exists, _, _, _, _, _) = GameState.SlotInfo(slot);
+        _state = exists ? GameState.Load(slot) : GameState.New(slot);
+        _state.Save();
+        _fishing.SetState(_state);
+        _smoking.SetItem(_state.Smoker);
+        _world.Rebuild(_state.Spot);
+        ApplyWaterTint();
+        _munchieLevel = 0;
+        _atTitle = false;
+        _screens.Open_ = "";
+        _hud.Visible = true;
     }
 
     // ---------------------------------------------------------------- visuals --

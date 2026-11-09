@@ -18,6 +18,8 @@ public partial class Screens : CanvasLayer
     public Action<string> Sfx = _ => { };
     public Action<string, float> Flash = (_, _) => { };
     public Action? Traveled;
+    public Action<int>? Board;
+    public Action? ToTitle;
 
     private Control _root = null!;
     private ColorRect _dim = null!;
@@ -114,6 +116,7 @@ public partial class Screens : CanvasLayer
         _msgT -= dt;
         switch (Open_)
         {
+            case "title": DrawTitle(); break;
             case "menu": DrawMenu(); break;
             case "shop": DrawShop(); break;
             case "sal": DrawSal(); break;
@@ -125,6 +128,32 @@ public partial class Screens : CanvasLayer
             case "help": DrawHelp(); break;
         }
         HandleKeys();
+    }
+
+    // ------------------------------------------------------------ title --
+    private void DrawTitle()
+    {
+        Title("CATCH & CHILL");
+        Text("HOTRODS", 40, 88, 44, new Color(0.96f, 0.72f, 0.36f));
+        Text("fish the pond, sell the catch, keep the good stuff burning",
+             40, 140, 16, new Color(0.62f, 0.67f, 0.78f));
+        int y = 190;
+        for (int slot = 1; slot <= 3; slot++)
+        {
+            var (exists, lv, cash, spot, species, mins) = GameState.SlotInfo(slot);
+            string line = exists
+                ? $"SLOT {slot}  -  LV {lv}   ${cash}   {GameData.SpotNames[Math.Min(spot, 3)]}   {species} SPECIES   {mins} MIN"
+                : $"SLOT {slot}  -  EMPTY  (NEW GAME)";
+            var col = exists ? new Color(0.82f, 0.85f, 0.92f) : new Color(0.55f, 0.58f, 0.68f);
+            Text((exists ? "  " : "> ") + line, 60, y, 20, col);
+            int yy = y;
+            int s2 = slot;
+            _hits.Add((new Rect2(60, yy - 6, 900, 30), () => Board?.Invoke(s2)));
+            y += 40;
+        }
+        Text("> HOW TO PLAY", 60, y + 10, 20, new Color(0.62f, 0.67f, 0.78f));
+        int hy = y + 10;
+        _hits.Add((new Rect2(60, hy - 6, 300, 30), () => Open("help")));
     }
 
     // ------------------------------------------------------------- menu --
@@ -167,7 +196,7 @@ public partial class Screens : CanvasLayer
             case "MAP AND TRAVEL": Open("map"); break;
             case "HOW TO PLAY": Open("help"); break;
             case "SAVE": _state.Save(); Flash("saved", 2f); Open_ = ""; break;
-            case "SAVE AND TITLE": _state.Save(); Flash("saved - title coming soon", 2f); Open_ = ""; break;
+            case "SAVE AND TITLE": _state.Save(); ToTitle?.Invoke(); break;
         }
     }
 
@@ -643,12 +672,20 @@ public partial class Screens : CanvasLayer
             if (Input.IsKeyPressed(k) && !held) { a(); held = true; }
             if (!Input.IsKeyPressed(k)) held = false;
         }
-        if (Open_ == "menu")
+        if (Open_ == "title")
+        {
+            // mouse only; Esc does nothing here
+        }
+        else if (Open_ == "menu")
         {
             Edge(Key.Up, ref _upHeld, () => MenuSel = Math.Max(0, MenuSel - 1));
             Edge(Key.Down, ref _downHeld, () => MenuSel = Math.Min(MenuItems.Length - 1, MenuSel + 1));
             Edge(Key.Enter, ref _enterHeld, () => ActMenu(MenuSel));
             Edge(Key.Escape, ref _leftHeld, () => Open_ = "");
+        }
+        else if (Open_ == "help")
+        {
+            Edge(Key.Escape, ref _leftHeld, () => Open("title"));
         }
         else
         {
