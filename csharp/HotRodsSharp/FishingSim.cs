@@ -380,7 +380,9 @@ public sealed class FishingSim
     /// <summary>Line from the rod tip down to the bobber.</summary>
     public void EmitLine(List<VertexPositionColor> v, Vector3 tip)
     {
-        if (Current == Phase.Idle || Current == Phase.Card)
+        // no dangling pre-cast line: the line only exists once the bobber
+        // is flying or in the water
+        if (Current == Phase.Idle || Current == Phase.Card || Current == Phase.Charging)
             return;
         Prims.AddSegment(v, tip, Bobber + Vector3.Up * 0.05f, 0.012f,
                          new Color(220, 230, 240), 3);
