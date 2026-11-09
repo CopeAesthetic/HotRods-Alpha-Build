@@ -240,13 +240,20 @@ public partial class Hud : CanvasLayer
                 Position = new Vector2(12 + i * 44, 676),
                 Size = new Vector2(40, 36),
                 Color = new Color(0.07f, 0.09f, 0.14f, 0.95f),
+                MouseFilter = Control.MouseFilterEnum.Ignore,
             };
             AddChild(r);
             _icons[i] = r;
             int cx = 20 + i * 44, cy = 683;
             void Box(float x, float y, float w, float h, Color col)
             {
-                var b = new ColorRect { Position = new Vector2(x, y), Size = new Vector2(w, h), Color = col };
+                var b = new ColorRect
+                {
+                    Position = new Vector2(x, y),
+                    Size = new Vector2(w, h),
+                    Color = col,
+                    MouseFilter = Control.MouseFilterEnum.Ignore,
+                };
                 AddChild(b);
             }
             switch (i)
@@ -287,15 +294,24 @@ public partial class Hud : CanvasLayer
         }
     }
 
+    /// <summary>GUI events arrive in window pixels; the HUD lives in the
+    /// 1280x720 design space, so scale the position before hit-testing.</summary>
+    private Vector2 ToViewportSpace(Vector2 p)
+    {
+        var vp = GetViewport();
+        return p * vp.GetWindow().Size / vp.GetVisibleRect().Size;
+    }
+
     private void OnIconInput(InputEvent e)
     {
         if (e is InputEventMouseButton mb && mb.Pressed
             && mb.ButtonIndex == MouseButton.Left)
         {
+            var pos = ToViewportSpace(mb.Position);
             for (int i = 0; i < 7; i++)
             {
                 var r = new Rect2(_icons[i].Position, _icons[i].Size);
-                if (r.HasPoint(mb.Position))
+                if (r.HasPoint(pos))
                 {
                     IconClicked?.Invoke(i);
                     return;

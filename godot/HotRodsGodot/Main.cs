@@ -86,6 +86,8 @@ public partial class Main : Node3D
             CallDeferred(nameof(ClickTest));
         if (OS.GetCmdlineUserArgs().Contains("--keytest"))
             CallDeferred(nameof(KeyTest));
+        if (OS.GetCmdlineUserArgs().Contains("--icontest"))
+            CallDeferred(nameof(IconTest));
     }
 
     // ---------------------------------------------------------------- input --
@@ -222,6 +224,38 @@ public partial class Main : Node3D
         GD.Print($"CLICKTEST atTitle={_atTitle} open={_screens.Open_} hudVisible={_hud.Visible}");
         GD.Print("Screens: " + _screens.DebugInfo());
         GD.Print("Hovered: " + (GetViewport().GuiGetHoveredControl()?.Name ?? "null"));
+        GetTree().Quit();
+    }
+
+    private void SynthClick(Vector2 at)
+    {
+        Input.ParseInputEvent(new InputEventMouseButton
+        {
+            ButtonIndex = MouseButton.Left,
+            Pressed = true,
+            Position = at,
+        });
+    }
+
+    /// <summary>Boards a slot, then clicks icon tiles 1 (store) and 2 (Sal)
+    /// to prove the icon bar routes into the screens.</summary>
+    private async void IconTest()
+    {
+        for (int i = 0; i < 10; i++)
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        await KeyPress(Key.Enter);          // board slot 1
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        SynthClick(new Vector2(76, 692));   // tile 1 = store
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        GD.Print($"ICONTEST store tile: open={_screens.Open_} hovered={GetViewport().GuiGetHoveredControl()?.Name}");
+        _screens.FlushPool();
+        _screens.Open_ = "";
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        SynthClick(new Vector2(120, 692));  // tile 2 = sal
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        GD.Print($"ICONTEST sal tile: open={_screens.Open_}");
         GetTree().Quit();
     }
 

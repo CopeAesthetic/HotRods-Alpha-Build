@@ -103,9 +103,13 @@ public partial class Screens : CanvasLayer
         if (e is InputEventMouseButton mb && mb.Pressed
             && mb.ButtonIndex == MouseButton.Left)
         {
+            // GUI events arrive in window pixels; the screens live in the
+            // 1280x720 design space, so scale the position first
+            var vp = GetViewport();
+            var pos = mb.Position * vp.GetWindow().Size / vp.GetVisibleRect().Size;
             foreach (var (r, act) in _hits)
             {
-                if (r.HasPoint(mb.Position))
+                if (r.HasPoint(pos))
                 {
                     act();
                     return;
@@ -183,10 +187,11 @@ public partial class Screens : CanvasLayer
     }
 
     // ------------------------------------------------------------- menu --
+    // the icon bar covers store, Sal, journal, stoke and map, so the ESC
+    // menu only carries what the icons can't reach
     private static readonly string[] MenuItems =
     {
-        "STORE", "SALS SHACK", "JARS", "JOURNAL", "STOKE",
-        "MAP AND TRAVEL", "HOW TO PLAY", "SAVE", "SAVE AND TITLE",
+        "JARS", "HOW TO PLAY", "SAVE", "SAVE AND TITLE",
     };
 
     private void DrawMenu()
@@ -214,12 +219,7 @@ public partial class Screens : CanvasLayer
         Sfx("click");
         switch (MenuItems[i])
         {
-            case "STORE": Open("shop"); break;
-            case "SALS SHACK": Open("sal"); break;
             case "JARS": Open("zaa"); break;
-            case "JOURNAL": Open("journal"); break;
-            case "STOKE": Open("stoke"); break;
-            case "MAP AND TRAVEL": Open("map"); break;
             case "HOW TO PLAY": Open("help"); break;
             case "SAVE": _state.Save(); Flash("saved", 2f); Open_ = ""; break;
             case "SAVE AND TITLE": _state.Save(); ToTitle?.Invoke(); break;
