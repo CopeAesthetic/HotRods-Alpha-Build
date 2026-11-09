@@ -107,10 +107,12 @@ public partial class Main : Node3D
         float dt = (float)delta;
         FishingSim.TickTime(dt);
 
+        // the screen layer ticks every frame so it can hide its dim the
+        // moment the last screen closes
+        _screens.Tick(dt, FishingSim.Clock);
         // the title and screens pause the sim, like the MonoGame port
         if (_atTitle || _screens.AnyOpen)
         {
-            _screens.Tick(dt, FishingSim.Clock);
             _hud.Tick(dt, FishingSim.Clock);
             return;
         }
@@ -245,6 +247,10 @@ public partial class Main : Node3D
         await KeyPress(Key.Down);      // menu -> SALS SHACK
         await KeyPress(Key.Space);     // space selects
         GD.Print($"KEYTEST menu: open={_screens.Open_}");
+        _screens.Open_ = "";           // close everything
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        GD.Print("KEYTEST closed: " + _screens.DebugInfo());
         GetTree().Quit();
     }
 
