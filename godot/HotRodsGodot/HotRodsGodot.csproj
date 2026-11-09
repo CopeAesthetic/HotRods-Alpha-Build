@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
+    <ImplicitUsings>enable</ImplicitUsings>
     <OutputPath>.godot/mono/temp/bin/Debug</OutputPath>
     <GodotProjectDir>$(MSBuildProjectDirectory)</GodotProjectDir>
     <RootNamespace>HotRodsGodot</RootNamespace>
