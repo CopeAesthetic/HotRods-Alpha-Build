@@ -14,13 +14,14 @@ public partial class Main : Node3D
     private FishingSim _fishing = null!;
     private SmokingSim _smoking = null!;
     private Hud _hud = null!;
+    private Screens _screens = null!;
     private DirectionalLight3D _sun = null!;
     private Node3D _rod = null!;
     private MeshInstance3D _bobber = null!, _line = null!;
     private AudioStreamPlayer _sfx = null!;
     private readonly List<(MeshInstance3D node, float age, StandardMaterial3D mat)> _ripples = new();
 
-    private bool _wasSmoking, _eHeld, _qHeld, _dragging;
+    private bool _wasSmoking, _eHeld, _qHeld, _xHeld, _dragging;
     private float _yawDeg, _pitchDeg, _uiMsgT;
     private int _munchieLevel;
     private Camera3D _cam = null!;
@@ -44,6 +45,15 @@ public partial class Main : Node3D
         _sun = GetNode<DirectionalLight3D>("Sun");
         _hud = GetNode<Hud>("Hud");
         _hud.Bind(_state, _fishing);
+        _screens = GetNode<Screens>("Screens");
+        _screens.Bind(_state, _fishing, _smoking);
+        _screens.Sfx = PlaySfx;
+        _screens.Flash = Flash;
+        _hud.IconClicked += i => _screens.Open(i switch
+        {
+            0 => "menu", 1 => "shop", 2 => "sal", 3 => "map",
+            4 => "journal", 5 => "stoke", 6 => "pouch", _ => "",
+        });
         _sfx = new AudioStreamPlayer();
         AddChild(_sfx);
 
@@ -73,6 +83,29 @@ public partial class Main : Node3D
     {
         float dt = (float)delta;
         FishingSim.TickTime(dt);
+
+        // screens pause the sim, like the MonoGame port
+        if (_screens.AnyOpen)
+        {
+            _screens.Tick(dt, FishingSim.Clock);
+            _hud.Tick(dt, FishingSim.Clock);
+            return;
+        }
+        if (Input.IsKeyPressed(Key.Escape))
+        {
+            _screens.Open("menu");
+            return;
+        }
+        if (Input.IsKeyPressed(Key.X) && !_xHeld)
+        {
+            int n = _state.Bag.Count;
+            int total = (int)MathF.Round(_state.BagValue());
+            _state.SellBag();
+            Flash(n > 0 ? n + " fish, $" + total + ". Pleasure." : "cooler is empty", 3f);
+            _xHeld = true;
+        }
+        if (!Input.IsKeyPressed(Key.X))
+            _xHeld = false;
 
         bool space = Input.IsKeyPressed(Key.Space);
         if (!_smoking.Active)

@@ -29,9 +29,17 @@ public partial class Hud : CanvasLayer
 
     private float _msgT;
     private float _nowPulse;
+    private readonly ColorRect[] _icons = new ColorRect[7];
+    private Control _catcher = null!;
+    private readonly Control[] _iconArt = new Control[7];
+
+    /// <summary>Bottom-left icon bar: phone, store, Sal, map, journal,
+    /// stoke, pouch. Clicking fires the mapped action.</summary>
+    public event Action<int>? IconClicked;
 
     public override void _Ready()
     {
+        BuildIcons();
         // ---- top info line
         _info = Label("", 22, new Color(0.93f, 0.9f, 0.8f));
         _info.Position = new Vector2(14, 10);
@@ -130,6 +138,7 @@ public partial class Hud : CanvasLayer
 
     public void Tick(float dt, float time)
     {
+        IconHover();
         _info.Text = $"{GameData.SpotNames[_state.Spot]}   {_state.Hour:00}:00   " +
                      $"CASTS {_state.Casts}   LV {_state.Level}  XP {_state.Xp}  ${_state.Cash}";
 
@@ -215,6 +224,96 @@ public partial class Hud : CanvasLayer
         _chargeBar.Visible = charging;
         if (charging)
             _chargeFill.Size = new Vector2(196f * _fishing.Power, 10);
+    }
+
+    private void BuildIcons()
+    {
+        _catcher = new Control();
+        _catcher.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        _catcher.MouseFilter = Control.MouseFilterEnum.Pass;
+        _catcher.GuiInput += OnIconInput;
+        AddChild(_catcher);
+        for (int i = 0; i < 7; i++)
+        {
+            var r = new ColorRect
+            {
+                Position = new Vector2(12 + i * 44, 676),
+                Size = new Vector2(40, 36),
+                Color = new Color(0.07f, 0.09f, 0.14f, 0.95f),
+            };
+            AddChild(r);
+            _icons[i] = r;
+            int cx = 20 + i * 44, cy = 683;
+            void Box(float x, float y, float w, float h, Color col)
+            {
+                var b = new ColorRect { Position = new Vector2(x, y), Size = new Vector2(w, h), Color = col };
+                AddChild(b);
+            }
+            switch (i)
+            {
+                case 0: // phone -> menu
+                    Box(cx + 4, cy + 1, 16, 22, new Color(0.11f, 0.13f, 0.16f));
+                    Box(cx + 7, cy + 5, 10, 14, new Color(0.35f, 0.91f, 0.80f));
+                    break;
+                case 1: // store -> price tag
+                    Box(cx + 1, cy + 2, 20, 20, new Color(0.89f, 0.70f, 0.26f));
+                    Box(cx + 3, cy + 4, 4, 4, new Color(0.11f, 0.09f, 0.07f));
+                    break;
+                case 2: // Sal -> cooler
+                    Box(cx + 2, cy + 4, 20, 18, new Color(0.78f, 0.24f, 0.19f));
+                    Box(cx + 1, cy + 2, 22, 3, new Color(0.91f, 0.93f, 0.94f));
+                    break;
+                case 3: // map
+                    Box(cx + 2, cy + 2, 20, 20, new Color(0.77f, 0.66f, 0.46f));
+                    Box(cx + 6, cy + 16, 3, 3, new Color(0.33f, 0.55f, 0.33f));
+                    Box(cx + 12, cy + 12, 3, 3, new Color(0.33f, 0.55f, 0.33f));
+                    Box(cx + 16, cy + 5, 3, 3, new Color(0.47f, 0.75f, 0.51f));
+                    break;
+                case 4: // journal
+                    Box(cx + 3, cy + 1, 18, 21, new Color(0.93f, 0.91f, 0.83f));
+                    Box(cx + 12, cy + 1, 2, 21, new Color(0.63f, 0.59f, 0.47f));
+                    break;
+                case 5: // stoke lanes
+                    Box(cx + 3, cy + 6, 5, 12, new Color(0.47f, 0.75f, 0.51f));
+                    Box(cx + 10, cy + 3, 5, 15, new Color(0.59f, 0.82f, 0.93f));
+                    Box(cx + 17, cy + 8, 5, 10, new Color(0.84f, 0.59f, 0.93f));
+                    break;
+                case 6: // smoke pouch
+                    Box(cx + 3, cy + 5, 18, 16, new Color(0.69f, 0.58f, 0.38f));
+                    Box(cx + 10, cy + 3, 4, 4, new Color(0.47f, 0.37f, 0.22f));
+                    Box(cx + 6, cy + 9, 3, 3, new Color(0.55f, 0.78f, 0.52f));
+                    break;
+            }
+        }
+    }
+
+    private void OnIconInput(InputEvent e)
+    {
+        if (e is InputEventMouseButton mb && mb.Pressed
+            && mb.ButtonIndex == MouseButton.Left)
+        {
+            for (int i = 0; i < 7; i++)
+            {
+                var r = new Rect2(_icons[i].Position, _icons[i].Size);
+                if (r.HasPoint(mb.Position))
+                {
+                    IconClicked?.Invoke(i);
+                    return;
+                }
+            }
+        }
+    }
+
+    private void IconHover()
+    {
+        var mouse = GetViewport().GetMousePosition();
+        for (int i = 0; i < 7; i++)
+        {
+            var r = new Rect2(_icons[i].Position, _icons[i].Size);
+            _icons[i].Color = r.HasPoint(mouse)
+                ? new Color(0.15f, 0.18f, 0.27f, 0.97f)
+                : new Color(0.07f, 0.09f, 0.14f, 0.95f);
+        }
     }
 
     private static Label Label(string text, int size, Color col)
