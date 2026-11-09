@@ -433,15 +433,8 @@ public partial class HotRodsGame : Game
         var grip = new Vector3(-3.16f, 1.20f, 1.62f);
         var mid = new Vector3(-2.45f, 1.42f, 1.55f);
         var tip = new Vector3(-0.85f, 1.60f, 1.45f);
-        var jacket = new Color(226, 178, 66);
-        // sleeves then hands
-        Prims.AddSegment(v, grip - (mid - grip) * 0.35f, grip, 0.082f, jacket);
-        Prims.AddBox(v, grip + new Vector3(-0.012f, 0.015f, 0.02f),
-                     0.085f, 0.095f, 0.10f, Skin);
-        Prims.AddSegment(v, mid - (tip - mid) * 0.25f, mid, 0.070f, jacket);
-        Prims.AddBox(v, mid + new Vector3(0.008f, -0.01f, -0.015f),
-                     0.075f, 0.08f, 0.09f, Skin);
-        // the rod (the tip dips under load while you fight the fish)
+        // no arms in view - just the rod (the tip dips under load while
+        // you fight the fish)
         float bend = _fishing.Current == FishingSim.Phase.Reeling
             ? 0.10f * _fishing.Progress : _fishing.Current == FishingSim.Phase.Hook ? 0.16f : 0f;
         var tipBent = tip - new Vector3(0f, bend, 0f);
@@ -1053,7 +1046,8 @@ public partial class HotRodsGame : Game
                 case "whoosh": _whoosh.Play(0.5f, 0f, 0f); break;
                 case "splash": _splash.Play(0.6f, 0f, 0f); break;
                 case "big": _splashBig.Play(0.7f, 0f, 0f); break;
-                case "click": _click.Play(0.35f, 0f, 0f); break;
+                case "click": break;                      // UI clicks stay silent
+                case "reel_tick": _click.Play(0.35f, 0f, 0f); break;
             }
         }
         catch

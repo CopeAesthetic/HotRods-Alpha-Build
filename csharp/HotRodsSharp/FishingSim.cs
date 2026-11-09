@@ -81,7 +81,6 @@ public sealed class FishingSim
                 if (kb.IsKeyUp(Keys.Space))
                 {
                     _state.Casts++;
-                    Sfx("whoosh");
                     _start = rodTip;
                     _target = rodTip + castDir * (5f + Power * 11f);
                     _target.Y = 0.06f;
@@ -190,7 +189,7 @@ public sealed class FishingSim
         if (kb.IsKeyDown(Keys.Space) && _strikeCd <= 0f)
         {
             _strikeCd = 0.14f;
-            Sfx("click");
+            Sfx("reel_tick");
             float d = MathF.Abs(Sweep - Zone);
             float half = ZoneW * 0.5f;
             float blue = ZoneW * 0.09f;
