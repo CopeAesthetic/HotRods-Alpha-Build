@@ -100,6 +100,7 @@ public partial class Screens : CanvasLayer
         foreach (var c in _built)
         {
             c.Visible = false;
+            _root.RemoveChild(c);
             _pool.Add(c);
         }
         _built.Clear();
