@@ -368,29 +368,7 @@ public partial class HotRodsGame : Game
                     Lilies[i].scale, 0.02f);
         BuildDock(s, Docks[_spot]);
         BuildShore(s, Banks[_spot]);
-        BuildCooler(s);
         _staticTriCount = s.Count / 3;
-    }
-
-    /// <summary>The cooler sits at your left with the phone on its lid;
-    /// the screen glows from the dynamic pass so it reads at night too.</summary>
-    private void BuildCooler(List<VertexPositionNormalColor> s)
-    {
-        // a small pier section bridges the planks out to the cooler
-        PrimsLit.AddBox(s, new Vector3(-3.30f, 0.72f, 1.15f), 2.0f, 0.13f, 1.1f, Wood);
-        var c = new Vector3(-3.20f, 0.80f, 0.95f);
-        PrimsLit.AddBox(s, c, 0.55f, 0.45f, 0.75f, new Color(200, 60, 48));
-        PrimsLit.AddBox(s, new Vector3(c.X, c.Y + 0.26f, c.Z), 0.57f, 0.06f, 0.77f,
-                        new Color(232, 236, 240));
-        PrimsLit.AddBox(s, new Vector3(c.X - 0.02f, c.Y + 0.32f, c.Z),
-                        0.16f, 0.035f, 0.26f, new Color(28, 32, 40));
-    }
-
-    /// <summary>Unlit phone-screen glow so it stays bright after dark.</summary>
-    private void EmitPhoneGlow(List<VertexPositionColor> v)
-    {
-        Prims.AddBox(v, new Vector3(-3.20f, 1.155f, 0.93f), 0.11f, 0.012f, 0.20f,
-                     new Color(90, 232, 205));
     }
 
     private void BuildDock(List<VertexPositionNormalColor> s,
@@ -783,7 +761,6 @@ public partial class HotRodsGame : Game
         }
         EmitShimmer(dyn);
         EmitRipples(dyn);
-        EmitPhoneGlow(dyn);
 
         // water first, then the lit static world, then the dynamic pieces
         DrawVerts(water, _effect);
@@ -1729,24 +1706,6 @@ public partial class HotRodsGame : Game
             return;
         }
 
-        // the glowing phone on the cooler opens the menu
-        if (HitRect(new Vector3(-3.20f, 1.16f, 0.95f), 0.10f, 0.05f, 0.15f)
-            is { } pr && pr.Contains(mouse))
-        {
-            _menuOpen = true;
-            _menuSel = 0;
-            PlaySfx("click");
-            return;
-        }
-        // the cooler itself opens Sal's shack
-        if (HitRect(new Vector3(-3.20f, 0.80f, 0.95f), 0.32f, 0.30f, 0.42f)
-            is { } cr && cr.Contains(mouse))
-        {
-            _dealerOpen = true;
-            _dealerSel = 0;
-            _dealerArea = _state.Spot;
-            PlaySfx("click");
-        }
     }
 
     private void MenuClick(Vector2 pos)
