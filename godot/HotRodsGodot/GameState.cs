@@ -1,3 +1,4 @@
+using Godot;
 using System.Text.Json;
 
 namespace HotRodsSharp;
@@ -51,8 +52,8 @@ public sealed class GameState
 
     // ------------------------------------------------------------------ save --
     private static string SlotPath(int slot) => slot == 1
-        ? Path.Combine(AppContext.BaseDirectory, "save.json")
-        : Path.Combine(AppContext.BaseDirectory, $"save{slot}.json");
+        ? ProjectSettings.GlobalizePath("user://save.json")
+        : ProjectSettings.GlobalizePath($"user://save{slot}.json");
 
     public static bool AnySave() =>
         Enumerable.Range(1, 3).Any(i => File.Exists(SlotPath(i)));

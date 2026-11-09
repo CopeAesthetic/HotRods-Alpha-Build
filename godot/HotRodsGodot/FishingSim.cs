@@ -40,6 +40,22 @@ public sealed class FishingSim
     public const float BiteWindow = 2.0f;   // FISH ON! - hook it or lose it
     public float BiteT => _biteT;
 
+    /// <summary>Godot render hook: the bobber's visual position with the
+    /// swell, nibble dips, bite tug, hook pull and fight jitter applied.</summary>
+    public Vector3 BobberWorld
+    {
+        get
+        {
+            float idle = Current == Phase.Waiting && _nibbleT <= 0f
+                ? 0.045f * MathF.Sin(_time * 2.6f) : 0f;
+            float nibble = _nibbleT > 0f ? 0.09f * MathF.Sin(_time * 24f) : 0f;
+            float bite = Current == Phase.Bite ? 0.12f * MathF.Sin(_time * 18f) : 0f;
+            float hook = Current == Phase.Hook ? -0.10f : 0f;
+            float jitter = Current == Phase.Reeling ? 0.06f * MathF.Sin(_time * 22f) : 0f;
+            return Bobber + new Vector3(jitter, idle - nibble + bite + hook, 0f);
+        }
+    }
+
     /// <summary>Fired when the bobber lands, nibbles or a fish bites.</summary>
     public event Action<Vector3>? Ripple;
 
