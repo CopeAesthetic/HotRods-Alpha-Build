@@ -176,13 +176,109 @@ public partial class World : Node3D
     {
         foreach (var (n, x, z, rot, s) in Layouts[spot])
             Prop(n, new Vector3(x, 0f, z), rot, s);
-        // reeds and lilies on the water
-        for (int i = 0; i < 9; i++)
-            Prop("reeds", new Vector3(-20f + i * 5f, 0f, -7.0f + (i % 3) * 0.8f),
-                 (i * 0.7f) % 6.28f, 1.0f);
-        for (int i = 0; i < 6; i++)
-            Prop("lily", new Vector3(-24f + i * 6.5f, 0f, -3.5f + (i % 2) * 1.6f),
-                 (i * 1.3f) % 6.28f, 1.0f);
+
+        // ---- Duckweed Pond: model it on the real thing - duckweed mats,
+        // cattail bands, lily flowers, half-submerged rocks, deadfall
+        if (spot == 0)
+        {
+            // duckweed mats drift along the bank and in the cove
+            for (int i = 0; i < 46; i++)
+            {
+                float bx = -30f + (i % 23) * 2.7f + MathF.Sin(i * 7.31f) * 1.2f;
+                float bz = -11.6f - (i * 5 % 3) * 0.9f + MathF.Cos(i * 3.1f) * 0.6f;
+                Duckweed(bx, bz, 0.10f + (i % 4) * 0.035f);
+            }
+            for (int i = 0; i < 18; i++)
+            {
+                float bx = -8.5f + (i % 9) * 1.4f + MathF.Sin(i * 5.7f) * 0.5f;
+                float bz = -1.8f - (i % 3) * 0.8f;
+                Duckweed(bx, bz, 0.09f + (i % 3) * 0.03f);
+            }
+            // dense cattail and reed bands at the waterline
+            for (int i = 0; i < 22; i++)
+            {
+                float bx = -31f + i * 2.9f + MathF.Sin(i * 2.7f) * 0.8f;
+                Prop("reeds", new Vector3(bx, 0f, -12.4f + (i % 3) * 0.5f),
+                     (i * 0.9f) % 6.28f, 1.0f);
+            }
+            // lily pads with a few flowers
+            for (int i = 0; i < 14; i++)
+            {
+                float bx = -26f + i * 3.8f + MathF.Sin(i * 4.1f) * 1.4f;
+                float bz = -6.5f - (i % 3) * 1.7f;
+                Prop("lily", new Vector3(bx, 0f, bz), (i * 1.3f) % 6.28f, 1.0f);
+                if (i % 3 == 0)
+                    LilyFlower(bx + 0.12f, bz - 0.10f);
+            }
+            // rocks half in the water along the near bank
+            Prop("rock_a", new Vector3(-18.5f, 0.02f, -11.9f), 1.9f, 1.0f);
+            Prop("rock_b", new Vector3(8.0f, 0.02f, -11.2f), 3.8f, 1.0f);
+            Prop("rock_a", new Vector3(21.5f, 0.02f, -10.6f), 0.6f, 0.9f);
+            // a fallen log reaches from the bank into the water
+            Log(new Vector3(-24.5f, 0.07f, -12.9f), new Vector3(-23.2f, 0.05f, -10.9f));
+            // two overhanging shore trees
+            Prop("tree_a", new Vector3(-15.5f, 0f, -14.6f), 0.4f, 1.25f);
+            Prop("tree_b", new Vector3(25.5f, 0f, -14.2f), 5.2f, 1.30f);
+        }
+        else
+        {
+            // the other waters keep light dressing
+            for (int i = 0; i < 9; i++)
+                Prop("reeds", new Vector3(-20f + i * 5f, 0f, -7.0f + (i % 3) * 0.8f),
+                     (i * 0.7f) % 6.28f, 1.0f);
+            for (int i = 0; i < 6; i++)
+                Prop("lily", new Vector3(-24f + i * 6.5f, 0f, -3.5f + (i % 2) * 1.6f),
+                     (i * 1.3f) % 6.28f, 1.0f);
+        }
+    }
+
+    private void Duckweed(float x, float z, float r)
+    {
+        var mesh = new CylinderMesh { TopRadius = r, BottomRadius = r * 0.8f, Height = 0.015f };
+        var mat = new StandardMaterial3D
+        {
+            AlbedoColor = new Color(0.36f, 0.62f, 0.24f),
+            Roughness = 0.8f,
+        };
+        var mi = new MeshInstance3D { Mesh = mesh, MaterialOverride = mat };
+        mi.Position = new Vector3(x, 0.085f, z);
+        mi.RotationDegrees = new Vector3(0f, (x * 37f + z * 13f) % 360f, 0f);
+        _land.AddChild(mi);
+    }
+
+    private void LilyFlower(float x, float z)
+    {
+        var mi = new MeshInstance3D
+        {
+            Mesh = new SphereMesh { Radius = 0.05f, Height = 0.05f },
+            MaterialOverride = new StandardMaterial3D
+            {
+                AlbedoColor = new Color(0.96f, 0.93f, 0.97f),
+                Roughness = 0.7f,
+            },
+        };
+        mi.Position = new Vector3(x, 0.12f, z);
+        _land.AddChild(mi);
+    }
+
+    private void Log(Vector3 a, Vector3 b)
+    {
+        var node = new MeshInstance3D
+        {
+            Mesh = new CylinderMesh { TopRadius = 0.10f, BottomRadius = 0.14f, Height = 1f },
+            MaterialOverride = new StandardMaterial3D
+            {
+                AlbedoColor = new Color(0.32f, 0.24f, 0.16f),
+                Roughness = 0.95f,
+            },
+        };
+        float len = a.DistanceTo(b);
+        node.Position = (a + b) * 0.5f;
+        node.Scale = new Vector3(1f, len, 1f);
+        _land.AddChild(node);
+        node.LookAt(b, Vector3.Up);
+        node.RotationDegrees = new Vector3(node.RotationDegrees.X + 90f,
+                                           node.RotationDegrees.Y, node.RotationDegrees.Z);
     }
 
     private void Box(Vector3 pos, Vector3 size, Color col)

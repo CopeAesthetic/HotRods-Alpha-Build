@@ -80,6 +80,8 @@ public partial class Main : Node3D
 
         if (OS.GetCmdlineUserArgs().Contains("--shot"))
             CallDeferred(nameof(TakeShot));
+        if (OS.GetCmdlineUserArgs().Contains("--shotgame"))
+            CallDeferred(nameof(ShotGame));
         if (OS.GetCmdlineUserArgs().Contains("--simtest"))
             CallDeferred(nameof(RunSimTests));
         if (OS.GetCmdlineUserArgs().Contains("--clicktest"))
@@ -589,6 +591,19 @@ public partial class Main : Node3D
     {
         _uiMsgT = t;
         _hud.Flash(msg, t);
+    }
+
+    private async void ShotGame()
+    {
+        for (int i = 0; i < 10; i++)
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        BoardSlot(1);
+        for (int i = 0; i < 8; i++)
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        var img = GetViewport().GetTexture().GetImage();
+        img.SavePng("user://shotgame.png");
+        GD.Print("SHOTGAME: " + ProjectSettings.GlobalizePath("user://shotgame.png"));
+        GetTree().Quit();
     }
 
     private async void TakeShot()

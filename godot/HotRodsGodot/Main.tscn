@@ -52,6 +52,6 @@ script = ExtResource("4_screens")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2, 1.6, 1.44)
-rotation_degrees = Vector3(-7, -90, 0)
+rotation_degrees = Vector3(-10, -104, 0)
 fov = 62.0
 current = true
