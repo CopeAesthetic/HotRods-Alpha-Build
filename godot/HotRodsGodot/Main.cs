@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 /// </summary>
 public partial class Main : Node3D
 {
+    private bool _dragging;
+    private float _yawDeg, _pitchDeg;
+
     public override void _Ready()
     {
         if (OS.GetCmdlineUserArgs().Contains("--shot"))
@@ -58,6 +61,19 @@ public partial class Main : Node3D
 
         GD.Print($"SIMTEST {passes} checks passed");
         GetTree().Quit();
+    }
+
+    public override void _Input(InputEvent e)
+    {
+        if (e is InputEventMouseButton mb && mb.ButtonIndex == MouseButton.Left)
+            _dragging = mb.Pressed;
+        if (e is InputEventMouseMotion mm && _dragging)
+        {
+            _yawDeg = Mathf.Clamp(_yawDeg - mm.Relative.X * 0.18f, -50f, 50f);
+            _pitchDeg = Mathf.Clamp(_pitchDeg + mm.Relative.Y * 0.18f, -25f, 30f);
+            GetNode<Camera3D>("Camera3D").RotationDegrees =
+                new Vector3(_pitchDeg, -90f + _yawDeg, 0f);
+        }
     }
 
     private async void TakeShot()
