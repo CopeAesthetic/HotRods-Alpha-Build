@@ -136,55 +136,22 @@ public sealed class SmokingSim
         }
     }
 
-    /// <summary>First-person arms: the right arm raises the piece to the
-    /// mouth while the left brings the lighter to the piece's lit end -
-    /// the bottom tip of a cylinder, the bowl of glass - so the flame
-    /// licks exactly where it should.</summary>
+    /// <summary>First person: one arm raises the piece to the mouth with
+    /// a hand wrapped on it. No lighter - the ceremony is just the hit.</summary>
     public void EmitArms(List<VertexPositionColor> v, Color vest, Color skin)
     {
         if (!Active)
             return;
         var hold = Hold();
-        var (id, _, lay, yaw) = Items[_item];
-        float r = Raise;
-        float ca = MathF.Cos(lay * r), sa = MathF.Sin(lay * r);
-        float cb = MathF.Cos(yaw * r), sb = MathF.Sin(yaw * r);
-        // the piece's axis under the same rotations the mesh gets
-        var axis = new Vector3(ca * sb, -sa, ca * cb);
         var off = new Vector3(0.02f, 0.10f, 0.04f);
-        float litZ = id switch
-        {
-            "smoker_one_hitter" => -0.19f,
-            "smoker_papers" => -0.165f,
-            "smoker_backwoods" => -0.145f,
-            _ => 0f,   // pipe and glass light the bowl up top
-        };
-        Vector3 lit = litZ < 0f ? hold + off + axis * litZ
-                    : hold + off + new Vector3(0f, 0.09f, 0f);
 
-        // right arm raises the piece, hand wrapped on it
+        // the arm rises from the bottom-right corner of the FP frame
         var shR = new Vector3(-4.10f, 1.05f, 1.78f);
         var elR = (shR + hold) * 0.5f + new Vector3(0.03f, -0.05f, 0.02f);
         Prims.AddSegment(v, shR, elR, 0.065f, vest);
         Prims.AddSegment(v, elR, hold, 0.052f, skin);
         Prims.AddBox(v, hold + off + new Vector3(0f, -0.02f, 0.02f),
                      0.075f, 0.08f, 0.09f, skin);
-
-        // left arm holds the lighter under the lit end
-        var lighter = lit + new Vector3(0.02f, -0.04f, 0.03f);
-        var shL = new Vector3(-4.38f, 1.05f, 1.00f);
-        var elL = (shL + lighter) * 0.5f + new Vector3(-0.03f, -0.05f, -0.02f);
-        Prims.AddSegment(v, shL, elL, 0.065f, vest);
-        Prims.AddSegment(v, elL, lighter, 0.052f, skin);
-        Prims.AddBox(v, lighter + new Vector3(0f, -0.02f, 0.01f),
-                     0.07f, 0.075f, 0.08f, skin);
-        Prims.AddBox(v, new Vector3(lighter.X, lighter.Y + 0.015f, lighter.Z + 0.01f),
-                     0.02f, 0.06f, 0.02f, new Color(232, 186, 96));
-        // the flame licks the tip of the piece
-        float flame = lit.Y + 0.02f + MathF.Sin(_clock * 30f) * 0.004f;
-        Prims.AddSegment(v, lit + new Vector3(0f, -0.02f, 0.01f),
-                         new Vector3(lit.X, flame, lit.Z + 0.01f), 0.012f,
-                         new Color(255, 190, 60), 4);
     }
 
     /// <summary>Five puffs rising from the mouth.</summary>
