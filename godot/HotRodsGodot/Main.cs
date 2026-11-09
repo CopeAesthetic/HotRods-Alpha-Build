@@ -25,7 +25,7 @@ public partial class Main : Node3D
     private MeshInstance3D _armUpper = null!, _armLower = null!, _hand = null!, _piece = null!;
     private readonly List<(MeshInstance3D node, StandardMaterial3D mat, float offset)> _plume = new();
 
-    private bool _wasSmoking, _eHeld, _qHeld, _xHeld, _dragging, _atTitle = true;
+    private bool _wasSmoking, _wasReeling, _eHeld, _qHeld, _xHeld, _dragging, _atTitle = true;
     private float _yawDeg, _pitchDeg, _uiMsgT;
     private int _munchieLevel;
     private Camera3D _cam = null!;
@@ -134,6 +134,12 @@ public partial class Main : Node3D
         if (_wasSmoking && !_smoking.Active)
             Flash(_state.ApplyToke(), 2.5f);
         _wasSmoking = _smoking.Active;
+        if (_wasReeling && !_fishing.Reeling && _fishing.Caught != null)
+        {
+            var f = _fishing.Caught;
+            Flash($"{f.Name.ToUpper()} - {_fishing.CaughtKg:0.0} KG  +${(int)_fishing.CaughtValue}", 3f);
+        }
+        _wasReeling = _fishing.Reeling;
         _smoking.Speed = 1f + 0.06f * _state.StokeRank("smoke");
 
         if (Input.IsKeyPressed(Key.E) && !_eHeld)
@@ -522,6 +528,40 @@ public partial class Main : Node3D
         Check(st.Couch == 2.6f && msg.Contains("couch"), "couch lock");
         st.Munchie = 100f;
         Check(!st.CanToke().ok, "munchie blocks smoke");
+
+        // drive a full catch through the sim: charge, cast, wait, bite,
+        // hook, then time pulls inside the zone until the fish lands
+        var st2 = GameState.New(1);
+        var fs = new FishingSim(st2);
+        var rodTip = new Vector3(-1.83f, 1.60f, 1.45f);
+        var castDir = new Vector3(1f, -0.12f, -0.1f).Normalized();
+        const float step = 1f / 60f;
+        int guard = 0;
+        fs.Update(step, true, rodTip, castDir);    // Idle -> Charging
+        while (fs.Current == FishingSim.Phase.Charging && guard++ < 500)
+            fs.Update(step, true, rodTip, castDir);
+        fs.Update(step, false, rodTip, castDir);   // release the cast
+        guard = 0;
+        while (fs.Current is FishingSim.Phase.Flying or FishingSim.Phase.Waiting
+               && guard++ < 3000)
+            fs.Update(step, false, rodTip, castDir);
+        fs.Update(step, true, rodTip, castDir);    // set the hook at the bite
+        guard = 0;
+        while (fs.Current == FishingSim.Phase.Hook && guard++ < 100)
+            fs.Update(step, false, rodTip, castDir);
+        guard = 0;
+        int dbg = 0;
+        while (fs.Current == FishingSim.Phase.Reeling && guard++ < 6000)
+        {
+            float d = Mathf.Abs(fs.Sweep - fs.Zone);
+            bool press = fs.Zone > 0.01f && d <= fs.ZoneW * 0.15f && fs.Sweep <= fs.Zone;
+            fs.Update(step, press, rodTip, castDir);
+            if (dbg++ < 40)
+                GD.Print($"  reel f{dbg} sweep={fs.Sweep:F3} zone={fs.Zone:F3} d={d:F3} press={press} hits={fs.Hits}");
+        }
+        GD.Print($"DRIVE end phase={fs.Current} hits={fs.Hits}/{fs.Needed} zoneW={fs.ZoneW}");
+        Check(fs.Caught != null, "drove a full catch");
+        Check(fs.Current == FishingSim.Phase.Card, "card phase after catch");
         GD.Print($"SIMTEST {passes} checks passed");
         GetTree().Quit();
     }
