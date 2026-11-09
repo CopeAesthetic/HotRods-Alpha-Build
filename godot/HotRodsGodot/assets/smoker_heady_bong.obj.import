@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://i2o17fxlxdfn"
+path="res://.godot/imported/smoker_heady_bong.obj-bfb5d3094e7dd117430c2df4c1d12b87.mesh"
+
+[deps]
+
+files=["res://.godot/imported/smoker_heady_bong.obj-bfb5d3094e7dd117430c2df4c1d12b87.mesh"]
+
+source_file="res://assets/smoker_heady_bong.obj"
+dest_files=["res://.godot/imported/smoker_heady_bong.obj-bfb5d3094e7dd117430c2df4c1d12b87.mesh", "res://.godot/imported/smoker_heady_bong.obj-bfb5d3094e7dd117430c2df4c1d12b87.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

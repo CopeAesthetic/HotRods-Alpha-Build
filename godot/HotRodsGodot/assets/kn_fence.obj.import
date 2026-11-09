@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://bxourb4r87eo2"
+path="res://.godot/imported/kn_fence.obj-c223e5fcf339ae031cd78d9d8e519dcf.mesh"
+
+[deps]
+
+files=["res://.godot/imported/kn_fence.obj-c223e5fcf339ae031cd78d9d8e519dcf.mesh"]
+
+source_file="res://assets/kn_fence.obj"
+dest_files=["res://.godot/imported/kn_fence.obj-c223e5fcf339ae031cd78d9d8e519dcf.mesh", "res://.godot/imported/kn_fence.obj-c223e5fcf339ae031cd78d9d8e519dcf.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

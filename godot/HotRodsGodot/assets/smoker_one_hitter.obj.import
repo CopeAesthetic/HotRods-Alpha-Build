@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://bexgiywch1t3e"
+path="res://.godot/imported/smoker_one_hitter.obj-e95f08d81f69520dffaaa81f51f5ae64.mesh"
+
+[deps]
+
+files=["res://.godot/imported/smoker_one_hitter.obj-e95f08d81f69520dffaaa81f51f5ae64.mesh"]
+
+source_file="res://assets/smoker_one_hitter.obj"
+dest_files=["res://.godot/imported/smoker_one_hitter.obj-e95f08d81f69520dffaaa81f51f5ae64.mesh", "res://.godot/imported/smoker_one_hitter.obj-e95f08d81f69520dffaaa81f51f5ae64.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

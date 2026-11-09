@@ -1,0 +1,62 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://Main.cs" id="1_main"]
+
+[sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
+sky_top_color = Color(0.36, 0.55, 0.82, 1)
+sky_horizon_color = Color(0.72, 0.8, 0.86, 1)
+ground_bottom_color = Color(0.32, 0.4, 0.42, 1)
+ground_horizon_color = Color(0.68, 0.78, 0.82, 1)
+sun_angle_max = 40.0
+
+[sub_resource type="Sky" id="sky"]
+sky_material = SubResource("sky_mat")
+
+[sub_resource type="Environment" id="env"]
+background_mode = 2
+sky = SubResource("sky")
+ambient_light_source = 3
+ambient_light_color = Color(0.55, 0.6, 0.66, 1)
+ambient_light_sky_contribution = 0.4
+tonemap_mode = 2
+glow_enabled = true
+glow_intensity = 0.35
+glow_bloom = 0.1
+
+[sub_resource type="PlaneMesh" id="water_plane"]
+size = Vector2(80, 80)
+orientation = 1
+
+[sub_resource type="StandardMaterial3D" id="water_mat"]
+albedo_color = Color(0.13, 0.36, 0.44, 1)
+metallic = 0.0
+roughness = 0.35
+transparency = 2
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_main")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, 38, 0)
+light_color = Color(1, 0.94, 0.82, 1)
+light_energy = 1.1
+shadow_enabled = true
+
+[node name="Water" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, -8)
+mesh = SubResource("water_plane")
+surface_material_override/0 = SubResource("water_mat")
+
+[node name="Dock" type="Node3D" parent="."]
+
+[node name="Plank1" type="MeshInstance3D" parent="Dock"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0.62, 0.6)
+mesh = SubResource("water_plane")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2, 1.6, 1.44)
+fov = 62.0
+current = true

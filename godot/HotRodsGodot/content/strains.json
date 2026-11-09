@@ -1,0 +1,330 @@
+[
+  {
+    "id": "homegrown",
+    "name": "Bluegill Bud",
+    "area": 0,
+    "tier": -1,
+    "gate_min": 0,
+    "gate_max": 1,
+    "pts": 3,
+    "potency": 1,
+    "luck": 0.15,
+    "duration": 1.0,
+    "wobble": 1.0,
+    "cash": 1.0,
+    "color": [
+      150,
+      196,
+      140
+    ],
+    "desc": "Honest, mellow and slightly seedy. Sal keeps a jar by the till."
+  },
+  {
+    "id": "sunset",
+    "name": "Crappie Kush",
+    "area": 0,
+    "tier": 1,
+    "gate_min": 1,
+    "gate_max": 3,
+    "pts": 6,
+    "potency": 2,
+    "luck": 0.25,
+    "duration": 1.6,
+    "wobble": 0.9,
+    "cash": 1.0,
+    "color": [
+      246,
+      168,
+      110
+    ],
+    "desc": "Lasts ages and makes the pond look like a postcard."
+  },
+  {
+    "id": "pond_haze",
+    "name": "Sunfish Skunk",
+    "area": 0,
+    "tier": 2,
+    "gate_min": 2,
+    "gate_max": 4,
+    "pts": 11,
+    "potency": 2,
+    "luck": 0.36,
+    "duration": 1.1,
+    "wobble": 1.1,
+    "cash": 1.0,
+    "color": [
+      176,
+      210,
+      120
+    ],
+    "desc": "Green, floaty, and inexplicably good at finding carp."
+  },
+  {
+    "id": "lake_blue",
+    "name": "Rainbow Roach",
+    "area": 1,
+    "tier": 2,
+    "gate_min": 1,
+    "gate_max": 2,
+    "pts": 26,
+    "potency": 3,
+    "luck": 0.45,
+    "duration": 1.2,
+    "wobble": 1.0,
+    "cash": 1.0,
+    "color": [
+      118,
+      168,
+      236
+    ],
+    "desc": "Cold-cured and clear-headed. The lake fish like it."
+  },
+  {
+    "id": "lake_gold",
+    "name": "Smallmouth Sativa",
+    "area": 1,
+    "tier": 3,
+    "gate_min": 2,
+    "gate_max": 3,
+    "pts": 40,
+    "potency": 3,
+    "luck": 0.4,
+    "duration": 1.3,
+    "wobble": 1.0,
+    "cash": 1.25,
+    "color": [
+      240,
+      190,
+      96
+    ],
+    "desc": "Tastes faintly of citrus. Sal swears by it at sunset."
+  },
+  {
+    "id": "lake_deep",
+    "name": "Pike Punch",
+    "area": 1,
+    "tier": 3,
+    "gate_min": 2,
+    "gate_max": 4,
+    "pts": 60,
+    "potency": 4,
+    "luck": 0.56,
+    "duration": 0.9,
+    "wobble": 1.3,
+    "cash": 1.0,
+    "color": [
+      96,
+      128,
+      200
+    ],
+    "desc": "Hits hard and doesn't last. Your hands will remember it."
+  },
+  {
+    "id": "marsh_mud",
+    "name": "Bowfin Blunt",
+    "area": 2,
+    "tier": 3,
+    "gate_min": 2,
+    "gate_max": 3,
+    "pts": 95,
+    "potency": 4,
+    "luck": 0.5,
+    "duration": 1.5,
+    "wobble": 1.15,
+    "cash": 1.0,
+    "color": [
+      138,
+      148,
+      96
+    ],
+    "desc": "Earthy, slow, and weirdly good at pulling up monsters."
+  },
+  {
+    "id": "marsh_fever",
+    "name": "Gar Gas",
+    "area": 2,
+    "tier": 4,
+    "gate_min": 3,
+    "gate_max": 4,
+    "pts": 135,
+    "potency": 5,
+    "luck": 0.62,
+    "duration": 1.0,
+    "wobble": 1.35,
+    "cash": 1.0,
+    "color": [
+      214,
+      128,
+      108
+    ],
+    "desc": "The marsh runs hot around this one. So will you."
+  },
+  {
+    "id": "marsh_wisp",
+    "name": "Catfish Chronic",
+    "area": 2,
+    "tier": 4,
+    "gate_min": 3,
+    "gate_max": 4,
+    "pts": 180,
+    "potency": 5,
+    "luck": 0.58,
+    "duration": 1.7,
+    "wobble": 1.2,
+    "cash": 1.2,
+    "color": [
+      150,
+      230,
+      206
+    ],
+    "desc": "Burns pale green and lasts most of the night."
+  },
+  {
+    "id": "trench_abyss",
+    "name": "Burbot Blaze",
+    "area": 3,
+    "tier": 4,
+    "gate_min": 3,
+    "gate_max": 4,
+    "pts": 250,
+    "potency": 6,
+    "luck": 0.72,
+    "duration": 1.2,
+    "wobble": 1.25,
+    "cash": 1.0,
+    "color": [
+      108,
+      96,
+      196
+    ],
+    "desc": "Grown under lights, cured under pressure. Do not operate a boat."
+  },
+  {
+    "id": "trench_star",
+    "name": "Sturgeon Stank",
+    "area": 3,
+    "tier": 4,
+    "gate_min": 3,
+    "gate_max": 4,
+    "pts": 350,
+    "potency": 6,
+    "luck": 0.68,
+    "duration": 1.5,
+    "wobble": 1.15,
+    "cash": 1.35,
+    "color": [
+      210,
+      180,
+      250
+    ],
+    "desc": "The trench's cash crop. Everything bites, everything pays."
+  },
+  {
+    "id": "cosmic",
+    "name": "Cosmic Carp",
+    "area": 3,
+    "tier": 4,
+    "gate_min": 3,
+    "gate_max": 4,
+    "pts": 480,
+    "potency": 7,
+    "luck": 0.85,
+    "duration": 1.3,
+    "wobble": 1.2,
+    "cash": 1.15,
+    "color": [
+      188,
+      138,
+      236
+    ],
+    "desc": "The one the mythics are actually interested in."
+  },
+  {
+    "id": "koi_kief",
+    "name": "Koi Kief",
+    "area": 0,
+    "tier": 4,
+    "gate_min": 3,
+    "gate_max": 4,
+    "pts": 55,
+    "potency": 4,
+    "hidden": true,
+    "unlock_fish": "bongwater_bream",
+    "luck": 0.55,
+    "duration": 1.5,
+    "wobble": 1.0,
+    "cash": 1.1,
+    "color": [
+      250,
+      208,
+      130
+    ],
+    "desc": "Scraped off an ornamental carp. Sparkly, floral, absurdly smooth."
+  },
+  {
+    "id": "bass_bong",
+    "name": "Bass Bongwater",
+    "area": 1,
+    "tier": 4,
+    "gate_min": 3,
+    "gate_max": 4,
+    "pts": 110,
+    "potency": 5,
+    "hidden": true,
+    "unlock_fish": "bassquatch",
+    "luck": 0.65,
+    "duration": 1.2,
+    "wobble": 1.2,
+    "cash": 1.0,
+    "color": [
+      120,
+      176,
+      232
+    ],
+    "desc": "Whatever the lake is filtering, it works."
+  },
+  {
+    "id": "gar_gasm",
+    "name": "Gar Gasm",
+    "area": 2,
+    "tier": 4,
+    "gate_min": 3,
+    "gate_max": 4,
+    "pts": 185,
+    "potency": 6,
+    "hidden": true,
+    "unlock_fish": "ganja_gar",
+    "luck": 0.72,
+    "duration": 1.4,
+    "wobble": 1.15,
+    "cash": 1.1,
+    "color": [
+      168,
+      200,
+      120
+    ],
+    "desc": "The marsh's oldest recipe. Tastes like the bottom of a pond."
+  },
+  {
+    "id": "coelacanth_chronic",
+    "name": "Coelacanth Chronic",
+    "area": 3,
+    "tier": 4,
+    "gate_min": 3,
+    "gate_max": 4,
+    "pts": 420,
+    "potency": 8,
+    "hidden": true,
+    "unlock_fish": "spliff_serpent",
+    "luck": 0.95,
+    "duration": 1.4,
+    "wobble": 1.25,
+    "cash": 1.2,
+    "color": [
+      150,
+      210,
+      240
+    ],
+    "desc": "Fossil weed. Has been in the ground longer than the fish."
+  }
+]

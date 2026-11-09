@@ -1,0 +1,337 @@
+{
+  "rods": [
+    {
+      "id": "bamboo",
+      "name": "Bamboo Stick",
+      "cost": 0,
+      "reel": 1.0,
+      "tol": 0.0,
+      "power": 1.0,
+      "color": [
+        198,
+        172,
+        120
+      ],
+      "desc": "A stick with string. Honest work."
+    },
+    {
+      "id": "fiber",
+      "name": "Fiberglass Rod",
+      "cost": 140,
+      "reel": 1.14,
+      "tol": 0.03,
+      "power": 1.12,
+      "color": [
+        150,
+        186,
+        214
+      ],
+      "desc": "Faster reel, softer tip. Forgiving on the line."
+    },
+    {
+      "id": "carbon",
+      "name": "Carbon Caster",
+      "cost": 750,
+      "reel": 1.3,
+      "tol": 0.06,
+      "power": 1.28,
+      "color": [
+        120,
+        126,
+        140
+      ],
+      "desc": "Light, stiff, and a little bit showy."
+    },
+    {
+      "id": "moon",
+      "name": "Moonwhisper Rod",
+      "cost": 3750,
+      "reel": 1.45,
+      "tol": 0.1,
+      "power": 1.5,
+      "color": [
+        196,
+        176,
+        246
+      ],
+      "desc": "Hums faintly. Catches things that should not be catchable."
+    }
+  ],
+  "lines": [
+    {
+      "id": "light",
+      "name": "Old Line",
+      "cost": 0,
+      "grace": 0.22,
+      "desc": "Six pound test and a lot of hope."
+    },
+    {
+      "id": "braid",
+      "name": "Braided Line",
+      "cost": 320,
+      "grace": 0.44,
+      "desc": "Takes a beating without complaining. Much."
+    },
+    {
+      "id": "ghost",
+      "name": "Ghost Line",
+      "cost": 2250,
+      "grace": 0.85,
+      "desc": "Barely visible, absurdly strong. Slight air of smugness."
+    }
+  ],
+  "lures": [
+    {
+      "id": "worm",
+      "name": "Worm on a Hook",
+      "cost": 0,
+      "bias": {},
+      "size": 1.0,
+      "color": [
+        196,
+        156,
+        130
+      ],
+      "desc": "Classic. Reliable. Ethical questions aside."
+    },
+    {
+      "id": "spoon",
+      "name": "Silver Spoon",
+      "cost": 180,
+      "size": 1.25,
+      "color": [
+        198,
+        206,
+        216
+      ],
+      "bias": {
+        "common": 0.85,
+        "uncommon": 0.9,
+        "rare": 1.2
+      },
+      "desc": "Big flash, big fish. Smaller fish get self-conscious."
+    },
+    {
+      "id": "fly",
+      "name": "Woolly Fly",
+      "cost": 500,
+      "size": 0.85,
+      "color": [
+        206,
+        168,
+        118
+      ],
+      "bias": {
+        "common": 0.55,
+        "uncommon": 1.6,
+        "rare": 1.35,
+        "epic": 0.9
+      },
+      "desc": "Fussy, floaty, and very good at finding interesting things."
+    },
+    {
+      "id": "jig",
+      "name": "Glow Jig",
+      "cost": 1400,
+      "size": 1.0,
+      "color": [
+        120,
+        232,
+        208
+      ],
+      "bias": {
+        "rare": 1.6,
+        "epic": 1.3,
+        "legendary": 1.2
+      },
+      "night_bias": {
+        "common": 0.7,
+        "rare": 1.5,
+        "epic": 1.4
+      },
+      "desc": "Glows under the surface. Fish find it hard to be cool about it."
+    },
+    {
+      "id": "gold",
+      "name": "Golden Lure",
+      "cost": 3000,
+      "size": 1.1,
+      "color": [
+        246,
+        196,
+        96
+      ],
+      "bias": {
+        "common": 0.4,
+        "uncommon": 0.7,
+        "epic": 2.2,
+        "legendary": 1.8
+      },
+      "desc": "Absurd. Ostentatious. The legends cannot resist it."
+    }
+  ],
+  "coolers": [
+    {
+      "id": "small",
+      "name": "Little Cooler",
+      "slots": 4,
+      "ice": 1,
+      "cost": 0,
+      "desc": "Four fish and one bag of ice. Fits in one hand."
+    },
+    {
+      "id": "medium",
+      "name": "Big Cooler",
+      "slots": 10,
+      "ice": 2,
+      "cost": 600,
+      "desc": "Ten fish, two bags of ice. The lid actually closes now."
+    },
+    {
+      "id": "huge",
+      "name": "Sal's Spare Cooler",
+      "slots": 16,
+      "ice": 4,
+      "cost": 3000,
+      "desc": "Sixteen fish and four bags of ice. Smells faintly of Sal."
+    }
+  ],
+  "smokers": [
+    {
+      "id": "one_hitter",
+      "name": "One-Hitter",
+      "cost": 0,
+      "ceremony": 1.0,
+      "potency": 0,
+      "dur": 1.0,
+      "fill": 1.0,
+      "luck": 0.0,
+      "conc": false,
+      "color": [
+        198,
+        172,
+        120
+      ],
+      "desc": "A brass one-hitter. Discreet, efficient, slightly hot on the lips."
+    },
+    {
+      "id": "papers",
+      "name": "Rolling Papers",
+      "cost": 40,
+      "ceremony": 3.5,
+      "potency": 0,
+      "dur": 1.05,
+      "fill": 1.1,
+      "luck": 0.03,
+      "conc": false,
+      "color": [
+        236,
+        232,
+        220
+      ],
+      "desc": "A pack of papers. Faster ceremony, same weed."
+    },
+    {
+      "id": "backwoods",
+      "name": "Backwoods",
+      "cost": 120,
+      "ceremony": 6.0,
+      "potency": 0,
+      "dur": 1.25,
+      "fill": 1.2,
+      "luck": 0.05,
+      "conc": false,
+      "color": [
+        120,
+        92,
+        62
+      ],
+      "desc": "A blunt wrap. Slower burn, so the high lasts longer."
+    },
+    {
+      "id": "pipe",
+      "name": "Glass Pipe",
+      "cost": 220,
+      "ceremony": 8.5,
+      "potency": 1,
+      "dur": 1.1,
+      "fill": 1.35,
+      "luck": 0.06,
+      "conc": false,
+      "color": [
+        150,
+        196,
+        210
+      ],
+      "desc": "A spoon pipe. Better airflow and better luck."
+    },
+    {
+      "id": "beaker_bong",
+      "name": "Beaker Bong",
+      "cost": 700,
+      "ceremony": 11.0,
+      "potency": 1,
+      "dur": 1.4,
+      "fill": 1.55,
+      "luck": 0.1,
+      "conc": false,
+      "color": [
+        140,
+        200,
+        180
+      ],
+      "desc": "Water filtration. Smooth, cool and long-lasting."
+    },
+    {
+      "id": "heady_bong",
+      "name": "Heady Bong",
+      "cost": 1500,
+      "ceremony": 13.5,
+      "potency": 2,
+      "dur": 1.45,
+      "fill": 1.8,
+      "luck": 0.16,
+      "conc": false,
+      "color": [
+        210,
+        170,
+        240
+      ],
+      "desc": "Headier glasswork. Hits harder and looks better doing it."
+    },
+    {
+      "id": "dab_rig",
+      "name": "Dab Rig",
+      "cost": 3200,
+      "ceremony": 16.0,
+      "potency": 0,
+      "dur": 1.0,
+      "fill": 2.6,
+      "luck": 0.0,
+      "conc": true,
+      "color": [
+        250,
+        210,
+        120
+      ],
+      "desc": "The only thing that can smoke concentrate. Worth it."
+    },
+    {
+      "id": "hot_press",
+      "name": "Hot Press",
+      "cost": 4800,
+      "ceremony": 1.0,
+      "potency": 0,
+      "dur": 1.0,
+      "fill": 1.0,
+      "luck": 0.0,
+      "conc": false,
+      "color": [
+        226,
+        120,
+        96
+      ],
+      "desc": "Presses flower into concentrate. Use PRESS here, then smoke it."
+    }
+  ]
+}

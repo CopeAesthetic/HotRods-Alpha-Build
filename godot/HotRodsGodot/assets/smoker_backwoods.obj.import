@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://c0kib0cg8nac2"
+path="res://.godot/imported/smoker_backwoods.obj-2e08d7822049aa9ec98cd8c476bad0b2.mesh"
+
+[deps]
+
+files=["res://.godot/imported/smoker_backwoods.obj-2e08d7822049aa9ec98cd8c476bad0b2.mesh"]
+
+source_file="res://assets/smoker_backwoods.obj"
+dest_files=["res://.godot/imported/smoker_backwoods.obj-2e08d7822049aa9ec98cd8c476bad0b2.mesh", "res://.godot/imported/smoker_backwoods.obj-2e08d7822049aa9ec98cd8c476bad0b2.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false
