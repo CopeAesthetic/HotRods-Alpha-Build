@@ -58,6 +58,32 @@ public sealed class SmokingSim
         _item = (_item + 1) % Items.Length;
     }
 
+    /// <summary>Switch the visible piece to a gear smoker (closest visual
+    /// for pieces that share a model).</summary>
+    public void SetItem(string gearId)
+    {
+        string want = "smoker_" + gearId;
+        for (int i = 0; i < Items.Length; i++)
+        {
+            if (Items[i].id == want)
+            {
+                _item = i;
+                return;
+            }
+        }
+        _item = gearId is "heady_bong" ? IndexOf("smoker_beaker_bong")
+              : gearId is "hot_press" ? IndexOf("smoker_dab_rig")
+              : 0;
+    }
+
+    private int IndexOf(string id)
+    {
+        for (int i = 0; i < Items.Length; i++)
+            if (Items[i].id == id)
+                return i;
+        return 0;
+    }
+
     public void Update(float dt)
     {
         _clock += dt;

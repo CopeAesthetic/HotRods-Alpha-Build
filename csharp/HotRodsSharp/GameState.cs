@@ -277,7 +277,7 @@ public sealed class GameState
     // ------------------------------------------------------------------- gear --
     public bool Owns(string kind, string id)
     {
-        if (id is "bamboo" or "light" or "worm" or "small")
+        if (id is "bamboo" or "light" or "worm" or "small" or "one_hitter")
             return true;
         return OwnedGear.TryGetValue(kind, out var set) && set.Contains(id);
     }
@@ -287,13 +287,15 @@ public sealed class GameState
         : kind switch
         {
             "rod" => "bamboo", "line" => "light", "lure" => "worm", "cooler" => "small",
+            "smoker" => "one_hitter",
             _ => "bamboo",
         };
 
     public Gear[] GearTable(string kind) => kind switch
     {
         "rod" => GameData.Rods, "line" => GameData.Lines,
-        "lure" => GameData.Lures, _ => GameData.Coolers,
+        "lure" => GameData.Lures, "smoker" => GameData.Smokers,
+        _ => GameData.Coolers,
     };
 
     public (bool ok, string msg) BuyGear(string kind, Gear g)

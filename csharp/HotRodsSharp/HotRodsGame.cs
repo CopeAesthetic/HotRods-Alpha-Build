@@ -22,7 +22,8 @@ public partial class HotRodsGame : Game
     private readonly FishRender _fish = new();
     private bool _eHeld, _qHeld, _xHeld, _lbHeld, _rbHeld;
     private bool _shopOpen, _enterHeld, _upHeld, _downHeld, _leftHeld, _rightHeld;
-    private bool _journalOpen, _zaaOpen, _escHeld;
+    private bool _journalOpen, _zaaOpen, _pouchOpen, _escHeld;
+    private int _pouchSel;
     private bool _atTitle = true, _tripsOpen, _dealerOpen, _stokeOpen, _helpOpen, _mapOpen, _menuOpen;
     private GameState? _boundState;          // level-up toast subscription
     private bool _hHeld, _tKeyHeld, _fHeld, _uHeld;
@@ -542,6 +543,12 @@ public partial class HotRodsGame : Game
             base.Update(gameTime);
             return;
         }
+        if (_pouchOpen)
+        {
+            UpdatePouch(dt, kb);
+            base.Update(gameTime);
+            return;
+        }
         if (_menuOpen)
         {
             UpdateMenu(dt, kb);
@@ -623,7 +630,7 @@ public partial class HotRodsGame : Game
             }
             else
             {
-                _state.Smoker = _smoking.CurrentItem;
+                _smoking.SetItem(_state.Smoker);
                 _smoking.Start();
             }
             _eHeld = true;
@@ -631,8 +638,15 @@ public partial class HotRodsGame : Game
         if (kb.IsKeyUp(Keys.E)) _eHeld = false;
         if (kb.IsKeyDown(Keys.Q) && !_qHeld)
         {
-            _smoking.CycleItem();
-            _state.Smoker = _smoking.CurrentItem;
+            // cycle through the pieces you actually own
+            var owned = GameData.Smokers.Where(g => _state.Owns("smoker", g.Id))
+                        .Select(g => g.Id).ToArray();
+            if (owned.Length > 0)
+            {
+                int idx = Array.IndexOf(owned, _state.Smoker);
+                _state.Smoker = owned[(idx + 1) % owned.Length];
+                _smoking.SetItem(_state.Smoker);
+            }
             _qHeld = true;
         }
         if (kb.IsKeyUp(Keys.Q)) _qHeld = false;
@@ -764,6 +778,8 @@ public partial class HotRodsGame : Game
             DrawJournal();
         if (_zaaOpen)
             DrawZaa();
+        if (_pouchOpen)
+            DrawPouch();
         if (_menuOpen)
             DrawMenu();
         if (_dealerOpen)
@@ -1175,8 +1191,8 @@ public partial class HotRodsGame : Game
     private static Rectangle[] IconRects()
     {
         int h = 480;   // window is fixed 800x480; icons anchor bottom-left
-        var rects = new Rectangle[7];
-        for (int i = 0; i < 7; i++)
+        var rects = new Rectangle[8];
+        for (int i = 0; i < 8; i++)
             rects[i] = new Rectangle(12 + i * 44, h - 44, 40, 36);
         return rects;
     }
@@ -1231,6 +1247,12 @@ public partial class HotRodsGame : Game
                     _batch.Draw(_pixel, new Rectangle(cx + 3, cy + 6, 5, 12), new Color(120, 190, 130));
                     _batch.Draw(_pixel, new Rectangle(cx + 10, cy + 3, 5, 15), new Color(150, 210, 236));
                     _batch.Draw(_pixel, new Rectangle(cx + 17, cy + 8, 5, 10), new Color(214, 150, 236));
+                    break;
+                case 7: // smoke pouch
+                    _batch.Draw(_pixel, new Rectangle(cx + 3, cy + 5, 18, 16), new Color(176, 148, 96));
+                    _batch.Draw(_pixel, new Rectangle(cx + 10, cy + 3, 4, 4), new Color(120, 94, 56));
+                    _batch.Draw(_pixel, new Rectangle(cx + 6, cy + 9, 3, 3), new Color(140, 200, 132));
+                    _batch.Draw(_pixel, new Rectangle(cx + 15, cy + 14, 3, 3), new Color(140, 200, 132));
                     break;
             }
         }
@@ -1353,6 +1375,130 @@ public partial class HotRodsGame : Game
         "legendary" => new Color(240, 200, 90),
         _ => new Color(160, 166, 180),
     };
+
+    /// <summary>Pouch screen keys: Up/Down pick a piece, Enter equips it,
+    /// Escape closes back to the dock.</summary>
+    private void UpdatePouch(float dt, KeyboardState kb)
+    {
+        _uiMsgT -= dt;
+        var pieces = GameData.Smokers.Where(g => _state.Owns("smoker", g.Id)).ToArray();
+        void Edge(ref bool held, Keys k, Action a)
+        {
+            if (kb.IsKeyDown(k) && !held) { a(); held = true; }
+            if (kb.IsKeyUp(k)) held = false;
+        }
+        Edge(ref _upHeld, Keys.Up, () => _pouchSel = Math.Max(0, _pouchSel - 1));
+        Edge(ref _downHeld, Keys.Down,
+             () => _pouchSel = Math.Min(Math.Max(0, pieces.Length - 1), _pouchSel + 1));
+        Edge(ref _enterHeld, Keys.Enter, () =>
+        {
+            if (pieces.Length == 0)
+                return;
+            _state.Smoker = pieces[Math.Min(_pouchSel, pieces.Length - 1)].Id;
+            _smoking.SetItem(_state.Smoker);
+            _uiMsg = "loaded the " + GameData.Smokers.First(x => x.Id == _state.Smoker).Name;
+            _uiMsgT = 2.5f;
+        });
+        if (kb.IsKeyDown(Keys.Escape))
+            _pouchOpen = false;
+    }
+
+    /// <summary>Pouch: weed stash on the left, owned pieces on the right.
+    /// Click a piece to equip it, a strain to load the jar.</summary>
+    private void DrawPouch()
+    {
+        int w = GraphicsDevice.Viewport.Width;
+        int h = GraphicsDevice.Viewport.Height;
+        _batch.Begin(samplerState: SamplerState.PointClamp);
+        _batch.Draw(_pixel, new Rectangle(0, 0, w, h), new Color(10, 14, 26, 235));
+        _font.Draw(_batch, "SMOKE POUCH", new Vector2(40, 30), 3, new Color(238, 232, 212));
+
+        // ---- weed stash
+        _font.Draw(_batch, "WEED  " + _state.WeedTotal() + " GRAMS", new Vector2(60, 80), 2,
+                   new Color(150, 216, 160));
+        int y = 108;
+        foreach (var kv in _state.WeedCounts.Where(kv => kv.Value > 0)
+                     .OrderByDescending(kv => kv.Value))
+        {
+            var st = GameData.Strains.FirstOrDefault(x => x.Id == kv.Key);
+            if (st == null)
+                continue;
+            bool inUse = _state.Strain == st.Id;
+            var col = inUse ? new Color(255, 240, 140) : new Color(150, 216, 160);
+            _font.Draw(_batch, (inUse ? "> " : "  ") + st.Name.ToUpper(),
+                       new Vector2(60, y), 2, col);
+            _font.Draw(_batch, "X" + kv.Value, new Vector2(300, y), 2, col);
+            y += 26;
+            if (y > h - 60)
+                break;
+        }
+        if (_state.WeedTotal() == 0)
+            _font.Draw(_batch, "DRY - SEE SAL", new Vector2(60, y), 2, new Color(120, 126, 148));
+
+        // ---- pieces
+        _font.Draw(_batch, "PIECES", new Vector2(w - 330, 80), 2, new Color(150, 210, 236));
+        int py = 108;
+        var pieces = GameData.Smokers.Where(g => _state.Owns("smoker", g.Id)).ToArray();
+        for (int i = 0; i < pieces.Length; i++)
+        {
+            bool eq = _state.Smoker == pieces[i].Id;
+            var col = eq ? new Color(255, 255, 200)
+                      : i == _pouchSel ? new Color(180, 220, 255)
+                      : new Color(170, 180, 210);
+            _font.Draw(_batch, (eq ? "> " : i == _pouchSel ? "  " : "  ") + pieces[i].Name.ToUpper(),
+                       new Vector2(w - 330, py), 2, col);
+            _font.Draw(_batch, eq ? "LOADED" : "", new Vector2(w - 120, py), 2, col);
+            py += 26;
+            if (py > h - 60)
+                break;
+        }
+        if (pieces.Length == 0)
+            _font.Draw(_batch, "ONE-HITTER ONLY - BUY MORE AT THE STORE",
+                       new Vector2(w - 330, py), 2, new Color(120, 126, 148));
+
+        if (_uiMsgT > 0f)
+            _font.Draw(_batch, _uiMsg, new Vector2(40, h - 60), 2, new Color(150, 216, 160));
+        _font.Draw(_batch, "UP/DOWN PIECE  ENTER LOAD  CLICK STRAIN TO LOAD  ESC BACK",
+                   new Vector2(40, h - 30), 2, new Color(130, 140, 170));
+        _batch.End();
+    }
+
+    /// <summary>Pouch clicks: pieces equip, strains load the jar.</summary>
+    private void PouchClick(Vector2 pos)
+    {
+        int h = GraphicsDevice.Viewport.Height;
+        // pieces column
+        var pieces = GameData.Smokers.Where(g => _state.Owns("smoker", g.Id)).ToArray();
+        int py = 108;
+        for (int i = 0; i < pieces.Length && py <= h - 60; i++)
+        {
+            if (pos.X >= 470 && pos.Y >= py - 4 && pos.Y <= py + 22)
+            {
+                _state.Smoker = pieces[i].Id;
+                _smoking.SetItem(_state.Smoker);
+                _uiMsg = "loaded the " + pieces[i].Name;
+                _uiMsgT = 2.5f;
+                return;
+            }
+            py += 26;
+        }
+        // strain rows
+        int y = 108;
+        foreach (var kv in _state.WeedCounts.Where(kv => kv.Value > 0)
+                     .OrderByDescending(kv => kv.Value))
+        {
+            if (pos.X >= 60 && pos.X <= 340 && pos.Y >= y - 4 && pos.Y <= y + 22)
+            {
+                _state.Strain = kv.Key;
+                _state.StrainIndex = Array.IndexOf(GameData.Strains,
+                    GameData.Strains.First(x => x.Id == kv.Key));
+                _uiMsg = "jar loaded - " + _state.StrainData().Name;
+                _uiMsgT = 2.5f;
+                return;
+            }
+            y += 26;
+        }
+    }
 
     private void DrawJournal()
     {
@@ -1536,6 +1682,7 @@ public partial class HotRodsGame : Game
         if (_shopOpen) { ShopClick(pos); return; }
         if (_dealerOpen) { DealerClick(pos); return; }
         if (_mapOpen) { MapClick(pos); return; }
+        if (_pouchOpen) { PouchClick(pos); return; }
         if (_zaaOpen || _journalOpen || _stokeOpen || _helpOpen)
             return;
 
@@ -1554,6 +1701,7 @@ public partial class HotRodsGame : Game
                 case 4: _zaaOpen = true; _zaaSel = 0; break;
                 case 5: _journalOpen = true; _journalSel = 0; break;
                 case 6: _stokeOpen = true; _stokeSel = 0; break;
+                case 7: _pouchOpen = true; _pouchSel = 0; break;
             }
             PlaySfx("click");
             return;
@@ -1645,8 +1793,8 @@ public partial class HotRodsGame : Game
         }
         Edge(ref _upHeld, Keys.Up, () => _shopSel = Math.Max(0, _shopSel - 1));
         Edge(ref _downHeld, Keys.Down, () => _shopSel++);
-        Edge(ref _leftHeld, Keys.Left, () => { _shopTab = (_shopTab + 5) % 6; _shopSel = 0; });
-        Edge(ref _rightHeld, Keys.Right, () => { _shopTab = (_shopTab + 1) % 6; _shopSel = 0; });
+        Edge(ref _leftHeld, Keys.Left, () => { _shopTab = (_shopTab + 6) % 7; _shopSel = 0; });
+        Edge(ref _rightHeld, Keys.Right, () => { _shopTab = (_shopTab + 1) % 7; _shopSel = 0; });
         Edge(ref _enterHeld, Keys.Enter, BuyShopItem);
         if (kb.IsKeyDown(Keys.Escape)) { _shopOpen = false; _menuOpen = true; }
     }
@@ -1663,6 +1811,14 @@ public partial class HotRodsGame : Game
             _shopMsg = msg; _shopMsgT = 2.2f;
         }
         else if (_shopTab == 4)
+        {
+            var gear = _state.GearTable("smoker");
+            if (_shopSel >= gear.Length) return;
+            var (ok, msg) = _state.BuyGear("smoker", gear[_shopSel]);
+            _shopMsg = msg; _shopMsgT = 2.2f;
+            if (ok) { _smoking.SetItem(_state.Smoker); PlaySfx("click"); }
+        }
+        else if (_shopTab == 5)
         {
             if (_shopSel >= 4) return;
             var (ok, msg) = _state.TryTravel(_shopSel);
@@ -1684,9 +1840,9 @@ public partial class HotRodsGame : Game
     {
         if (pos.Y >= 50 && pos.Y <= 76)
         {
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < 7; i++)
             {
-                if (pos.X >= 40 + i * 118 && pos.X <= 40 + i * 118 + 90)
+                if (pos.X >= 40 + i * 108 && pos.X <= 40 + i * 108 + 88)
                 {
                     _shopTab = i;
                     _shopSel = 0;
@@ -1712,6 +1868,20 @@ public partial class HotRodsGame : Game
             }
         }
         else if (_shopTab == 4)
+        {
+            var gear = _state.GearTable("smoker");
+            for (int i = 0; i < gear.Length; i++)
+            {
+                if (pos.Y >= y - 4 && pos.Y <= y + 40)
+                {
+                    _shopSel = i;
+                    BuyShopItem();
+                    return;
+                }
+                y += 46;
+            }
+        }
+        else if (_shopTab == 5)
         {
             for (int i = 0; i < 4; i++)
             {
@@ -1747,9 +1917,9 @@ public partial class HotRodsGame : Game
         _batch.Draw(_pixel, new Rectangle(0, 0, w, h), new Color(10, 14, 26, 225));
         _font.Draw(_batch, "STORE  -  $" + _state.Cash, new Vector2(40, 30), 3,
                    new Color(240, 214, 120));
-        string[] tabs = { "RODS", "LINES", "LURES", "COOLERS", "WATERS", "MUNCHIES" };
-        for (int i = 0; i < 6; i++)
-            _font.Draw(_batch, tabs[i], new Vector2(40 + i * 118, 60), 2,
+        string[] tabs = { "RODS", "LINES", "LURES", "COOLERS", "SMOKERS", "WATERS", "MUNCHIES" };
+        for (int i = 0; i < 7; i++)
+            _font.Draw(_batch, tabs[i], new Vector2(40 + i * 108, 60), 2,
                        i == _shopTab ? new Color(255, 255, 255)
                                      : new Color(110, 120, 150));
         int y = 100;
@@ -1776,6 +1946,27 @@ public partial class HotRodsGame : Game
             }
         }
         else if (_shopTab == 4)
+        {
+            var gear = _state.GearTable("smoker");
+            for (int i = 0; i < gear.Length; i++)
+            {
+                var g = gear[i];
+                bool owned = _state.Owns("smoker", g.Id);
+                bool eq = _state.Smoker == g.Id;
+                var col = i == _shopSel ? new Color(255, 255, 200)
+                          : owned ? new Color(150, 216, 160)
+                          : new Color(170, 180, 210);
+                _font.Draw(_batch, (i == _shopSel ? ">" : " ") + " " + g.Name.ToUpper(),
+                           new Vector2(60, y), 2, col);
+                string right = eq ? "EQUIPPED" : owned ? "OWNED"
+                             : "$" + g.Cost;
+                _font.Draw(_batch, right, new Vector2(w - 240, y), 2, col);
+                _font.Draw(_batch, g.Desc, new Vector2(80, y + 22), 2,
+                           new Color(120, 130, 160));
+                y += 46;
+            }
+        }
+        else if (_shopTab == 5)
         {
             for (int i = 0; i < 4; i++)
             {
