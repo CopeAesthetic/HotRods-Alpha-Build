@@ -1047,7 +1047,7 @@ public partial class HotRodsGame : Game
                 case "splash": _splash.Play(0.6f, 0f, 0f); break;
                 case "big": _splashBig.Play(0.7f, 0f, 0f); break;
                 case "click": break;                      // UI clicks stay silent
-                case "reel_tick": _click.Play(0.35f, 0f, 0f); break;
+                case "reel_tick": break;                   // the reel pulls are silent too
             }
         }
         catch
