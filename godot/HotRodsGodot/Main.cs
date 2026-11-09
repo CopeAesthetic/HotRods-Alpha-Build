@@ -498,6 +498,7 @@ public partial class Main : Node3D
         var img = GetViewport().GetTexture().GetImage();
         img.SavePng("user://shot.png");
         GD.Print("SHOT: " + ProjectSettings.GlobalizePath("user://shot.png"));
+        _screens.FlushPool();
         GetTree().Quit();
     }
 

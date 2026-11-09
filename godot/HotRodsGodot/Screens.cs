@@ -43,6 +43,17 @@ public partial class Screens : CanvasLayer
         new(640, 130), new(240, 420), new(900, 460), new(620, 620),
     };
 
+    public override void _ExitTree() => FlushPool();
+
+    /// <summary>Frees every detached pooled node - call before quitting so
+    /// the shutdown leak warnings stay quiet.</summary>
+    public void FlushPool()
+    {
+        foreach (var c in _pool)
+            c.Free();
+        _pool.Clear();
+    }
+
     public override void _Ready()
     {
         _root = new Control { Visible = false };
